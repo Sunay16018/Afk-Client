@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>AFK AI CLIENT</title>
+    <title>AFK AI CLIENT PRO</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,6 +11,14 @@
             <input type="text" id="host" placeholder="IP:Port">
             <input type="text" id="username" placeholder="Bot Adı">
             <input type="password" id="password" placeholder="Şifre">
+        </div>
+        <div class="settings-row">
+            <button id="toggle-ai" onclick="toggleSetting('ai')" class="btn btn-on">AI: AÇIK</button>
+            <button id="toggle-math" onclick="toggleSetting('math')" class="btn btn-on">MAT: AÇIK</button>
+            <div class="range-group">
+                <label>Gecikme: <span id="delay-val">2000</span>ms</label>
+                <input type="range" id="delay-range" min="500" max="10000" step="500" value="2000" oninput="updateDelay(this.value)">
+            </div>
         </div>
         <div class="action-row">
             <button onclick="connect()" class="btn btn-start">BAĞLAN</button>
