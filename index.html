@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFK CLIENT</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="client-window">
+        <div class="window-header">
+            <div class="window-title">● AFK CLIENT V1.0</div>
+            <div id="status-text" style="color: var(--danger); font-size: 12px; font-weight: bold;">DISCONNECTED</div>
+        </div>
+
+        <div class="settings-panel">
+            <div class="inputs-row">
+                <input type="text" id="host" placeholder="Sunucu IP:Port">
+                <input type="text" id="username" placeholder="Bot İsmi">
+                <input type="password" id="password" placeholder="Şifre (Hafızadan Alınır)">
+            </div>
+            <div class="buttons-row">
+                <button onclick="connect()" class="btn btn-start">BAĞLAN</button>
+                <button onclick="disconnect()" class="btn btn-stop">DURDUR</button>
+                <button onclick="move('forward')" class="btn btn-cmd">↑</button>
+                <button onclick="move('back')" class="btn btn-cmd">↓</button>
+                <button onclick="move('jump')" class="btn btn-cmd">ZIPLA</button>
+            </div>
+        </div>
+
+        <div class="terminal-body">
+            <div id="logs">
+                <div style="color: #4b5563;">[System] AFK Client başlatıldı.</div>
+            </div>
+            <div class="terminal-input-area">
+                <span style="color: var(--accent); font-weight: bold;">➜</span>
+                <input type="text" id="chat-input" placeholder="Komut veya mesaj yazın...">
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

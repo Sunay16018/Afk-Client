@@ -1,0 +1,143 @@
+:root {
+    --bg: #050810;
+    --window-border: #334155;
+    --window-header: #1e293b;
+    --accent: #00f2ff;
+    --success: #00ff88;
+    --danger: #ff4b5c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    background-color: var(--bg);
+    color: #e2e8f0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* ANA PENCERE ÇERÇEVESİ */
+.client-window {
+    width: 95vw;
+    height: 95vh;
+    background: #000;
+    border: 2px solid var(--window-border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+}
+
+/* PENCERE BAŞLIĞI */
+.window-header {
+    background: var(--window-header);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--window-border);
+    flex-shrink: 0;
+}
+
+.window-title {
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: var(--accent);
+    font-size: 14px;
+}
+
+/* ÜST AYARLAR PANELİ (%35) */
+.settings-panel {
+    height: 35%;
+    background: #0f172a;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    border-bottom: 1px solid var(--window-border);
+    flex-shrink: 0;
+}
+
+.inputs-row {
+    display: flex;
+    gap: 10px;
+}
+
+.input-box {
+    flex: 1;
+}
+
+input {
+    width: 100%;
+    background: #050810;
+    border: 1px solid #334155;
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+}
+
+input:focus { border-color: var(--accent); }
+
+.buttons-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.btn-start { background: var(--success); color: #000; }
+.btn-stop { background: var(--danger); color: white; }
+.btn-cmd { background: #334155; color: white; border: 1px solid #475569; }
+
+/* ALT TERMİNAL (%65) */
+.terminal-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    overflow: hidden;
+}
+
+#logs {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.terminal-input-area {
+    background: #0a0a0a;
+    border-top: 1px solid var(--window-border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#chat-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--success);
+    font-family: 'Consolas', monospace;
+    font-size: 16px;
+    outline: none;
+}
