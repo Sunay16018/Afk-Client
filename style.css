@@ -1,39 +1,113 @@
 :root {
-    --bg: #050810;
-    --window-border: #334155;
-    --window-header: #1e293b;
-    --accent: #00f2ff;
-    --success: #00ff88;
-    --danger: #ff4b5c;
+    --bg: #030712;
+    --header: #1e293b;
+    --accent: #0ea5e9;
+    --success: #22c55e;
+    --danger: #ef4444;
 }
 
 * { box-sizing: border-box; }
 
 body {
-    background-color: var(--bg);
-    color: #e2e8f0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg);
+    color: #f1f5f9;
+    font-family: 'Consolas', monospace;
     margin: 0;
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
 }
 
-/* ANA PENCERE ÇERÇEVESİ */
-.client-window {
-    width: 95vw;
-    height: 95vh;
-    background: #000;
-    border: 2px solid var(--window-border);
+.client-frame {
+    width: 98vw;
+    height: 98vh;
+    border: 2px solid #334155;
     border-radius: 12px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    overflow: hidden;
+    box-shadow: 0 0 50px rgba(0,0,0,0.9);
 }
 
-/* PENCERE BAŞLIĞI */
+.window-title-bar {
+    background: var(--header);
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #334155;
+}
+
+.title { font-weight: bold; color: var(--accent); font-size: 18px; letter-spacing: 1px; }
+
+.top-controls {
+    background: #0f172a;
+    padding: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    border-bottom: 1px solid #1e293b;
+}
+
+.input-group { display: flex; gap: 10px; flex: 2; min-width: 600px; }
+
+input {
+    background: #020617;
+    border: 1px solid #334155;
+    color: white;
+    padding: 14px;
+    border-radius: 8px;
+    flex: 1;
+    font-size: 15px;
+}
+
+.btn {
+    padding: 14px 25px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: 0.1s;
+}
+
+.btn-start { background: var(--success); color: #000; }
+.btn-stop { background: var(--danger); color: #fff; }
+.btn-tab { background: var(--accent); color: #000; }
+
+.terminal-main {
+    flex: 1;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+}
+
+#logs {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.input-area {
+    background: #050505;
+    padding: 20px 30px;
+    border-top: 1px solid #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#chat-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #fff;
+    outline: none;
+    font-size: 20px;
+}
 .window-header {
     background: var(--window-header);
     padding: 10px 20px;
