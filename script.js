@@ -4,19 +4,29 @@ const chatInput = document.getElementById('chat-input');
 const statusInd = document.getElementById('status-indicator');
 let players = [];
 
+const MAX_LINES = 150; // Terminalde tutulan satır sınırı
 const mcColors = {'0':'#000','1':'#00A','2':'#0A0','3':'#0AA','4':'#A00','5':'#A0A','6':'#FA0','7':'#AAA','8':'#555','9':'#55F','a':'#5F5','b':'#5FF','c':'#F55','d':'#F5F','e':'#FF5','f':'#FFF'};
 
 function addLog(text) {
     if(!text) return;
+    
+    // Satır Limit Kontrolü
+    while (logs.childNodes.length > MAX_LINES) {
+        logs.removeChild(logs.firstChild);
+    }
+
     const div = document.createElement('div');
     div.className = 'mc-text';
     let html = text.replace(/§([0-9a-f])/gi, (m, c) => `</span><span style="color:${mcColors[c.toLowerCase()]}">`);
     div.innerHTML = `<span>${html}</span>`;
+    
+    // Akıllı Kaydırma (Kullanıcı yukarıda değilse aşağı kaydır)
+    const isAtBottom = logs.scrollHeight - logs.clientHeight <= logs.scrollTop + 60;
     logs.appendChild(div);
-    logs.scrollTop = logs.scrollHeight;
+    if (isAtBottom) logs.scrollTop = logs.scrollHeight;
 }
 
-// TAB & Otomatik Tamamlama
+// TAB Tamamlama
 chatInput.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') {
         e.preventDefault();
@@ -27,8 +37,6 @@ chatInput.addEventListener('keydown', (e) => {
         if (matches.length === 1) {
             words[words.length - 1] = matches[0];
             chatInput.value = words.join(' ') + ' ';
-        } else if (matches.length > 1) {
-            addLog("§bEşleşenler: §f" + matches.join(", "));
         }
     }
 });
@@ -57,6 +65,4 @@ function sendChat() {
     socket.emit('send-chat', chatInput.value);
     chatInput.value = '';
 }
-
-document.getElementById('tab-btn').onclick = () => socket.emit('get-players');
 chatInput.addEventListener("keypress", e => { if (e.key === "Enter") sendChat(); });
