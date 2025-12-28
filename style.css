@@ -1,13 +1,16 @@
 :root {
-    --bg: #0a0a0a;
-    --panel: #161b22;
-    --accent: #00aaff;
+    --bg: #05070a;
+    --panel: #111418;
+    --accent: #00d4ff;
+    --border: #2a2e35;
+    --success: #00ff88;
 }
 
+* { box-sizing: border-box; }
 body {
     background-color: var(--bg);
-    color: #fff;
-    font-family: 'Segoe UI', sans-serif;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
     margin: 0;
     height: 100vh;
     display: flex;
@@ -15,64 +18,79 @@ body {
     overflow: hidden;
 }
 
-/* ÜST KONTROL PANELİ */
+/* KONTROL MERKEZİ */
 .top-bar {
     height: 30%;
     background: var(--panel);
-    padding: 15px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    border-bottom: 2px solid #30363d;
+    gap: 12px;
+    border-bottom: 2px solid var(--border);
 }
 
-.input-row { display: flex; gap: 8px; }
+.input-row { display: flex; gap: 10px; }
 input {
-    background: #0d1117;
-    border: 1px solid #30363d;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 4px;
+    background: #1a1d23;
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 10px;
+    border-radius: 6px;
     flex: 1;
+    outline: none;
 }
+input:focus { border-color: var(--accent); }
 
-.action-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.action-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .btn {
-    padding: 8px 16px;
-    border-radius: 4px;
+    padding: 10px 20px;
+    border-radius: 6px;
     border: none;
     cursor: pointer;
     font-weight: bold;
     font-size: 13px;
+    transition: 0.2s;
 }
 
-.btn-start { background: #238636; color: white; }
-.btn-stop { background: #da3633; color: white; }
-.btn-move { background: #30363d; color: white; min-width: 40px; }
-.btn-tab { background: var(--accent); color: white; }
+.btn-start { background: var(--success); color: #000; }
+.btn-stop { background: #ff4d4d; color: #fff; }
+.btn-move { background: #2a2e35; color: #fff; min-width: 45px; }
 
-/* TERMİNAL (ALT %70) */
-.terminal-container {
-    height: 70%;
+/* TERMİNAL PENCERESİ */
+.terminal-window {
+    flex: 1;
+    margin: 15px;
     background: #000;
+    border: 2px solid var(--border);
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.terminal-header {
+    background: #1a1d23;
+    padding: 10px 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
 }
 
 #logs {
     flex: 1;
     padding: 15px;
     overflow-y: auto;
-    font-family: 'Consolas', monospace;
-    font-size: 15px;
-    line-height: 1.5;
-    white-space: pre-wrap;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .input-area {
-    background: #050505;
-    padding: 10px 15px;
-    border-top: 1px solid #30363d;
+    background: #111418;
+    padding: 12px;
+    border-top: 1px solid var(--border);
     display: flex;
     gap: 10px;
 }
@@ -86,5 +104,4 @@ input {
     font-size: 16px;
 }
 
-/* MINECRAFT RENK GÖLGESİ */
-.mc-text { text-shadow: 1px 1px #222; }
+.mc-text { text-shadow: 1px 1px 1px rgba(0,0,0,1); }
