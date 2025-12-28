@@ -9,9 +9,8 @@
 <body>
     <div class="top-bar">
         <div class="input-row">
-            <input type="text" id="host" placeholder="IP:Port">
-            <input type="text" id="username" placeholder="Bot Adı">
-            <input type="password" id="password" placeholder="Şifre">
+            <input type="text" id="host" placeholder="Sunucu IP:Port">
+            <input type="text" id="username" placeholder="Bot Kullanıcı Adı">
         </div>
         <div class="settings-row">
             <button id="toggle-ai" onclick="toggleSetting('ai')" class="btn btn-on">AI: AÇIK</button>
@@ -23,15 +22,16 @@
         </div>
         <div class="action-row">
             <button onclick="connect()" class="btn btn-start">BAĞLAN</button>
-            <button onclick="disconnect()" class="btn btn-stop">KES</button>
+            <button onclick="disconnect()" class="btn btn-stop">BAĞLANTIYI KES</button>
             <div id="status-indicator">● OFFLINE</div>
         </div>
     </div>
 
     <div class="terminal-window" onclick="document.getElementById('chat-input').focus()">
-        <div id="logs"></div> <div class="terminal-input-line">
+        <div id="logs"></div>
+        <div class="terminal-input-line">
             <span class="prompt">➜</span>
-            <input type="text" id="chat-input" spellcheck="false" autocomplete="off" placeholder="Komut yaz...">
+            <input type="text" id="chat-input" spellcheck="false" autocomplete="off" placeholder="Buraya yazın...">
         </div>
     </div>
 
