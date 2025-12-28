@@ -2,35 +2,38 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>AFK CLIENT - PRO</title>
+    <title>AFK CLIENT</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="client-frame">
-        <div class="window-title-bar">
-            <div class="title">● AFK CLIENT TERMINAL</div>
-            <div id="status" style="color: var(--danger); font-weight: bold;">DURUM: BAĞLI DEĞİL</div>
+    <div class="top-bar">
+        <div style="font-size: 12px; color: var(--accent); font-weight: bold;">AFK CLIENT CONTROL</div>
+        <div class="input-row">
+            <input type="text" id="host" placeholder="IP:Port">
+            <input type="text" id="username" placeholder="Bot İsmi">
+            <input type="password" id="password" placeholder="Şifre">
         </div>
-
-        <div class="top-controls">
-            <div class="input-group">
-                <input type="text" id="host" placeholder="Sunucu IP:Port">
-                <input type="text" id="username" placeholder="Kullanıcı Adı">
-                <input type="password" id="password" placeholder="Şifre">
-            </div>
+        <div class="action-row">
             <button onclick="connect()" class="btn btn-start">BAĞLAN</button>
-            <button onclick="disconnect()" class="btn btn-stop">KESE BAS</button>
-            <button id="tab-btn" class="btn btn-tab">TAB (LİSTELE)</button>
-        </div>
-
-        <div class="terminal-main">
-            <div id="logs"></div>
-            <div class="input-area">
-                <span style="color: var(--success); font-weight: bold; font-size: 20px;">➜</span>
-                <input type="text" id="chat-input" placeholder="Yazmaya başla ve TAB'a bas..." autocomplete="off">
-            </div>
+            <button onclick="disconnect()" class="btn btn-stop">KES</button>
+            <button id="tab-btn" class="btn btn-tab">TAB (OYUNCULAR)</button>
+            <div style="width:10px"></div>
+            <button onclick="move('forward')" class="btn btn-move">↑</button>
+            <button onclick="move('left')" class="btn btn-move">←</button>
+            <button onclick="move('back')" class="btn btn-move">↓</button>
+            <button onclick="move('right')" class="btn btn-move">→</button>
+            <button onclick="move('jump')" class="btn btn-move">ZIPLA</button>
         </div>
     </div>
+
+    <div class="terminal-container">
+        <div id="logs"></div>
+        <div class="input-area">
+            <span style="color: #55FF55;">➜</span>
+            <input type="text" id="chat-input" placeholder="Mesaj yaz..." autocomplete="off">
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
