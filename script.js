@@ -1,32 +1,29 @@
 const socket = io();
 const logs = document.getElementById('logs');
 const chatInput = document.getElementById('chat-input');
+const statusInd = document.getElementById('status-indicator');
 let players = [];
 
-const mcColors = {'0':'#000000','1':'#0000AA','2':'#00AA00','3':'#00AAAA','4':'#AA0000','5':'#AA00AA','6':'#FFAA00','7':'#AAAAAA','8':'#555555','9':'#5555FF','a':'#55FF55','b':'#55FFFF','c':'#FF5555','d':'#FF55FF','e':'#FFFF55','f':'#FFFFFF'};
+const mcColors = {'0':'#000','1':'#00A','2':'#0A0','3':'#0AA','4':'#A00','5':'#A0A','6':'#FA0','7':'#AAA','8':'#555','9':'#55F','a':'#5F5','b':'#5FF','c':'#F55','d':'#F5F','e':'#FF5','f':'#FFF'};
 
 function addLog(text) {
     if(!text) return;
     const div = document.createElement('div');
     div.className = 'mc-text';
-    
-    // Minecraft renk kodlarını HTML span'larına çevir
-    let html = text.replace(/§([0-9a-f])/g, (m, c) => `</span><span style="color:${mcColors[c]}">`);
+    let html = text.replace(/§([0-9a-f])/gi, (m, c) => `</span><span style="color:${mcColors[c.toLowerCase()]}">`);
     div.innerHTML = `<span>${html}</span>`;
-    
     logs.appendChild(div);
     logs.scrollTop = logs.scrollHeight;
 }
 
-// TAB Tamamlama
+// TAB & Otomatik Tamamlama
 chatInput.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') {
         e.preventDefault();
         const words = chatInput.value.split(' ');
-        const lastWord = words[words.length - 1].toLowerCase();
-        if (!lastWord) return;
-
-        const matches = players.filter(p => p.toLowerCase().startsWith(lastWord));
+        const last = words[words.length - 1].toLowerCase();
+        if (!last) return;
+        const matches = players.filter(p => p.toLowerCase().startsWith(last));
         if (matches.length === 1) {
             words[words.length - 1] = matches[0];
             chatInput.value = words.join(' ') + ' ';
@@ -45,11 +42,15 @@ function connect() {
     });
 }
 
-function disconnect() { socket.emit('stop-bot'); addLog("§cBağlantı kesildi."); }
+function disconnect() { socket.emit('stop-bot'); }
 function move(dir) { socket.emit('move', dir); }
 
 socket.on('log', d => addLog(d.text));
-socket.on('player-list', list => { players = list; }); // Sessiz güncelleme
+socket.on('player-list', list => { players = list; });
+socket.on('status', d => {
+    statusInd.style.color = d.connected ? "#00ff88" : "#ff4d4d";
+    statusInd.innerText = d.connected ? "● ONLINE" : "● OFFLINE";
+});
 
 function sendChat() {
     if (!chatInput.value) return;
