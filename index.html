@@ -3,29 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AFK BOT PANEL</title>
+    <title>AFK MULTI-BOT PANEL</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="top-bar">
-        <div class="input-row">
-            <input type="text" id="host" placeholder="IP (Örn: play.sunucu.com)">
-            <input type="number" id="port" placeholder="Port" value="25565">
-            <input type="text" id="username" placeholder="Bot İsmi">
-            <input type="password" id="password" placeholder="Şifre">
+    <div class="container">
+        <div class="sidebar">
+            <h3>HESAP EKLE</h3>
+            <input type="text" id="host" placeholder="IP:Port">
+            <input type="text" id="user" placeholder="Kullanıcı Adı">
+            <input type="password" id="pass" placeholder="Şifre">
+            <button id="add-bot" class="btn-primary">BAĞLAN</button>
+            <hr>
+            <h3>AKTİF BOTLAR</h3>
+            <div id="bot-list"></div>
         </div>
-        <div class="action-row">
-            <button id="btn-connect" class="btn btn-start">BAĞLAN</button>
-            <button id="btn-stop" class="btn btn-stop">KES</button>
-            <div id="status-indicator">● OFFLINE</div>
-        </div>
-    </div>
 
-    <div class="terminal-window">
-        <div id="logs"></div>
-        <div class="terminal-input-line">
-            <span class="prompt">➜</span>
-            <input type="text" id="chat-input" placeholder="Mesaj veya komut..." autocomplete="off">
+        <div class="main-terminal">
+            <div id="logs"></div>
+            <div class="input-area">
+                <select id="target-bot"></select>
+                <input type="text" id="chat-input" placeholder="Mesaj gönder...">
+            </div>
         </div>
     </div>
 
