@@ -8,7 +8,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Gemini API Yapılandırması (Kendi anahtarını buraya koyabilirsin)
+// Gemini API Yapılandırması
 const genAI = new GoogleGenerativeAI("AIzaSyCFU2TM3B0JLjsStCI0zObHs3K5IU5ZKc4");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -21,7 +21,7 @@ async function solveSmart(msgStr, botName) {
     const cleanMsg = msgStr.replace(/§[0-9a-fk-or]/gi, '').trim();
     const lowerMsg = cleanMsg.toLowerCase();
 
-    // 1. Matematik Çözücü
+    // Matematik Çözücü
     if (botSettings.mathEnabled) {
         const mathMatch = cleanMsg.match(/(\d+)\s*([\+\-\*x\/])\s*(\d+)/);
         if (mathMatch) {
@@ -37,12 +37,12 @@ async function solveSmart(msgStr, botName) {
         }
     }
 
-    // 2. AI Sohbet
+    // AI Sohbet
     if (botSettings.aiEnabled) {
-        const keywords = ["naber", "selam", "sa", "nasılsın", "merhaba", botName.toLowerCase()];
+        const keywords = ["naber", "selam", "sa", "nasılsın", botName.toLowerCase()];
         if (keywords.some(k => lowerMsg.includes(k)) && !lowerMsg.startsWith(botName.toLowerCase())) {
             try {
-                const prompt = `Sen bir Minecraft oyuncususun. Adın ${botName}. Çok kısa ve samimi bir cevap ver. Mesaj: ${cleanMsg}`;
+                const prompt = `Sen bir Minecraft oyuncususun. Adın ${botName}. Çok kısa ve samimi cevap ver. Mesaj: ${cleanMsg}`;
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
                 return { answer: response.text().substring(0, 80).replace(/\n/g, ' '), delay: botSettings.delay + 1000 };
@@ -57,12 +57,10 @@ io.on('connection', (socket) => {
 
     socket.on('start-bot', (c) => {
         if (bot) { try { bot.quit(); } catch(e){} }
-        
         bot = mineflayer.createBot({
             host: c.host.split(':')[0],
             port: parseInt(c.host.split(':')[1]) || 25565,
-            username: c.username,
-            version: false
+            username: c.username
         });
 
         bot.on('spawn', () => {
@@ -72,10 +70,13 @@ io.on('connection', (socket) => {
                     bot.chat(`/login ${c.password}`);
                 }, 1500);
             }
+            socket.emit('log', { msg: '<b style="color:#00ff00;">[SİSTEM] Bot başarıyla bağlandı!</b>' });
         });
 
         bot.on('message', async (jsonMsg) => {
-            socket.emit('log', { text: jsonMsg.toMotd() });
+            // Yüklediğin dosyadaki profesyonel renk sistemi
+            socket.emit('log', { msg: jsonMsg.toHTML() });
+            
             const result = await solveSmart(jsonMsg.toString(), c.username);
             if (result && bot && bot.entity) {
                 setTimeout(() => { if(bot && bot.entity) bot.chat(result.answer); }, result.delay);
@@ -84,8 +85,7 @@ io.on('connection', (socket) => {
 
         bot.on('login', () => socket.emit('status', { connected: true }));
         bot.on('end', () => socket.emit('status', { connected: false }));
-        bot.on('kicked', (reason) => socket.emit('log', { text: `§cAtıldı: ${reason}` }));
-        bot.on('error', (err) => socket.emit('log', { text: `§cHata: ${err.message}` }));
+        bot.on('error', (err) => socket.emit('log', { msg: `<span style="color:red;">Hata: ${err.message}</span>` }));
     });
 
     socket.on('send-chat', (m) => { if(bot) bot.chat(m); });
@@ -93,4 +93,3 @@ io.on('connection', (socket) => {
 });
 
 server.listen(process.env.PORT || 3000);
-                           
