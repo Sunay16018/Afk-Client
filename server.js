@@ -3,67 +3,17 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const mineflayer = require('mineflayer');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 app.use(express.static(__dirname));
 
-// Gemini AI Yapılandırması
-const genAI = new GoogleGenerativeAI("AIzaSyCFU2TM3B0JLjsStCI0zObHs3K5IU5ZKc4");
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
 let bots = {};
-// Arayüzden gelecek olan buton ayarlarını burada tutuyoruz
-let botSettings = { aiEnabled: true, mathEnabled: true, delay: 2000 };
-
-// AI ve Matematik Motoru
-async function handleSmartResponse(msgStr, botName) {
-    const cleanMsg = msgStr.replace(/§[0-9a-fk-or]/gi, '').trim();
-    const lowerMsg = cleanMsg.toLowerCase();
-
-    // 1. Matematik Çözücü (Sadece buton AÇIKSA çalışır)
-    if (botSettings.mathEnabled) {
-        const mathMatch = cleanMsg.match(/(\d+)\s*([\+\-\*x\/])\s*(\d+)/);
-        if (mathMatch) {
-            const n1 = parseInt(mathMatch[1]);
-            const op = mathMatch[2];
-            const n2 = parseInt(mathMatch[3]);
-            let res = null;
-            if (op === '+') res = n1 + n2;
-            else if (op === '-') res = n1 - n2;
-            else if (op === '*' || op === 'x') res = n1 * n2;
-            else if (op === '/' || op === ':') res = n2 !== 0 ? Math.floor(n1 / n2) : null;
-            
-            if (res !== null) return { answer: res.toString(), delay: botSettings.delay };
-        }
-    }
-
-    // 2. AI Sohbet (Sadece buton AÇIKSA çalışır)
-    if (botSettings.aiEnabled) {
-        const keywords = ["naber", "selam", "sa", "nasılsın", botName.toLowerCase()];
-        // Mesajda botun adı geçiyorsa veya selam veriliyorsa cevap ver
-        if (keywords.some(k => lowerMsg.includes(k))) {
-            try {
-                const prompt = `Sen bir Minecraft oyuncususun. Adın ${botName}. Çok kısa ve samimi bir cevap ver: ${cleanMsg}`;
-                const result = await model.generateContent(prompt);
-                const response = result.response.text().substring(0, 80).replace(/\n/g, ' ');
-                return { answer: response, delay: botSettings.delay + 500 };
-            } catch (e) { return null; }
-        }
-    }
-    return null;
-}
 
 io.on('connection', (socket) => {
-    // Arayüzdeki butonlara basıldığında burası tetiklenir
-    socket.on('update-settings', (newSettings) => {
-        botSettings = newSettings;
-        console.log("Ayarlar Güncellendi:", botSettings);
-    });
-
-    // BOTU BAĞLATMA
-    socket.on('join', (data) => {
-        const botId = "1";
-        if (bots[botId]) { try { bots[botId].quit(); } catch(e){} }
+    // BOT BAŞLATMA
+    socket.on('start-bot', (data) => {
+        const botId = data.username; // Her botu kullanıcı adıyla ayırıyoruz
+        
+        if (bots[botId]) return socket.emit('log', { msg: `§c[HATA] ${botId} zaten bağlı!` });
 
         const bot = mineflayer.createBot({
             host: data.host,
@@ -75,10 +25,10 @@ io.on('connection', (socket) => {
         bots[botId] = bot;
 
         bot.on('spawn', () => {
-            socket.emit('status', { connected: true });
-            socket.emit('log', { msg: '§a[SİSTEM] Bot başarıyla bağlandı!' });
-
-            // Otomatik Şifre Girişi
+            socket.emit('status', { username: botId, connected: true });
+            socket.emit('log', { msg: `§a[SİSTEM] ${botId} sunucuya girdi.` });
+            
+            // Otomatik Login
             if (data.password) {
                 setTimeout(() => {
                     bot.chat(`/register ${data.password} ${data.password}`);
@@ -87,35 +37,36 @@ io.on('connection', (socket) => {
             }
         });
 
-        bot.on('message', async (jsonMsg) => {
-            // Mesajı arayüze gönder
-            socket.emit('log', { msg: jsonMsg.toHTML() });
-
-            // AI/Matematik cevaplarını kontrol et
-            const result = await handleSmartResponse(jsonMsg.toString(), data.username);
-            if (result && bot.entity) {
-                setTimeout(() => { 
-                    if(bot.entity) bot.chat(result.answer); 
-                }, result.delay);
-            }
+        bot.on('message', (jsonMsg) => {
+            socket.emit('log', { username: botId, msg: jsonMsg.toHTML() });
         });
 
-        bot.on('error', (err) => socket.emit('log', { msg: `§cHata: ${err.message}` }));
-        bot.on('kicked', (reason) => socket.emit('log', { msg: `§cAtıldı: ${reason}` }));
-        bot.on('end', () => socket.emit('status', { connected: false }));
+        bot.on('kicked', (reason) => {
+            socket.emit('log', { msg: `§c[KİCK] ${botId} atıldı: ${reason}` });
+        });
+
+        bot.on('end', () => {
+            socket.emit('status', { username: botId, connected: false });
+            delete bots[botId];
+            socket.emit('log', { msg: `§7[BİLGİ] ${botId} bağlantısı koptu.` });
+        });
+
+        bot.on('error', (err) => socket.emit('log', { msg: `§c[HATA] ${err.message}` }));
     });
 
-    // Manuel Mesaj Gönderme
+    // MESAJ GÖNDERME (Hangi botla yazacağını seçer)
     socket.on('send-chat', (data) => {
-        const bot = bots["1"];
-        if (bot && bot.entity) bot.chat(data.msg);
+        const bot = bots[data.username];
+        if (bot) bot.chat(data.msg);
     });
 
-    socket.on('stop-bot', () => {
-        if (bots["1"]) bots["1"].quit();
+    // BAĞLANTI KES
+    socket.on('stop-bot', (username) => {
+        if (bots[username]) {
+            bots[username].quit();
+            delete bots[username];
+        }
     });
 });
 
-const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log(`Stabil server ${PORT} portunda çalışıyor.`));
-    
+http.listen(process.env.PORT || 3000, () => console.log("7/24 Sistem Aktif."));
