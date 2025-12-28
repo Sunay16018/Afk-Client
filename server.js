@@ -8,7 +8,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Gemini API
+// Gemini Yapılandırması
 const genAI = new GoogleGenerativeAI("AIzaSyCFU2TM3B0JLjsStCI0zObHs3K5IU5ZKc4");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -21,30 +21,28 @@ async function solveSmart(msgStr, botName) {
     const cleanMsg = msgStr.replace(/§[0-9a-fk-or]/gi, '').trim();
     const lowerMsg = cleanMsg.toLowerCase();
 
-    // 1. MATEMATİK VE KOD OYUNLARI
+    // Matematik Çözücü
     if (botSettings.mathEnabled) {
         const mathMatch = cleanMsg.match(/(\d+)\s*([\+\-\*x\/])\s*(\d+)/);
         if (mathMatch) {
             const n1 = parseInt(mathMatch[1]);
             const op = mathMatch[2];
             const n2 = parseInt(mathMatch[3]);
-            let res;
+            let res = null;
             if (op === '+') res = n1 + n2;
             else if (op === '-') res = n1 - n2;
             else if (op === '*' || op === 'x') res = n1 * n2;
             else if (op === '/' || op === ':') res = n2 !== 0 ? Math.floor(n1 / n2) : null;
             if (res !== null) return { answer: res.toString(), delay: botSettings.delay };
         }
-        const codeMatch = cleanMsg.match(/(?:yazın|kod|yaz|ilk)\s*[:>-]?\s*([A-Za-z0-9]{5,10})/i);
-        if (codeMatch && codeMatch[1]) return { answer: codeMatch[1], delay: botSettings.delay };
     }
 
-    // 2. AI SOHBET
+    // AI Sohbet
     if (botSettings.aiEnabled) {
-        const keywords = ["naber", "selam", "sa", "nasılsın", "merhaba", botName.toLowerCase()];
+        const keywords = ["naber", "selam", "sa", "nasılsın", botName.toLowerCase()];
         if (keywords.some(k => lowerMsg.includes(k)) && !lowerMsg.startsWith(botName.toLowerCase())) {
             try {
-                const prompt = `Sen bir Minecraft oyuncususun. Adın ${botName}. Çok kısa ve samimi cevap ver. Mesaj: ${cleanMsg}`;
+                const prompt = `Sen bir Minecraft oyuncususun. Adın ${botName}. Çok kısa ve samimi bir cevap ver. Mesaj: ${cleanMsg}`;
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
                 return { answer: response.text().substring(0, 80).replace(/\n/g, ' '), delay: botSettings.delay + 1000 };
