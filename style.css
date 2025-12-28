@@ -1,158 +1,119 @@
 :root {
-    --bg-color: #0d1117;
-    --panel-bg: #161b22;
-    --terminal-bg: #000000;
-    --border-color: #30363d;
-    --accent-blue: #58a6ff;
-    --success-green: #238636;
-    --danger-red: #da3633;
-    --text-gray: #8b949e;
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    background-color: var(--bg-color);
-    color: #c9d1d9;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg);
+    color: #fff;
+    font-family: 'Segoe UI', sans-serif;
     height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Sayfanın tamamının kaymasını engeller */
+    overflow: hidden;
 }
 
-/* ÜST PANEL */
 .top-bar {
-    background: var(--panel-bg);
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border-color);
+    background: var(--panel);
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    z-index: 10;
-}
-
-.input-row {
-    display: flex;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
-.input-row input {
-    background: #0d1117;
-    border: 1px solid var(--border-color);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    flex: 1;
-    min-width: 130px;
-    outline: none;
-}
-
-/* AYARLAR VE TOGGLE BUTONLARI */
-.settings-row {
+.input-row, .action-row, .settings-row {
     display: flex;
     gap: 10px;
     align-items: center;
-    background: #000;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
 }
 
-.range-group {
+input[type="text"] {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    outline: none;
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    font-size: 11px;
-    color: var(--text-gray);
 }
 
-/* BUTONLAR */
-.btn {
-    padding: 8px 14px;
+.settings-row {
+    background: #000;
+    padding: 8px;
     border-radius: 5px;
+    border: 1px solid var(--border);
+}
+
+.btn {
+    padding: 8px 12px;
+    border-radius: 4px;
     border: none;
     cursor: pointer;
     font-weight: bold;
-    font-size: 12px;
-    transition: 0.2s;
+    font-size: 11px;
     color: white;
 }
 
-.btn:active { transform: scale(0.96); }
-.btn-on { background: var(--success-green); }
+.btn-on { background: #238636; }
 .btn-off { background: #444; }
-.btn-start { background: var(--success-green); }
-.btn-stop { background: var(--danger-red); }
+.btn-start { background: #238636; }
+.btn-stop { background: #da3633; }
 
-/* TERMİNAL PENCERESİ */
+.range-group { flex: 1; display: flex; flex-direction: column; font-size: 11px; color: #8b949e; }
+
+/* TERMİNAL ANA KUTU */
 .terminal-window {
     flex: 1;
-    margin: 15px;
-    background: var(--terminal-bg);
-    border: 2px solid var(--border-color);
-    border-radius: 10px;
+    margin: 10px;
+    background: #000;
+    border: 2px solid var(--border);
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
-    overflow-y: auto; /* Mesajlar birikince kutu içinde kaydırır */
-    padding: 15px;
-    position: relative;
+    overflow: hidden; /* Dışa taşmayı önler */
 }
 
+/* MESAJ ALANI */
 #logs {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-/* MINECRAFT METİN STİLİ */
-.mc-text {
-    font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 15px;
-    line-height: 1.4;
-    text-shadow: 1px 1px 1px rgba(0,0,0,1);
-    white-space: pre-wrap;
-    word-break: break-all;
-}
-
-/* TERMİNAL İÇİ GİRİŞ SATIRI */
+/* KOMUT SATIRI - EN ALTA SABİT */
 .terminal-input-line {
+    background: #050505;
+    padding: 10px;
+    border-top: 1px solid var(--border);
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 10px;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
-.prompt {
-    color: #3fb950;
-    font-weight: bold;
-    user-select: none;
-}
+.prompt { color: #3fb950; font-weight: bold; }
 
 #chat-input {
     flex: 1;
     background: transparent;
     border: none;
-    color: white;
     outline: none;
+    color: white;
     font-family: 'Consolas', monospace;
-    font-size: 15px;
-    padding: 0;
+    font-size: 14px;
 }
 
-/* DURUM GÖSTERGESİ */
-#status-indicator {
-    font-weight: bold;
-    font-size: 12px;
-    margin-left: auto;
-}
+.mc-text { text-shadow: 1px 1px 1px #000; white-space: pre-wrap; word-break: break-all; }
 
-/* SCROLLBAR TASARIMI */
-.terminal-window::-webkit-scrollbar { width: 8px; }
-.terminal-window::-webkit-scrollbar-track { background: #000; }
-.terminal-window::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+#status-indicator { font-weight: bold; font-size: 11px; margin-left: auto; }
