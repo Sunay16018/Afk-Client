@@ -2,22 +2,23 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>AFK CLIENT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFK CLIENT PRO</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="top-bar">
-        <div style="font-size: 12px; color: var(--accent); font-weight: bold;">AFK CLIENT CONTROL</div>
+        <div style="font-weight: bold; color: var(--accent); letter-spacing: 1px;">AFK CLIENT v3.0</div>
         <div class="input-row">
-            <input type="text" id="host" placeholder="IP:Port">
-            <input type="text" id="username" placeholder="Bot İsmi">
+            <input type="text" id="host" placeholder="Sunucu IP:Port">
+            <input type="text" id="username" placeholder="Kullanıcı Adı">
             <input type="password" id="password" placeholder="Şifre">
         </div>
         <div class="action-row">
             <button onclick="connect()" class="btn btn-start">BAĞLAN</button>
             <button onclick="disconnect()" class="btn btn-stop">KES</button>
-            <button id="tab-btn" class="btn btn-tab">TAB (OYUNCULAR)</button>
-            <div style="width:10px"></div>
+            <button id="tab-btn" class="btn" style="background:var(--accent); color:#000">TAB (LİSTE)</button>
+            <div style="width:15px"></div>
             <button onclick="move('forward')" class="btn btn-move">↑</button>
             <button onclick="move('left')" class="btn btn-move">←</button>
             <button onclick="move('back')" class="btn btn-move">↓</button>
@@ -26,11 +27,15 @@
         </div>
     </div>
 
-    <div class="terminal-container">
+    <div class="terminal-window">
+        <div class="terminal-header">
+            <span style="color: #8b949e;">TERMINAL / AFK_LOGS</span>
+            <span id="status-indicator" style="color: #ff4d4d; font-weight: bold;">● OFFLINE</span>
+        </div>
         <div id="logs"></div>
         <div class="input-area">
-            <span style="color: #55FF55;">➜</span>
-            <input type="text" id="chat-input" placeholder="Mesaj yaz..." autocomplete="off">
+            <span style="color: var(--success); font-weight: bold;">➜</span>
+            <input type="text" id="chat-input" placeholder="Mesaj veya komut..." autocomplete="off">
         </div>
     </div>
 
