@@ -6,45 +6,54 @@ const statusInd = document.getElementById('status-indicator');
 // BAĞLAN BUTONU
 document.getElementById('btn-connect').onclick = function() {
     const host = document.getElementById('host').value;
+    const port = document.getElementById('port').value;
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
     if (!host || !username) {
-        alert("IP ve Kullanıcı adı boş olamaz!");
+        alert("IP ve Bot İsmi boş olamaz!");
         return;
     }
 
-    // Verileri backend'e gönder
-    socket.emit('start-bot', { host, username, password });
+    // Senin server.js dosyan 'join' bekliyor ve 'botId' istiyor
+    socket.emit('join', { 
+        host: host,
+        port: port,
+        username: username,
+        password: password, // Şifreyi de gönderiyoruz
+        botId: "1" // Senin kodun botId beklediği için sabit 1 gönderiyoruz
+    });
+
+    addLog('<b style="color:orange;">[SİSTEM] Bağlantı isteği gönderildi...</b>');
 };
 
-// KES BUTONU
-document.getElementById('btn-stop').onclick = function() {
-    socket.emit('stop-bot');
-};
-
-// KOMUT GÖNDERME (Enter tuşu)
+// MESAJ GÖNDERME
 chatInput.onkeypress = function(e) {
     if (e.key === 'Enter' && this.value) {
-        socket.emit('send-chat', { msg: this.value });
+        // Senin kodun botId: data.botId bekliyor
+        socket.emit('send-chat', { botId: "1", msg: this.value });
         this.value = '';
     }
 };
 
-// LOGLARI YAKALAMA VE KAYDIRMA
-socket.on('log', (d) => {
-    const div = document.createElement('div');
-    div.style.marginBottom = "4px";
-    div.innerHTML = d.msg;
-    logs.appendChild(div);
+document.getElementById('btn-stop').onclick = function() {
+    // Kapatma işlemi için sayfayı yenilemek en temizi ya da socket emit
+    location.reload();
+};
 
-    // Kaydırma mantığı: Eğer kullanıcı yukarı çıkmamışsa aşağı kaydır
-    const isBottom = logs.scrollHeight - logs.clientHeight <= logs.scrollTop + 100;
-    if (isBottom) logs.scrollTop = logs.scrollHeight;
+// LOGLARI ALMA
+socket.on('log', (d) => {
+    addLog(d.msg);
 });
 
-// BAĞLANTI DURUMU
 socket.on('status', (d) => {
     statusInd.style.color = d.connected ? "#3fb950" : "#f85149";
     statusInd.innerText = d.connected ? "● ONLINE" : "● OFFLINE";
 });
+
+function addLog(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    logs.appendChild(div);
+    logs.scrollTop = logs.scrollHeight;
+}
