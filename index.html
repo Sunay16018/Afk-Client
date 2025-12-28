@@ -3,40 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AFK AI BOT PRO</title>
+    <title>AFK AI BOT PRO - KONTROL PANELİ</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+
     <div class="top-bar">
         <div class="input-row">
-            <input type="text" id="host" placeholder="Sunucu IP:Port">
-            <input type="text" id="username" placeholder="Bot Adı">
-            <input type="password" id="password" placeholder="Şifre (Authme)">
+            <input type="text" id="host" placeholder="Sunucu IP:Port (Örn: play.server.com:25565)">
+            <input type="text" id="username" placeholder="Bot İsmi">
+            <input type="password" id="password" placeholder="Giriş Şifresi (Authme)">
         </div>
+
         <div class="settings-row">
-            <button id="toggle-ai" onclick="toggleSetting('ai')" class="btn btn-on">AI: AÇIK</button>
-            <button id="toggle-math" onclick="toggleSetting('math')" class="btn btn-on">MAT: AÇIK</button>
+            <button id="toggle-ai" class="btn btn-on">AI: AÇIK</button>
+            <button id="toggle-math" class="btn btn-on">MAT: AÇIK</button>
             <div class="range-group">
-                <label>Gecikme: <span id="delay-val">2000</span>ms</label>
-                <input type="range" id="delay-range" min="500" max="10000" step="500" value="2000" oninput="updateDelay(this.value)">
+                <label>Mesaj Gecikmesi: <span id="delay-val">2000</span>ms</label>
+                <input type="range" id="delay-range" min="500" max="10000" step="500" value="2000">
             </div>
         </div>
+
         <div class="action-row">
-            <button onclick="connect()" class="btn btn-start">BAĞLAN</button>
-            <button onclick="disconnect()" class="btn btn-stop">KES</button>
+            <button id="btn-connect" class="btn btn-start">BAĞLAN</button>
+            <button id="btn-stop" class="btn btn-stop">BAĞLANTIYI KES</button>
             <div id="status-indicator">● OFFLINE</div>
         </div>
     </div>
 
-    <div class="terminal-window" onclick="document.getElementById('chat-input').focus()">
-        <div id="logs"></div>
+    <div class="terminal-window">
+        <div id="logs">
+            <div class="mc-text" style="color: #8b949e;">[SİSTEM] Bot kontrol paneline hoş geldiniz. Lütfen bilgileri girip 'BAĞLAN' butonuna basın.</div>
+        </div>
+
         <div class="terminal-input-line">
             <span class="prompt">➜</span>
-            <input type="text" id="chat-input" spellcheck="false" autocomplete="off" placeholder="Komut veya mesaj gönder...">
+            <input type="text" id="chat-input" placeholder="Sunucuya mesaj veya komut gönder..." autocomplete="off" spellcheck="false">
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
+
 </body>
-</html>
+            </html>
+    
