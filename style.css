@@ -1,116 +1,147 @@
 :root {
-    --bg: #0d1117;
-    --panel: #161b22;
-    --border: #30363d;
+    --bg-dark: #080a0f;
+    --panel-bg: #11141d;
+    --accent: #00f2ff; /* Neon Mavi */
+    --success: #2ecc71;
+    --danger: #e74c3c;
+    --border: #232936;
+    --text: #e1e4e8;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    background-color: var(--bg);
-    color: #fff;
-    font-family: 'Segoe UI', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
     height: 100vh;
     display: flex;
-    flex-direction: column;
     overflow: hidden;
 }
 
-.top-bar {
-    background: var(--panel);
-    padding: 10px 15px;
-    border-bottom: 1px solid var(--border);
+/* YAN PANEL */
+.sidebar {
+    width: 320px;
+    background: var(--panel-bg);
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    flex-shrink: 0;
+    padding: 20px;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+    z-index: 10;
 }
 
-.input-row, .action-row, .settings-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
+.sidebar h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 20px;
+    margin-top: 10px;
 }
 
-input {
-    background: #000;
+input, select {
+    width: 100%;
+    background: #1a1f2b;
     border: 1px solid var(--border);
-    color: white;
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 13px;
-    outline: none;
-    flex: 1;
-}
-
-.settings-row {
-    background: #000;
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid var(--border);
-}
-
-.btn {
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 11px;
-    color: white;
-}
-
-.btn-on, .btn-start { background: #238636; }
-.btn-off { background: #444; }
-.btn-stop { background: #da3633; }
-
-.range-group { flex: 1; display: flex; flex-direction: column; font-size: 11px; color: #8b949e; }
-
-/* TERMİNAL ANA KUTU */
-.terminal-window {
-    flex: 1;
-    margin: 10px;
-    background: #000;
-    border: 2px solid var(--border);
     border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    padding: 12px;
+    color: white;
+    margin-bottom: 12px;
+    transition: all 0.3s;
 }
 
-/* MESAJ ALANI */
+input:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #00f2ff, #0072ff);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-primary:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+/* AKTİF BOT LİSTESİ */
+#bot-list {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+.bot-item {
+    background: #1a1f2b;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--success);
+}
+
+.bot-item button {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* ANA TERMİNAL ALANI */
+.main-terminal {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(circle at top right, #11141d, #080a0f);
+}
+
 #logs {
     flex: 1;
-    padding: 10px;
+    padding: 25px;
     overflow-y: auto;
-    font-family: 'Consolas', monospace;
+    font-family: 'Fira Code', 'Consolas', monospace;
     font-size: 14px;
+    line-height: 1.8;
+    background: rgba(0,0,0,0.2);
 }
 
-/* KOMUT SATIRI - EN ALTA SABİT */
-.terminal-input-line {
-    background: #050505;
-    padding: 10px;
+/* Renkli Minecraft Mesaj Düzenlemesi */
+.mc-text { margin-bottom: 6px; display: block; }
+
+/* ALT GİRİŞ ALANI */
+.input-area {
+    background: var(--panel-bg);
+    padding: 20px 30px;
     border-top: 1px solid var(--border);
     display: flex;
+    gap: 15px;
     align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
 }
 
 #chat-input {
     flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: white;
+    margin-bottom: 0;
+    background: #080a0f;
+    border-radius: 30px;
+    padding: 15px 25px;
 }
 
-.prompt { color: #3fb950; font-weight: bold; }
-
-/* Minecraft Renklerinin Terminalde Güzel Durması İçin */
-.mc-text { 
-    white-space: pre-wrap; 
-    word-break: break-all;
-    line-height: 1.5;
+#target-bot {
+    width: 150px;
+    margin-bottom: 0;
+    border-radius: 30px;
 }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
