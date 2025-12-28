@@ -1,13 +1,11 @@
 :root {
-    --bg-color: #0d1117;
-    --panel-bg: #161b22;
-    --terminal-bg: #000000;
-    --border-color: #30363d;
-    --accent-color: #58a6ff;
-    --success-color: #238636;
-    --danger-color: #da3633;
-    --text-main: #c9d1d9;
-    --mc-shadow: 2px 2px 0px rgba(0,0,0,0.8);
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --success: #238636;
+    --danger: #da3633;
+    --terminal: #000000;
 }
 
 * {
@@ -17,20 +15,20 @@
 }
 
 body {
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg);
+    color: #c9d1d9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Sayfanın tamamının kaymasını engeller */
+    overflow: hidden; /* Dış sayfa kaymasını engeller */
 }
 
 /* ÜST KONTROL PANELİ */
 .top-bar {
-    background: var(--panel-bg);
+    background: var(--panel);
     padding: 15px 20px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -46,24 +44,23 @@ body {
 
 .input-row input {
     background: #0d1117;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border);
     color: white;
-    padding: 10px 14px;
+    padding: 10px;
     border-radius: 6px;
     flex: 1;
-    min-width: 150px;
+    min-width: 140px;
     font-size: 14px;
-    transition: border-color 0.2s;
+    outline: none;
 }
 
 .input-row input:focus {
-    border-color: var(--accent-color);
-    outline: none;
+    border-color: var(--accent);
 }
 
 .action-row {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
     flex-wrap: wrap;
 }
@@ -76,28 +73,27 @@ body {
     cursor: pointer;
     font-weight: 600;
     font-size: 13px;
-    text-transform: uppercase;
-    transition: filter 0.2s, transform 0.1s;
+    transition: transform 0.1s, filter 0.2s;
+    color: white;
 }
 
-.btn:active { transform: scale(0.96); }
+.btn:active { transform: scale(0.95); }
+.btn:hover { filter: brightness(1.2); }
 
-.btn-start { background: var(--success-color); color: white; }
-.btn-stop { background: var(--danger-color); color: white; }
-.btn-move { background: #30363d; color: white; min-width: 45px; font-size: 16px; }
-.btn-tab { background: var(--accent-color); color: white; margin-right: 10px; }
+.btn-start { background: var(--success); }
+.btn-stop { background: var(--danger); }
+.btn-move { background: #30363d; min-width: 45px; font-size: 16px; }
 
-/* TERMİNAL PENCERESİ */
+/* TERMİNAL ALANI */
 .terminal-window {
     flex: 1;
     margin: 15px;
-    background: var(--terminal-bg);
-    border: 2px solid var(--border-color);
-    border-radius: 10px;
+    background: var(--terminal);
+    border: 2px solid var(--border);
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    position: relative;
 }
 
 .terminal-header {
@@ -106,42 +102,34 @@ body {
     font-family: 'Consolas', monospace;
     font-size: 12px;
     color: #8b949e;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
-    align-items: center;
 }
 
 #logs {
     flex: 1;
     padding: 15px;
-    overflow-y: auto; /* Sadece log alanı kayar */
+    overflow-y: auto; /* Sadece mesajların olduğu yer kayar */
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 15px;
-    line-height: 1.6;
-    word-wrap: break-word;
-    scroll-behavior: auto;
+    line-height: 1.5;
+    background: black;
 }
 
-/* Scrollbar Tasarımı (Chrome/Safari) */
+/* Scrollbar Özelleştirme */
 #logs::-webkit-scrollbar { width: 8px; }
 #logs::-webkit-scrollbar-track { background: #000; }
-#logs::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; }
-#logs::-webkit-scrollbar-thumb:hover { background: #484f58; }
+#logs::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
 
-/* MESAJ GİRİŞ ALANI */
+/* MESAJ YAZMA ÇUBUĞU */
 .input-area {
     background: #0d1117;
-    padding: 12px 18px;
-    border-top: 1px solid var(--border-color);
+    padding: 12px 15px;
+    border-top: 1px solid var(--border);
     display: flex;
     align-items: center;
     gap: 12px;
-}
-
-.input-area span {
-    font-size: 18px;
-    user-select: none;
 }
 
 #chat-input {
@@ -151,19 +139,19 @@ body {
     color: #fff;
     outline: none;
     font-size: 16px;
-    font-family: 'Consolas', monospace;
 }
 
-/* MINECRAFT RENKLERİ VE GÖLGE */
+/* MINECRAFT METİN FORMATI */
 .mc-text {
     margin-bottom: 4px;
-    text-shadow: var(--mc-shadow);
-    letter-spacing: 0.5px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    text-shadow: 1px 1px 1px rgba(0,0,0,1); /* Minecraft gölge efekti */
 }
 
-/* Mobilde Düzenleme */
+/* Mobil Cihazlar İçin Ayar */
 @media (max-width: 600px) {
-    .top-bar { height: auto; }
-    .terminal-window { margin: 5px; }
-    .btn { padding: 8px 12px; font-size: 11px; }
-}
+    .top-bar { padding: 10px; }
+    .btn { padding: 8px 10px; font-size: 11px; }
+    .terminal-window { margin: 10px 5px; }
+    }
