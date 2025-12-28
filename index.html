@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>MC AFK Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="glass-container">
+        <h2>Minecraft AFK Dashboard</h2>
+        <div class="input-group">
+            <input type="text" id="host" placeholder="Sunucu IP (Örn: play.hypixel.net)">
+            <input type="number" id="port" value="25565">
+            <input type="text" id="username" placeholder="Bot İsmi">
+            <input type="password" id="password" placeholder="Şifre">
+            <input type="text" id="autoMsg" placeholder="Oto Mesaj">
+            <input type="number" id="autoMsgTime" placeholder="Süre (sn)">
+        </div>
+        
+        <div class="button-group">
+            <button onclick="startBot()" class="btn-start">Bağlan</button>
+            <button onclick="startBot()" class="btn-reconnect">Yeniden Bağlan</button>
+            <button onclick="stopBot()" class="btn-stop">Bağlantıyı Kes</button>
+        </div>
+
+        <div id="log-screen" class="log-screen"></div>
+    </div>
+
+    <script>
+        const socket = io();
+        const logScreen = document.getElementById('log-screen');
+
+        function startBot() {
+            const data = {
+                host: document.getElementById('host').value,
+                port: document.getElementById('port').value,
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                autoMsg: document.getElementById('autoMsg').value,
+                autoMsgTime: document.getElementById('autoMsgTime').value
+            };
+            socket.emit('bot-baslat', data);
+        }
+
+        function stopBot() { socket.emit('bot-durdur'); }
+
+        socket.on('log', (msg) => {
+            const div = document.createElement('div');
+            div.textContent = `> ${msg}`;
+            logScreen.appendChild(div);
+            logScreen.scrollTop = logScreen.scrollHeight;
+        });
+    </script>
+</body>
+</html>
