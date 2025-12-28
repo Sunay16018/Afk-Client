@@ -28,35 +28,26 @@ function connect() {
     socket.emit('start-bot', { 
         host: document.getElementById('host').value, 
         username: document.getElementById('username').value,
-        password: document.getElementById('password').value 
+        password: document.getElementById('password').value
     });
 }
 
 function disconnect() { socket.emit('stop-bot'); }
+
+// MESAJ YAKALAMA VE YAZDIRMA
+socket.on('log', d => {
+    const div = document.createElement('div');
+    div.className = "mc-text";
+    div.innerHTML = d.msg; // Gelen hazır HTML'i yapıştır
+    logs.appendChild(div);
+    logs.scrollTop = logs.scrollHeight;
+});
 
 chatInput.addEventListener("keypress", e => {
     if (e.key === "Enter" && chatInput.value) {
         socket.emit('send-chat', chatInput.value);
         chatInput.value = '';
     }
-});
-
-const mcColors = {'0':'#000','1':'#00A','2':'#0A0','3':'#0AA','4':'#A00','5':'#A0A','6':'#FA0','7':'#AAA','8':'#555','9':'#55F','a':'#5F5','b':'#5FF','c':'#F55','d':'#F5F','e':'#FF5','f':'#FFF','r':'#FFF'};
-
-socket.on('log', d => {
-    const div = document.createElement('div');
-    div.className = "mc-text";
-    let parts = d.text.split('§');
-    let html = parts[0] || '';
-    let color = '#fff';
-    for(let i=1; i<parts.length; i++) {
-        let code = parts[i][0].toLowerCase();
-        if(mcColors[code]) color = mcColors[code];
-        html += `<span style="color:${color}">${parts[i].substring(1)}</span>`;
-    }
-    div.innerHTML = html;
-    logs.appendChild(div);
-    logs.scrollTop = logs.scrollHeight;
 });
 
 socket.on('status', d => {
