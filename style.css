@@ -1,16 +1,169 @@
-:root { --bg: #05070a; --panel: #111418; --accent: #00d4ff; --border: #2a2e35; }
-* { box-sizing: border-box; }
-body { background: var(--bg); color: #eee; font-family: sans-serif; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-.top-bar { height: 30%; background: var(--panel); padding: 15px; border-bottom: 2px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
-.input-row { display: flex; gap: 8px; }
-input { background: #1a1d23; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 5px; flex: 1; outline: none; }
-.btn { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; font-size: 12px; }
-.btn-start { background: #00ff88; color: #000; }
-.btn-stop { background: #ff4d4d; color: #fff; }
-.btn-move { background: #2a2e35; color: #fff; min-width: 40px; }
-.terminal-window { flex: 1; margin: 10px; background: #000; border: 2px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; }
-.terminal-header { background: #1a1d23; padding: 8px 12px; font-family: monospace; font-size: 11px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
-#logs { flex: 1; padding: 12px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 14px; scroll-behavior: smooth; }
-.input-area { background: #111418; padding: 10px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
-#chat-input { flex: 1; background: transparent; border: none; color: #fff; outline: none; }
-.mc-text { text-shadow: 1px 1px 1px #000; margin-bottom: 2px; }
+:root {
+    --bg-color: #0d1117;
+    --panel-bg: #161b22;
+    --terminal-bg: #000000;
+    --border-color: #30363d;
+    --accent-color: #58a6ff;
+    --success-color: #238636;
+    --danger-color: #da3633;
+    --text-main: #c9d1d9;
+    --mc-shadow: 2px 2px 0px rgba(0,0,0,0.8);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Sayfanın tamamının kaymasını engeller */
+}
+
+/* ÜST KONTROL PANELİ */
+.top-bar {
+    background: var(--panel-bg);
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 10;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.input-row input {
+    background: #0d1117;
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 6px;
+    flex: 1;
+    min-width: 150px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.input-row input:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+
+.action-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* BUTONLAR */
+.btn {
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    transition: filter 0.2s, transform 0.1s;
+}
+
+.btn:active { transform: scale(0.96); }
+
+.btn-start { background: var(--success-color); color: white; }
+.btn-stop { background: var(--danger-color); color: white; }
+.btn-move { background: #30363d; color: white; min-width: 45px; font-size: 16px; }
+.btn-tab { background: var(--accent-color); color: white; margin-right: 10px; }
+
+/* TERMİNAL PENCERESİ */
+.terminal-window {
+    flex: 1;
+    margin: 15px;
+    background: var(--terminal-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.terminal-header {
+    background: #1c2128;
+    padding: 10px 15px;
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    color: #8b949e;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#logs {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto; /* Sadece log alanı kayar */
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 15px;
+    line-height: 1.6;
+    word-wrap: break-word;
+    scroll-behavior: auto;
+}
+
+/* Scrollbar Tasarımı (Chrome/Safari) */
+#logs::-webkit-scrollbar { width: 8px; }
+#logs::-webkit-scrollbar-track { background: #000; }
+#logs::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; }
+#logs::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+/* MESAJ GİRİŞ ALANI */
+.input-area {
+    background: #0d1117;
+    padding: 12px 18px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.input-area span {
+    font-size: 18px;
+    user-select: none;
+}
+
+#chat-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #fff;
+    outline: none;
+    font-size: 16px;
+    font-family: 'Consolas', monospace;
+}
+
+/* MINECRAFT RENKLERİ VE GÖLGE */
+.mc-text {
+    margin-bottom: 4px;
+    text-shadow: var(--mc-shadow);
+    letter-spacing: 0.5px;
+}
+
+/* Mobilde Düzenleme */
+@media (max-width: 600px) {
+    .top-bar { height: auto; }
+    .terminal-window { margin: 5px; }
+    .btn { padding: 8px 12px; font-size: 11px; }
+}
