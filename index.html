@@ -1,41 +1,32 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AFK AI CLIENT</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="top-bar">
-        <div style="font-weight: bold; color: #00d4ff;">AFK BOT SYSTEM (AI)</div>
         <div class="input-row">
             <input type="text" id="host" placeholder="IP:Port">
-            <input type="text" id="username" placeholder="Bot İsmi">
+            <input type="text" id="username" placeholder="Bot Adı">
             <input type="password" id="password" placeholder="Şifre">
         </div>
         <div class="action-row">
             <button onclick="connect()" class="btn btn-start">BAĞLAN</button>
             <button onclick="disconnect()" class="btn btn-stop">KES</button>
-            <div style="flex:1"></div>
-            <button onclick="move('forward')" class="btn btn-move">↑</button>
-            <button onclick="move('left')" class="btn btn-move">←</button>
-            <button onclick="move('back')" class="btn btn-move">↓</button>
-            <button onclick="move('right')" class="btn btn-move">→</button>
-            <button onclick="move('jump')" class="btn btn-move">ZIP</button>
+            <div id="status-indicator">● OFFLINE</div>
         </div>
     </div>
-    <div class="terminal-window">
-        <div class="terminal-header">
-            <span>CONSOLE</span>
-            <span id="status-indicator">● OFFLINE</span>
-        </div>
+
+    <div class="terminal-window" onclick="document.getElementById('chat-input').focus()">
         <div id="logs"></div>
-        <div class="input-area">
-            <span>➜</span>
-            <input type="text" id="chat-input" placeholder="Mesaj..." autocomplete="off">
+        <div class="terminal-input-line">
+            <span class="prompt">➜</span>
+            <input type="text" id="chat-input" spellcheck="false" autocomplete="off">
         </div>
     </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
