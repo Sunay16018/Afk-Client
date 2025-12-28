@@ -3,42 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AFK CLIENT PRO</title>
+    <title>AFK AI CLIENT</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="top-bar">
-        <div style="font-weight: bold; color: var(--accent); letter-spacing: 1px;">AFK CLIENT v3.0</div>
+        <div style="font-weight: bold; color: #00d4ff;">AFK BOT SYSTEM (AI)</div>
         <div class="input-row">
-            <input type="text" id="host" placeholder="Sunucu IP:Port">
-            <input type="text" id="username" placeholder="Kullanıcı Adı">
+            <input type="text" id="host" placeholder="IP:Port">
+            <input type="text" id="username" placeholder="Bot İsmi">
             <input type="password" id="password" placeholder="Şifre">
         </div>
         <div class="action-row">
             <button onclick="connect()" class="btn btn-start">BAĞLAN</button>
             <button onclick="disconnect()" class="btn btn-stop">KES</button>
-            <button id="tab-btn" class="btn" style="background:var(--accent); color:#000">TAB (LİSTE)</button>
-            <div style="width:15px"></div>
+            <div style="flex:1"></div>
             <button onclick="move('forward')" class="btn btn-move">↑</button>
             <button onclick="move('left')" class="btn btn-move">←</button>
             <button onclick="move('back')" class="btn btn-move">↓</button>
             <button onclick="move('right')" class="btn btn-move">→</button>
-            <button onclick="move('jump')" class="btn btn-move">ZIPLA</button>
+            <button onclick="move('jump')" class="btn btn-move">ZIP</button>
         </div>
     </div>
-
     <div class="terminal-window">
         <div class="terminal-header">
-            <span style="color: #8b949e;">TERMINAL / AFK_LOGS</span>
-            <span id="status-indicator" style="color: #ff4d4d; font-weight: bold;">● OFFLINE</span>
+            <span>CONSOLE</span>
+            <span id="status-indicator">● OFFLINE</span>
         </div>
         <div id="logs"></div>
         <div class="input-area">
-            <span style="color: var(--success); font-weight: bold;">➜</span>
-            <input type="text" id="chat-input" placeholder="Mesaj veya komut..." autocomplete="off">
+            <span>➜</span>
+            <input type="text" id="chat-input" placeholder="Mesaj..." autocomplete="off">
         </div>
     </div>
-
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
