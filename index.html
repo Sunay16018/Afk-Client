@@ -2,94 +2,36 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>CYBER AFK KONTROL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFK Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header class="ust-bar">
-        <div class="bilgi">SUNUCUDAKİ KİŞİ SAYISI: <span id="oyuncuSayisi">0</span></div>
-        <div class="bot-durum">SEÇİLİ BOT: <span id="seciliBotIsmi">YOK</span></div>
-    </header>
-
-    <div class="ana-konteyner">
-        <aside class="kontrol-paneli">
-            <h2 class="siber-baslik">CYBER CLIENT</h2>
-            
-            <div class="grup">
-                <label>BOT SEÇ:</label>
-                <select id="botListesi" onchange="botDegisti()"></select>
-                <button onclick="baglantiyiKes()" class="kirmizi-buton">BAĞLANTIYI KES</button>
-            </div>
-
-            <div class="hareket-merkezi">
-                <button onmousedown="hareket('forward', true)" onmouseup="hareket('forward', false)">İLERİ (W)</button>
-                <div class="orta-satir">
-                    <button onmousedown="hareket('left', true)" onmouseup="hareket('left', false)">SOL (A)</button>
-                    <button onmousedown="hareket('back', true)" onmouseup="hareket('back', false)">GERİ (S)</button>
-                    <button onmousedown="hareket('right', true)" onmouseup="hareket('right', false)">SAĞ (D)</button>
+    <div class="dashboard">
+        <div class="side-panel">
+            <h1 class="neon-text">CYBER-AFK</h1>
+            <div class="move-controls">
+                <button onclick="move('forward')">W</button>
+                <div class="mid-row">
+                    <button onclick="move('left')">A</button>
+                    <button onclick="move('back')">S</button>
+                    <button onclick="move('right')">D</button>
                 </div>
-                <button onmousedown="hareket('jump', true)" onmouseup="hareket('jump', false)">ZIPLA (SPACE)</button>
             </div>
-
-            <div class="alt-butonlar">
-                <button onclick="ayarModalAc()" class="mavi-buton">AYARLAR MENÜSÜ</button>
-                <button onclick="baglanModalAc()" class="yesil-buton">YENİ BOT EKLE</button>
-            </div>
-        </aside>
-
-        <main class="terminal-alani">
-            <div id="terminal" class="terminal-ekran"></div>
-            <div class="giris-alani">
-                <input type="text" id="sohbetInput" placeholder="Mesaj veya komut yazın...">
-                <button onclick="mesajGonder()">GÖNDER</button>
-            </div>
-        </main>
-    </div>
-
-    <!-- Ayarlar Modalı -->
-    <div id="ayarModal" class="modal">
-        <div class="modal-icerik">
-            <h3>BOT AYARLARI</h3>
-            <div class="ayar-satir">
-                <span>Kazma Sistemini Aktif Et:</span>
-                <input type="checkbox" id="kazmaTik">
-            </div>
-            <hr>
-            <div class="ayar-satir">
-                <span>Otomatik Mesaj:</span>
-                <input type="checkbox" id="otoMesajTik">
-            </div>
-            <input type="text" id="otoMesajMetin" placeholder="Yazılacak mesaj...">
-            <input type="number" id="otoMesajSure" placeholder="Saniye (örn: 30)">
-            <hr>
-            <div class="ayar-satir">
-                <span>Matematik Çözücü:</span>
-                <input type="checkbox" id="matTik">
-            </div>
-            <input type="number" id="matGecikme" placeholder="Cevap Gecikmesi (Saniye)">
-            
-            <div class="modal-butonlar">
-                <button onclick="ayarlariKaydet()" class="yesil-buton">KAYDET VE UYGULA</button>
-                <button onclick="modalKapat('ayarModal')">KAPAT</button>
+            <button class="danger-btn" onclick="stopBot()">FULL STOP</button>
+            <button class="action-btn" onclick="mineBlock()">MINE BLOCK</button>
+            <div class="chat-area">
+                <input type="text" id="chatMsg" placeholder="Sohbete yaz...">
+                <button onclick="sendChat()">GÖNDER</button>
             </div>
         </div>
-    </div>
 
-    <!-- Bağlan Modalı -->
-    <div id="baglanModal" class="modal">
-        <div class="modal-icerik">
-            <h3>SUNUCUYA BAĞLAN</h3>
-            <input type="text" id="ip" placeholder="Sunucu IP">
-            <input type="text" id="port" value="25565" placeholder="Port">
-            <input type="text" id="isim" placeholder="Bot İsmi">
-            <input type="password" id="sifre" placeholder="Giriş Şifresi (/login)">
-            <div class="modal-butonlar">
-                <button onclick="botuBaslat()" class="yesil-buton">BAĞLAN</button>
-                <button onclick="modalKapat('baglanModal')">İPTAL</button>
-            </div>
+        <div class="terminal-wrapper">
+            <div id="terminal" class="terminal-box"></div>
         </div>
     </div>
-
+    
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
