@@ -1,59 +1,41 @@
 @import url('https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap');
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #0a0a0a; color: #fff; height: 100vh; overflow: hidden; font-family: 'Silkscreen', cursive; }
+body { background: #000; color: #fff; height: 100vh; overflow: hidden; font-family: 'Silkscreen'; }
+.mc { font-family: 'Silkscreen'; font-size: 12px; }
+.mono { font-family: 'VT323'; }
 
-.mc-font { font-family: 'Silkscreen', cursive; font-size: 12px; }
-.mc-mono { font-family: 'VT323', monospace; }
+.main-container { display: flex; height: 100vh; padding: 10px; gap: 10px; }
 
-.app-wrapper { display: flex; height: 100vh; padding: 15px; gap: 15px; }
+/* Kontrol Paneli */
+.ui-panel { width: 320px; background: #111; border: 4px solid #333; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+.group { background: #1a1a1a; padding: 10px; border: 2px solid #222; }
+input, select { width: 100%; padding: 8px; margin-bottom: 5px; background: #000; color: #0f9; border: 1px solid #444; font-family: 'VT323'; font-size: 18px; }
 
-/* Sol Taraf */
-.left-side { width: 350px; display: flex; flex-direction: column; gap: 15px; background: #151515; padding: 20px; border: 4px solid #000; border-radius: 8px; }
-h1 span { color: #00ffcc; }
-.card { background: #222; padding: 10px; border: 2px solid #333; border-radius: 5px; }
-input, select { width: 100%; padding: 10px; margin-bottom: 5px; background: #000; color: #00ffcc; border: 2px solid #444; font-family: 'VT323'; font-size: 18px; }
-
-.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-.mc-btn { border: 4px solid #000; color: #fff; padding: 10px; cursor: pointer; text-shadow: 1px 1px #000; font-family: 'Silkscreen'; }
-.green { background: #3e8e41; }
-.red { background: #8e3e3e; }
-.blue { background: #3e5e8e; }
-.gray { background: #444; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.btn { border: 3px solid #000; color: #fff; padding: 10px; cursor: pointer; font-family: 'Silkscreen'; font-size: 10px; }
+.green { background: #2d7d32; } .red { background: #a32b2b; } .blue { background: #2b56a3; } .gray { background: #444; }
 
 /* D-PAD */
-.dpad-box { display: flex; flex-direction: column; align-items: center; gap: 5px; background: #000; padding: 10px; }
-.dp-row { display: flex; gap: 5px; }
-.dp { width: 50px; height: 50px; background: #333; color: #fff; border: 3px solid #000; cursor: pointer; }
-.jump { width: 160px; margin-top: 5px; }
+.dpad { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.dp-mid { display: flex; gap: 5px; }
+.dp { width: 50px; height: 50px; background: #222; border: 3px solid #000; color: #fff; }
 
-/* SAĞ TARAF: TERMİNAL KUTUSU */
-.right-side { flex: 1; display: flex; align-items: flex-start; justify-content: center; }
-.terminal-box { 
+/* Terminal (KÜÇÜK VE SABİT) */
+.console-panel { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+.term-container { 
     width: 100%; 
-    max-width: 500px; /* Terminalin genişliği */
-    height: 400px;    /* Terminalin yüksekliği SABİT */
-    background: #000; 
+    max-width: 600px; 
+    height: 450px; /* SABİT YÜKSEKLİK */
+    background: #080808; 
     border: 4px solid #333; 
     display: flex; 
     flex-direction: column; 
-    position: relative;
-    border-radius: 10px;
 }
+.term-header { background: #222; padding: 5px; text-align: center; color: #0f9; }
+.logs { flex: 1; padding: 10px; overflow-y: auto; font-size: 18px; line-height: 1.2; color: #bbb; }
+.input-row { display: flex; border-top: 2px solid #333; background: #111; padding: 5px; }
+.input-row input { margin: 0; flex: 1; }
+.send-btn { background: #0f9; color: #000; border: none; padding: 0 10px; font-family: 'Silkscreen'; cursor: pointer; }
 
-.term-head { background: #222; padding: 8px; text-align: center; color: #00ffcc; border-bottom: 2px solid #333; }
-.logs { flex: 1; padding: 10px; overflow-y: auto; font-size: 18px; color: #ccc; }
-
-/* Mesaj Kutusu Tasarımı */
-.chat-input-area { 
-    display: flex; 
-    background: #111; 
-    padding: 8px; 
-    border-top: 2px solid #333; 
-}
-.chat-input-area input { flex: 1; margin: 0; border-color: #00ffcc; }
-.chat-input-area button { background: #00ffcc; color: #000; border: none; padding: 0 15px; font-family: 'Silkscreen'; font-size: 10px; cursor: pointer; }
-
-/* Modal */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; }
-.modal-box { background: #1a1a1a; padding: 20px; border: 4px solid #00ffcc; width: 280px; }
+.modal-box { background: #111; padding: 20px; border: 3px solid #0f9; width: 300px; display: flex; flex-direction: column; gap: 10px; }
