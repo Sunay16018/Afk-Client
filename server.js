@@ -15,19 +15,15 @@ io.on('connection', (socket) => {
             host: data.host.split(':')[0],
             port: parseInt(data.host.split(':')[1]) || 25565,
             username: data.username,
-            version: false, // Otomatik sürüm algılama
+            version: false,
             hideErrors: true
         });
 
-        bots[data.username] = {
-            instance: bot,
-            settings: { math: false, delay: 0, mine: false, pass: data.pass || "" }
-        };
+        bots[data.username] = { instance: bot, settings: { math: false, delay: 0, mine: false, pass: data.pass || "" } };
 
         bot.on('spawn', () => {
             socket.emit('status', { user: data.username, online: true });
             const b = bots[data.username];
-            // Otomatik Login/Register
             if (b.settings.pass) {
                 setTimeout(() => bot.chat(`/register ${b.settings.pass} ${b.settings.pass}`), 2000);
                 setTimeout(() => bot.chat(`/login ${b.settings.pass}`), 3000);
@@ -64,21 +60,16 @@ io.on('connection', (socket) => {
             socket.emit('status', { user: data.username, online: false });
             delete bots[data.username];
         });
-
-        bot.on('error', (err) => socket.emit('log', { user: 'SİSTEM', msg: `§cHata: ${err.message}` }));
     });
 
     socket.on('chat', (d) => bots[d.user]?.instance.chat(d.msg));
     socket.on('quit', (u) => bots[u]?.instance.quit());
     socket.on('move', (d) => {
         const b = bots[d.user]?.instance;
-        if (b) { 
-            b.setControlState(d.dir, true); 
-            setTimeout(() => b.setControlState(d.dir, false), 300); 
-        }
+        if (b) { b.setControlState(d.dir, true); setTimeout(() => b.setControlState(d.dir, false), 300); }
     });
     socket.on('update-config', (d) => { if(bots[d.user]) bots[d.user].settings = d.config; });
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log(`AFK CLIENT Online: ${PORT}`));
+http.listen(PORT, () => console.log(`PORT_OK:${PORT}`));
