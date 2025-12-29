@@ -1,59 +1,79 @@
 const socket = io();
-let isMiningActive = false;
 
-function move(dir) {
-    socket.emit('move', dir);
+function botuBaslat() {
+    const veri = {
+        ip: document.getElementById('ip').value,
+        port: document.getElementById('port').value,
+        isim: document.getElementById('isim').value,
+        sifre: document.getElementById('sifre').value
+    };
+    socket.emit('bot-baslat', veri);
+    modalKapat('baglanModal');
 }
 
-function toggleMining() {
-    isMiningActive = !isMiningActive;
-    socket.emit('toggle-mining', isMiningActive);
-    const btn = document.getElementById('mineBtn');
-    btn.innerText = isMiningActive ? 'STOP MINING' : 'START MINING';
-    btn.classList.toggle('mining-on');
+function baglantiyiKes() {
+    const secili = document.getElementById('botListesi').value;
+    if (secili) socket.emit('bot-durdur', secili);
 }
 
-function sendChat() {
-    const input = document.getElementById('chatInput');
-    if (input.value.trim()) {
-        socket.emit('send-chat', input.value);
-        input.value = '';
+function mesajGonder() {
+    const isim = document.getElementById('botListesi').value;
+    const mesaj = document.getElementById('sohbetInput').value;
+    if (isim && mesaj) {
+        socket.emit('mesaj-gonder', { isim, mesaj });
+        document.getElementById('sohbetInput').value = '';
     }
 }
 
-function connectBot() {
-    const data = {
-        host: document.getElementById('host').value,
-        port: document.getElementById('port').value,
-        username: document.getElementById('username').value
-    };
-    if (!data.host || !data.username) return alert('Lütfen gerekli alanları doldurun!');
-    socket.emit('start-bot', data);
-    closeModal();
+function hareket(yon, durum) {
+    const isim = document.getElementById('botListesi').value;
+    if (isim) socket.emit('hareket', { isim, yon, durum });
 }
 
-socket.on('log', (msg) => {
-    const terminal = document.getElementById('terminal');
-    const line = document.createElement('div');
-    
-    // Minecraft Renk Kodlarını Render Etme
-    const colors = {
-        '0': '#000', '1': '#00a', '2': '#0a0', '3': '#0aa', '4': '#a00', '5': '#a0a',
-        '6': '#fa0', '7': '#aaa', '8': '#555', '9': '#55f', 'a': '#5f5', 'b': '#5ff',
-        'c': '#f55', 'd': '#f5f', 'e': '#ff5', 'f': '#fff'
+function ayarlariKaydet() {
+    const isim = document.getElementById('botListesi').value;
+    if (!isim) return alert("Önce bir bot seçmelisiniz!");
+
+    const yeniAyarlar = {
+        kazmaAktif: document.getElementById('kazmaTik').checked,
+        otoMesajAktif: document.getElementById('otoMesajTik').checked,
+        otoMesajMetni: document.getElementById('otoMesajMetin').value,
+        otoMesajSuresi: parseInt(document.getElementById('otoMesajSure').value) || 30,
+        matematikAktif: document.getElementById('matTik').checked,
+        matematikGecikme: parseInt(document.getElementById('matGecikme').value) || 2
     };
 
-    let html = msg.replace(/§([0-9a-f])/g, (m, c) => `</span><span style="color:${colors[c]}">`);
-    line.innerHTML = `<span>${html}</span>`;
-    
-    terminal.appendChild(line);
-    terminal.scrollTop = terminal.scrollHeight;
+    socket.emit('ayarlari-uygula', { isim, yeniAyarlar });
+    modalKapat('ayarModal');
+}
+
+socket.on('bot-listesi-guncelle', (liste) => {
+    const select = document.getElementById('botListesi');
+    select.innerHTML = liste.map(bot => `<option value="${bot}">${bot}</option>`).join('');
+    botDegisti();
 });
 
-function openModal() { document.getElementById('settingsModal').style.display = 'flex'; }
-function closeModal() { document.getElementById('settingsModal').style.display = 'none'; }
-
-// Enter tuşu ile chat gönderme
-document.getElementById('chatInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendChat();
+socket.on('bilgi-guncelle', (veri) => {
+    const secili = document.getElementById('botListesi').value;
+    if (veri.isim === secili) {
+        document.getElementById('oyuncuSayisi').innerText = veri.oyuncuSayisi;
+    }
 });
+
+socket.on('log', (msg) => {
+    const term = document.getElementById('terminal');
+    const div = document.createElement('div');
+    const renkler = { 'a': '#0f9', 'b': '#0cf', 'c': '#f33', 'e': '#ff0', 'f': '#fff', '7': '#aaa' };
+    div.innerHTML = msg.replace(/§([0-9a-f])/g, (m, c) => `</span><span style="color:${renkler[c] || '#fff'}">`);
+    term.appendChild(div);
+    term.scrollTop = term.scrollHeight;
+});
+
+function botDegisti() {
+    const isim = document.getElementById('botListesi').value;
+    document.getElementById('seciliBotIsmi').innerText = isim || "YOK";
+}
+
+function ayarModalAc() { document.getElementById('ayarModal').style.display = 'flex'; }
+function baglanModalAc() { document.getElementById('baglanModal').style.display = 'flex'; }
+function modalKapat(id) { document.getElementById(id).style.display = 'none'; }
