@@ -3,90 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberAFK v2.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+    <title>CyberAFK Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="main-container">
-    <div class="left-panel">
-        <h1 class="logo">CYBER<span style="color:#fff">AFK</span></h1>
-        
-        <div class="status-box" id="statusBox">DURUM: BAĞLI DEĞİL</div>
+<div class="dashboard">
+    <div class="panel-left">
+        <h1 class="title">CYBER<span>AFK</span></h1>
+        <div id="statusIndicator" class="status-offline">BAĞLI DEĞİL</div>
 
-        <div class="movement-area">
-            <button onmousedown="sendMove('forward', true)" onmouseup="sendMove('forward', false)" class="move-btn up">W</button>
-            <div class="mid-row">
-                <button onmousedown="sendMove('left', true)" onmouseup="sendMove('left', false)" class="move-btn">A</button>
-                <button onmousedown="sendMove('back', true)" onmouseup="sendMove('back', false)" class="move-btn">S</button>
-                <button onmousedown="sendMove('right', true)" onmouseup="sendMove('right', false)" class="move-btn">D</button>
-            </div>
-            <button onmousedown="sendMove('jump', true)" onmouseup="sendMove('jump', false)" class="jump-btn">ZIPLA (SPACE)</button>
+        <div class="controls-grid">
+            <div class="spacer"></div>
+            <button onmousedown="move('forward', true)" onmouseup="move('forward', false)">W</button>
+            <div class="spacer"></div>
+            
+            <button onmousedown="move('left', true)" onmouseup="move('left', false)">A</button>
+            <button onmousedown="move('back', true)" onmouseup="move('back', false)">S</button>
+            <button onmousedown="move('right', true)" onmouseup="move('right', false)">D</button>
         </div>
+        <button class="jump-btn" onmousedown="move('jump', true)" onmouseup="move('jump', false)">ZIPLA [SPACE]</button>
 
-        <div class="action-buttons">
-            <button class="btn-cyan" onclick="openModal('loginModal')">👤 HESAP / BAĞLAN</button>
-            <button class="btn-purple" onclick="openModal('settingsModal')">⚙️ AYARLAR</button>
-            <button class="btn-red" onclick="disconnectBot()">🛑 BAĞLANTIYI KES</button>
+        <div class="menu-buttons">
+            <button class="btn-connect" onclick="toggleModal('loginModal')">🌐 SUNUCUYA BAĞLAN</button>
+            <button class="btn-settings" onclick="toggleModal('settingsModal')">🛠️ AYARLAR</button>
+            <button class="btn-disconnect" onclick="disconnectBot()">🔌 BAĞLANTIYI KES</button>
         </div>
     </div>
 
-    <div class="right-panel">
-        <div class="chat-window" id="chatWindow">
-            <div class="system-msg">--- Sistem Başlatıldı ---</div>
-            </div>
-        <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Mesaj veya komut (Örn: /gamemode 1)...">
+    <div class="panel-right">
+        <div id="terminal" class="terminal-display">
+            <div class="sys-msg">> Sistem Hazır. Bağlantı bekleniyor...</div>
+        </div>
+        <div class="chat-input-wrapper">
+            <input type="text" id="chatInp" placeholder="Sohbet veya komut yaz..." onkeypress="handleEnter(event)">
             <button onclick="sendChat()">GÖNDER</button>
         </div>
     </div>
 </div>
 
 <div id="loginModal" class="modal">
-    <div class="modal-content">
-        <h2>SUNUCU BİLGİLERİ</h2>
-        <input type="text" id="inpIp" placeholder="Sunucu IP Adresi">
-        <input type="text" id="inpUser" placeholder="Kullanıcı Adı">
-        <input type="password" id="inpPass" placeholder="Şifre (/login için)">
-        <div class="modal-btns">
-            <button class="btn-green" onclick="connectBot()">BAĞLAN</button>
-            <button class="btn-red" onclick="closeModal('loginModal')">KAPAT</button>
+    <div class="modal-box">
+        <h2>GİRİŞ BİLGİLERİ</h2>
+        <input type="text" id="ip" placeholder="Sunucu IP Adresi (örn: play.sunucu.com)">
+        <input type="text" id="user" placeholder="Kullanıcı Adı">
+        <input type="password" id="pass" placeholder="Şifre (/login ...)">
+        <div class="modal-actions">
+            <button class="btn-save" onclick="connectBot()">BAĞLAN</button>
+            <button class="btn-cancel" onclick="toggleModal('loginModal')">İPTAL</button>
         </div>
     </div>
 </div>
 
 <div id="settingsModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-box">
         <h2>BOT AYARLARI</h2>
         
-        <div class="setting-row">
-            <label>🧮 Matematik Çözücü:</label>
+        <label class="check-container">🧮 Matematik Çözücü
             <input type="checkbox" id="setMath">
-        </div>
-        <div class="setting-row">
-            <label>⏱️ Cevap Gecikmesi (ms):</label>
-            <input type="number" id="setMathDelay" value="2000">
-        </div>
+            <span class="checkmark"></span>
+        </label>
+        <input type="number" id="setMathDelay" placeholder="Gecikme (ms)" value="2000">
+        
         <hr>
-        <div class="setting-row">
-            <label>⛏️ Oto Maden (Önündekini Kır):</label>
+        
+        <label class="check-container">⛏️ Oto-Maden (Önündekini Kır)
             <input type="checkbox" id="setMine">
-        </div>
+            <span class="checkmark"></span>
+        </label>
+        
         <hr>
-        <div class="setting-row">
-            <label>📢 Oto Mesaj:</label>
-            <input type="checkbox" id="setAutoMsg">
-        </div>
-        <input type="text" id="setAutoMsgText" placeholder="Mesaj içeriği..." class="full-width">
-        <div class="setting-row">
-            <label>⏲️ Mesaj Aralığı (sn):</label>
-            <input type="number" id="setAutoMsgTime" value="60">
-        </div>
 
-        <div class="modal-btns">
-            <button class="btn-green" onclick="saveSettings()">AYARLARI KAYDET</button>
-            <button class="btn-red" onclick="closeModal('settingsModal')">KAPAT</button>
+        <label class="check-container">📢 Oto-Mesaj
+            <input type="checkbox" id="setMsg">
+            <span class="checkmark"></span>
+        </label>
+        <input type="text" id="setMsgText" placeholder="Mesaj..." value="AFK Botu Aktif">
+        <input type="number" id="setMsgTime" placeholder="Süre (sn)" value="60">
+
+        <div class="modal-actions">
+            <button class="btn-save" onclick="saveSettings()">KAYDET & GÖNDER</button>
+            <button class="btn-cancel" onclick="toggleModal('settingsModal')">KAPAT</button>
         </div>
     </div>
 </div>
