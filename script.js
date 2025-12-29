@@ -1,27 +1,18 @@
 const socket = io();
 let selBot = "";
+const el = (i) => document.getElementById(i);
 
 function connect() {
-    socket.emit('start-bot', { 
-        host: el('ip').value, 
-        username: el('nick').value, 
-        pass: el('pass').value 
-    });
+    socket.emit('start-bot', { host: el('ip').value, username: el('nick').value, pass: el('pass').value });
 }
 
 function disconnect() { if(selBot) socket.emit('quit', selBot); }
 function move(dir) { if(selBot) socket.emit('move', { user: selBot, dir }); }
 function openSet() { el('modal').style.display = 'flex'; }
-function closeSet() { el('modal').style.display = 'none'; }
-
 function save() {
-    const config = { 
-        math: el('m-on').checked, 
-        delay: el('m-del').value, 
-        mine: el('mine-on').checked 
-    };
+    const config = { math: el('m-on').checked, delay: el('m-del').value, mine: el('mine-on').checked };
     socket.emit('update-config', { user: selBot, config });
-    closeSet();
+    el('modal').style.display = 'none';
 }
 
 socket.on('status', d => {
@@ -40,8 +31,7 @@ socket.on('status', d => {
 
 socket.on('log', d => {
     const l = el('logs');
-    // Minecraft renk kodlarını basitçe temizle/düzenle
-    l.innerHTML += `<div><span style="color:var(--mc-green)">[${d.user}]</span> ${d.msg}</div>`;
+    l.innerHTML += `<div><span style="color:#00ffcc">[${d.user}]</span> ${d.msg}</div>`;
     l.scrollTop = l.scrollHeight;
 });
 
@@ -51,5 +41,3 @@ el('cin').onkeydown = e => {
         e.target.value = "";
     }
 };
-
-function el(id) { return document.getElementById(id); }
