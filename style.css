@@ -1,68 +1,60 @@
 :root {
-    --main-bg: #050b14;
-    --panel-bg: rgba(16, 28, 48, 0.9);
-    --neon-blue: #00d2ff;
-    --neon-glow: 0 0 10px rgba(0, 210, 255, 0.5);
+    --bg: #050b14;
+    --panel: rgba(16, 28, 48, 0.95);
+    --blue: #00d2ff;
     --border: #1e3a5f;
-    --text: #e1e8f0;
 }
 
 body {
-    background: radial-gradient(circle at center, #0a192f 0%, #050b14 100%);
-    color: var(--text);
+    background-color: var(--bg);
+    color: #e1e8f0;
     font-family: 'Segoe UI', sans-serif;
-    height: 100vh; display: flex; overflow: hidden;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; height: 100vh;
 }
 
-/* Sidebar Tasarımı */
+.dashboard { display: grid; grid-template-columns: 320px 1fr; gap: 20px; height: 100%; }
+
+/* Ayarlar Paneli */
 .sidebar {
-    width: 320px;
-    background: var(--panel-bg);
-    border-right: 1px solid var(--border);
-    padding: 20px;
-    display: flex; flex-direction: column; gap: 20px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+    display: flex; flex-direction: column; gap: 15px;
 }
 
-.logo {
-    font-size: 22px; font-weight: bold; color: var(--neon-blue);
-    text-shadow: var(--neon-glow); text-align: center; margin-bottom: 10px;
-}
-
-input {
+.sidebar input {
     background: #0d1726; border: 1px solid var(--border);
-    color: white; padding: 12px; border-radius: 8px;
-    outline: none; transition: 0.3s;
+    color: white; padding: 10px; border-radius: 6px; outline: none;
 }
 
-input:focus { border-color: var(--neon-blue); box-shadow: var(--neon-glow); }
-
-.btn {
-    padding: 12px; border-radius: 8px; border: none; cursor: pointer;
-    font-weight: bold; transition: 0.3s;
-}
-
-.btn-primary { background: var(--neon-blue); color: #000; }
-.btn-danger { background: #ff4b2b; color: white; }
-
-/* Dashboard Alanı */
-.main-content {
-    flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 20px;
-}
-
+/* Terminal Penceresi (Küçük ve Sabit) */
 .terminal-container {
-    flex: 1; background: #000; border: 1px solid var(--border);
-    border-radius: 12px; display: flex; flex-direction: column; overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-
-.terminal-header {
-    background: #0f172a; padding: 10px 20px; 
-    border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;
+    height: 400px; /* Sabit yükseklik */
+    background: #000; border: 2px solid var(--border);
+    border-radius: 10px; display: flex; flex-direction: column; overflow: hidden;
 }
 
 #logs {
     flex: 1; padding: 15px; overflow-y: auto;
-    font-family: 'Consolas', monospace; font-size: 14px; line-height: 1.6;
+    font-family: 'Consolas', monospace; font-size: 14px;
 }
 
-.mc-text { margin-bottom: 5px; text-shadow: 1px 1px #000; }
+/* Sabit Mesaj Alanı */
+.chat-controls {
+    margin-top: 15px; background: var(--panel);
+    border: 2px solid var(--blue); border-radius: 10px;
+    padding: 10px; display: flex; align-items: center; gap: 10px;
+}
+
+#chat-input {
+    flex: 1; background: transparent; border: none;
+    color: white; font-size: 16px; outline: none;
+}
+
+.btn {
+    background: var(--blue); color: #000; font-weight: bold;
+    border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;
+}
+
+.status { font-weight: bold; text-align: center; margin-bottom: 10px; }
