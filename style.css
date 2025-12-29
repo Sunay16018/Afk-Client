@@ -1,32 +1,88 @@
-:root { --neon: #0f9; --bg: #000; --danger: #f44; }
-body { background: var(--bg); color: var(--neon); font-family: 'VT323', monospace; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+:root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --neon-blue: #58a6ff;
+    --neon-green: #2ea043;
+    --neon-red: #da3633;
+    --text: #c9d1d9;
+    --border: #30363d;
+}
 
-.dashboard { display: flex; width: 100%; padding: 20px; gap: 20px; }
-.side-panel { flex: 1; border: 2px solid var(--neon); padding: 15px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 0 10px var(--neon); }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Chakra Petch', sans-serif; height: 100vh; overflow: hidden; }
+
+.main-container { display: flex; height: 100vh; }
+
+/* SOL PANEL */
+.left-panel {
+    width: 320px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.logo { margin: 0; color: var(--neon-blue); font-family: 'VT323'; font-size: 3rem; text-align: center; text-shadow: 0 0 10px rgba(88, 166, 255, 0.5); }
+
+.status-box {
+    background: #000; border: 1px solid var(--border); color: #888;
+    padding: 10px; text-align: center; font-weight: bold; border-radius: 5px;
+}
 
 /* Hareket Tuşları */
-.move-controls { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-.mid-row { display: flex; gap: 5px; }
+.movement-area { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 20px 0; }
+.mid-row { display: flex; gap: 8px; }
+.move-btn { width: 50px; height: 50px; background: #21262d; border: 1px solid var(--border); color: #fff; border-radius: 8px; cursor: pointer; font-weight: bold; }
+.move-btn:active { background: var(--neon-blue); color: #000; }
+.jump-btn { width: 100%; padding: 10px; background: #21262d; border: 1px solid var(--border); color: #fff; border-radius: 8px; cursor: pointer; }
+.jump-btn:active { background: var(--neon-blue); color: #000; }
 
-/* Terminal Ayarları */
-.terminal-wrapper { flex: 1.5; }
-.terminal-box { 
-    height: 450px; /* Sabit Yükseklik */
-    background: #050505; 
-    border: 2px solid var(--neon); 
-    padding: 10px; 
-    overflow-y: auto; 
-    font-size: 1.1rem;
-    box-shadow: inset 0 0 15px rgba(0, 255, 153, 0.2);
+.action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+button { font-family: 'Chakra Petch'; cursor: pointer; border: none; padding: 12px; border-radius: 6px; color: #fff; font-weight: bold; transition: 0.2s; }
+.btn-cyan { background: #1f6feb; } .btn-cyan:hover { background: #388bfd; }
+.btn-purple { background: #8957e5; } .btn-purple:hover { background: #a371f7; }
+.btn-red { background: #da3633; } .btn-red:hover { background: #f85149; }
+.btn-green { background: var(--neon-green); }
+
+/* SAĞ PANEL (Sohbet) */
+.right-panel { flex: 1; display: flex; flex-direction: column; height: 100%; background: #000; }
+
+.chat-window {
+    flex: 1; /* Kalan tüm alanı kapla */
+    overflow-y: auto; /* Sadece burası kaydırılsın */
+    padding: 15px;
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
-button { 
-    background: transparent; color: var(--neon); border: 2px solid var(--neon); 
-    padding: 8px 15px; cursor: pointer; font-family: 'VT323'; font-size: 1.2rem;
-}
-button:hover { background: var(--neon); color: #000; }
-.danger-btn { border-color: var(--danger); color: var(--danger); width: 100%; }
-.danger-btn:hover { background: var(--danger); color: #fff; }
+.chat-entry { word-wrap: break-word; }
+.chat-user { color: var(--neon-blue); font-weight: bold; }
+.chat-msg { color: #fff; }
+.log-msg { color: #8b949e; font-style: italic; }
 
-.chat-area { display: flex; gap: 5px; }
-#chatMsg { background: #111; border: 1px solid var(--neon); color: var(--neon); padding: 5px; flex: 1; }
+.chat-input-area {
+    padding: 15px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+}
+.chat-input-area input {
+    flex: 1; background: #0d1117; border: 1px solid var(--border);
+    color: #fff; padding: 10px; border-radius: 6px; font-family: 'Chakra Petch';
+}
+
+/* Modals */
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100; }
+.modal-content { background: var(--panel); padding: 25px; border: 2px solid var(--neon-blue); width: 400px; border-radius: 10px; display: flex; flex-direction: column; gap: 15px; }
+.modal-content input { padding: 10px; background: #0d1117; border: 1px solid #30363d; color: #fff; border-radius: 5px; }
+.setting-row { display: flex; justify-content: space-between; align-items: center; }
+.modal-btns { display: flex; gap: 10px; margin-top: 10px; }
+.modal-btns button { flex: 1; }
+.full-width { width: 100%; }
+                
