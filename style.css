@@ -1,32 +1,62 @@
-:root { --main: #00f2ff; --bg: #0c0c14; --side: #161625; --text: #eee; }
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body { background: #08080c; color: #fff; height: 100vh; overflow: hidden; }
 
-.app { display: flex; flex-direction: column; height: 100vh; }
-.navbar { height: 60px; background: var(--side); display: flex; justify-content: space-between; align-items: center; padding: 0 25px; border-bottom: 1px solid #333; }
-.brand { font-size: 22px; font-weight: bold; }
-.brand span { color: var(--main); }
+/* Ana İskelet */
+.app-container { display: flex; flex-direction: column; height: 100vh; }
 
-.content { flex: 1; display: flex; overflow: hidden; }
-.sidebar { width: 300px; background: var(--side); padding: 20px; border-right: 1px solid #222; overflow-y: auto; }
-.terminal { flex: 1; display: flex; flex-direction: column; background: #000; }
-#logs { flex: 1; padding: 15px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 13px; line-height: 1.5; }
+/* Üst Bar */
+.navbar { height: 60px; background: #111; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; flex-shrink: 0; }
+.brand { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+.brand span { color: #00f2ff; }
+.nav-controls { display: flex; gap: 15px; align-items: center; }
 
-input, button, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #333; background: #050505; color: #fff; outline: none; }
-.btn-primary { background: var(--main); color: #000; font-weight: bold; border: none; cursor: pointer; }
-.btn-danger { background: #ff4757; border: none; cursor: pointer; color: #fff; }
-
-.controller { display: flex; flex-direction: column; align-items: center; margin: 20px 0; gap: 5px; }
-.key-row { display: flex; gap: 5px; }
-.key { width: 60px; height: 50px; background: #222; border-bottom: 3px solid var(--main); cursor: pointer; }
-.jump { width: 190px; background: #0055ff !important; border: none; }
-
-.chat-input { padding: 15px; background: var(--side); border-top: 1px solid #333; }
-.badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.badge { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; }
 .online { background: #00ff88; color: #000; }
 .offline { background: #ff4757; color: #fff; }
+.settings-btn { background: #222; border: 1px solid #444; color: #ddd; padding: 5px 15px; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+.settings-btn:hover { background: #333; }
 
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100; }
-.modal-content { background: #1a1a2e; padding: 30px; border-radius: 15px; width: 380px; border: 1px solid var(--main); }
-.field { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.auto-row { display: flex; gap: 8px; }
+/* İçerik Alanı */
+.main-content { flex: 1; display: flex; overflow: hidden; }
+
+/* Sol Panel */
+.sidebar { width: 300px; background: #161620; border-right: 1px solid #222; padding: 15px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+.panel-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; border: 1px solid #2a2a35; }
+
+input, select { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #080808; color: #fff; margin-bottom: 8px; outline: none; }
+input:focus { border-color: #00f2ff; }
+
+.btn-green { background: #007bff; border: none; color: white; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 5px; }
+.btn-red { background: #dc3545; border: none; color: white; padding: 10px; border-radius: 5px; cursor: pointer; width: 100%; }
+.btn-green:hover { background: #0056b3; }
+
+/* Kontroller */
+.d-pad { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.key-row { display: flex; gap: 5px; }
+.key-btn { background: #222; border: none; border-bottom: 3px solid #00f2ff; color: #fff; width: 100%; height: 40px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+.key-btn:active { border-bottom: 0; transform: translateY(3px); }
+.jump { background: #005cbf !important; margin-top: 5px; }
+
+/* Terminal */
+.terminal-wrapper { flex: 1; display: flex; flex-direction: column; background: #000; min-width: 0; }
+.logs-area { 
+    flex: 1; 
+    padding: 15px; 
+    overflow-y: auto; 
+    font-family: 'Consolas', monospace; 
+    font-size: 13px; 
+    line-height: 1.5;
+    color: #ddd;
+}
+.log-line { margin-bottom: 4px; word-wrap: break-word; }
+.chat-input-area { height: 60px; background: #111; padding: 10px; border-top: 1px solid #333; display: flex; }
+#chat-msg { margin: 0; height: 100%; }
+
+/* Modal */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 999; }
+.modal-content { background: #1a1a2e; width: 400px; padding: 20px; border-radius: 10px; border: 1px solid #00f2ff; }
+.modal-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
+.close-icon { background: none; border: none; color: #fff; cursor: pointer; font-size: 18px; }
+.setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.setting-row input[type="number"] { width: 60px; margin: 0; }
+.auto-msg-box { display: flex; gap: 10px; margin-bottom: 15px; }
