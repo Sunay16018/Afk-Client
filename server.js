@@ -7,80 +7,109 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-const PORT = process.env.PORT || 3000;
 
-// Dosyaları ana dizinden servis etme ayarı
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/style.css', (req, res) => res.sendFile(path.join(__dirname, 'style.css')));
-app.get('/script.js', (req, res) => res.sendFile(path.join(__dirname, 'script.js')));
+// Dosyaları ana dizinden servis et
+app.use(express.static(__dirname));
 
-let bot;
-let isMining = false;
-let isDigging = false; // Çift kazmayı önlemek için kilit
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-function createBot() {
-    bot = mineflayer.createBot({
-        host: 'SUNUCU_IP_ADRESI', 
-        port: 25565,
-        username: 'CyberAFK_Bot',
-        version: '1.20.1'
-    });
+let bot = null;
+let miningState = false;
 
-    bot.on('login', () => sendLogs('✅ Bot sunucuya giriş yaptı!'));
-
-    // SOHBET VE MATEMATİK ÇÖZÜCÜ (Regex)
-    bot.on('chat', (username, message) => {
-        if (username === bot.username) return;
-        
-        const mathMatch = message.match(/(\d+)\s*([\+\-\*\/])\s*(\d+)/);
-        if (mathMatch) {
-            const n1 = parseInt(mathMatch[1]), op = mathMatch[2], n2 = parseInt(mathMatch[3]);
-            let res = op==='+' ? n1+n2 : op==='-' ? n1-n2 : op==='*' ? n1*n2 : n1/n2;
-            bot.chat(`Cevap: ${res}`);
-            sendLogs(`🧠 Matematik Çözüldü: ${n1}${op}${n2} = ${res}`);
+io.on('connection', (socket) => {
+    socket.on('start-bot', (data) => {
+        if (bot) {
+            bot.quit();
+            socket.emit('log', '§e[SİSTEM] Eski bot oturumu sonlandırıldı.');
         }
-        sendLogs(`💬 [${username}]: ${message}`);
+
+        bot = mineflayer.createBot({
+            host: data.host,
+            port: parseInt(data.port) || 25565,
+            username: data.username,
+            version: data.version || false,
+            checkTimeoutInterval: 60000
+        });
+
+        setupBotEvents(socket);
     });
 
-    // HATASIZ ASENKRON MINING SİSTEMİ
-    bot.on('physicsTick', async () => {
-        if (!isMining || isDigging) return;
-        const target = bot.blockAtCursor(4);
-        if (target && bot.canDigBlock(target)) {
-            isDigging = true;
-            try {
-                sendLogs(`⛏️ Kırılıyor: ${target.name}`);
-                await bot.dig(target);
-            } catch (err) { /* Sessizce geç */ }
-            isDigging = false;
+    socket.on('move', (dir) => {
+        if (!bot) return;
+        if (dir === 'stop') {
+            const states = ['forward', 'back', 'left', 'right', 'jump', 'sneak'];
+            states.forEach(s => bot.setControlState(s, false));
+        } else {
+            bot.setControlState(dir, true);
+        }
+    });
+
+    socket.on('toggle-mining', (val) => { miningState = val; });
+    
+    socket.on('send-chat', (msg) => {
+        if (bot) bot.chat(msg);
+    });
+});
+
+function setupBotEvents(socket) {
+    bot.on('spawn', () => socket.emit('log', '§a[SİSTEM] Bot başarıyla bağlandı ve doğdu!'));
+    
+    bot.on('chat', (username, message) => {
+        socket.emit('log', `§b${username}: §f${message}`);
+        
+        // Matematik Çözücü (Regex)
+        const mathMatch = message.match(/(\d+)\s*([\+\-\*\/x])\s*(\d+)/);
+        if (mathMatch) {
+            const n1 = parseInt(mathMatch[1]);
+            const op = mathMatch[2];
+            const n2 = parseInt(mathMatch[3]);
+            let result;
+            
+            switch(op.toLowerCase()) {
+                case '+': result = n1 + n2; break;
+                case '-': result = n1 - n2; break;
+                case '*': case 'x': result = n1 * n2; break;
+                case '/': result = Math.floor(n1 / n2); break;
+            }
+            if (result !== undefined) {
+                setTimeout(() => bot.chat(`${result}`), 1200);
+            }
         }
     });
 
     bot.on('kicked', (reason) => {
-        const cleanReason = reason.toString();
-        sendLogs(`❌ ATILMA SEBEBİ: [${cleanReason}]`, 'error');
+        // Kick sebebini sade metne çevir
+        let cleanReason = "Bilinmiyor";
+        try {
+            const parsed = JSON.parse(reason);
+            cleanReason = parsed.text || parsed.extra?.map(e => e.text).join('') || reason;
+        } catch(e) { cleanReason = reason; }
+        
+        socket.emit('log', `§c[SİSTEM] ATILDIN! Sebep: ${cleanReason}`);
     });
 
-    bot.on('end', () => {
-        sendLogs('⚠️ Bağlantı koptu, 5 saniye sonra otomatik restart...');
-        setTimeout(createBot, 5000);
-    });
-}
+    bot.on('error', (err) => socket.emit('log', `§4[HATA] ${err.message}`));
 
-function sendLogs(msg, type = 'info') {
-    io.emit('log', { msg, type, time: new Date().toLocaleTimeString() });
-}
+    // Akıllı Mining Sistemi
+    bot.on('physicsTick', async () => {
+        if (!miningState || !bot || bot.isMiningTask) return;
 
-io.on('connection', (socket) => {
-    socket.on('command', (data) => {
-        if (data.type === 'chat') bot.chat(data.val);
-        if (data.type === 'move') {
-            bot.clearControlStates();
-            if (data.val !== 'stop') bot.setControlState(data.val, true);
+        const targetBlock = bot.blockAtCursor(4);
+        if (targetBlock && targetBlock.type !== 0) {
+            try {
+                bot.isMiningTask = true;
+                bot.swingArm('right');
+                await bot.dig(targetBlock);
+            } catch (err) {
+                // Blok kırılamadıysa veya iptal edildiyse
+            } finally {
+                bot.isMiningTask = false;
+            }
         }
-        if (data.type === 'mining') isMining = data.val;
     });
-});
+}
 
-server.listen(PORT, () => console.log(`Dashboard aktif: Port ${PORT}`));
-createBot();
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Cyber AFK Bot aktif: Port ${PORT}`));
