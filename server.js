@@ -17,7 +17,6 @@ let bot = null;
 
 function solveSmart(message) {
     const cleanMsg = message.replace(/§[0-9a-fk-or]/gi, '').trim();
-    // Matematik Çözücü
     const mathMatch = cleanMsg.match(/(\d+)\s*([\+\-\*x\/])\s*(\d+)/);
     if (mathMatch) {
         const n1 = parseInt(mathMatch[1]);
@@ -40,20 +39,19 @@ io.on('connection', (socket) => {
         bot = mineflayer.createBot({
             host: c.host,
             port: parseInt(c.port) || 25565,
-            username: c.username,
-            checkTimeoutInterval: 60000
+            username: c.username
         });
 
         bot.on('message', async (jsonMsg) => {
-            const rawText = jsonMsg.toString();
-            socket.emit('log', { text: jsonMsg.toMotd() });
+            // Renk kodlarını doğrudan HTML'e çevirip gönderiyoruz
+            socket.emit('log', { html: jsonMsg.toHTML() });
             
-            // 1. Otomatik Matematik/Kod Çözücü
+            const rawText = jsonMsg.toString();
             const answer = solveSmart(rawText);
-            if (answer) setTimeout(() => bot.chat(answer), 1200);
+            if (answer) setTimeout(() => bot.chat(answer), 1100);
 
-            // 2. ChatGPT Entegrasyonu (Sana seslenilirse cevap verir)
-            if (rawText.includes(bot.username)) {
+            // ChatGPT Zekası: Bot ismi geçerse cevap verir
+            if (rawText.includes(bot.username) && !rawText.includes("<" + bot.username + ">")) {
                 try {
                     const aiRes = await openai.chat.completions.create({
                         model: "gpt-3.5-turbo",
@@ -66,23 +64,22 @@ io.on('connection', (socket) => {
         });
 
         bot.on('login', () => {
-            socket.emit('status', { connected: true, msg: "Sisteme Giriş Yapıldı" });
+            socket.emit('status', { connected: true, msg: "SİSTEM ÇEVRİMİÇİ" });
             if (c.password) bot.chat(`/login ${c.password}`);
         });
 
-        bot.on('error', (err) => socket.emit('log', { text: `§4[HATA] ${err.message}` }));
-        bot.on('kicked', (reason) => socket.emit('log', { text: `§c[ATILDI] ${reason}` }));
-        bot.on('end', () => socket.emit('status', { connected: false, msg: "Bağlantı Kesildi" }));
+        bot.on('end', () => socket.emit('status', { connected: false, msg: "BAĞLANTI KESİLDİ" }));
+        bot.on('error', (err) => socket.emit('log', { html: `<span style="color:#f00">HATA: ${err.message}</span>` }));
     });
 
     socket.on('send-chat', (m) => { if(bot) bot.chat(m); });
     socket.on('move', (dir) => {
         if(bot) {
             bot.setControlState(dir, true);
-            setTimeout(() => bot.setControlState(dir, false), 400);
+            setTimeout(() => bot.setControlState(dir, false), 500);
         }
     });
     socket.on('stop-bot', () => { if(bot) bot.quit(); });
 });
 
-server.listen(process.env.PORT || 3000, () => console.log("CyberCore Aktif!"));
+server.listen(process.env.PORT || 3000, () => console.log("CyberCore Sunucusu Hazır!"));
