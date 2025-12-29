@@ -1,32 +1,53 @@
 const socket = io();
+const logs = document.getElementById('logs');
+const chatInput = document.getElementById('chat-input');
+const statusText = document.getElementById('status-text');
 
-socket.on('log', (msg) => {
-    const box = document.getElementById('logs');
-    box.innerHTML += `<div>> ${msg}</div>`;
-    box.scrollTop = box.scrollHeight;
-});
+const mcColors = {
+    '0':'#000','1':'#00A','2':'#0A0','3':'#0AA','4':'#A00','5':'#A0A','6':'#FA0','7':'#AAA',
+    '8':'#555','9':'#55F','a':'#5F5','b':'#5FF','c':'#F55','d':'#F5F','e':'#FF5','f':'#FFF','r':'#FFF'
+};
 
-socket.on('chat-log', (data) => {
-    const box = document.getElementById('logs');
-    box.innerHTML += `<div><span style="color:#00d4ff">[${data.user}]</span>: ${data.msg}</div>`;
-    box.scrollTop = box.scrollHeight;
-});
-
-socket.on('status', (s) => {
-    const badge = document.getElementById('status');
-    badge.innerText = s === 'connected' ? 'BAĞLI' : 'BAĞLI DEĞİL';
-    badge.style.color = s === 'connected' ? '#0f9' : '#f00';
-});
-
-function openModal() { document.getElementById('modal').style.display = 'flex'; }
-function start() {
-    const data = { host: document.getElementById('ip').value, username: document.getElementById('user').value, password: document.getElementById('pass').value };
-    socket.emit('connect-bot', data);
-    document.getElementById('modal').style.display = 'none';
+function addLog(text) {
+    const div = document.createElement('div');
+    div.className = 'mc-text';
+    let parts = text.split('§');
+    let html = parts[0] ? `<span>${parts[0]}</span>` : '';
+    let color = '#fff';
+    
+    for (let i = 1; i < parts.length; i++) {
+        let code = parts[i].charAt(0).toLowerCase();
+        let content = parts[i].substring(1);
+        if (mcColors[code]) color = mcColors[code];
+        html += `<span style="color:${color}">${content}</span>`;
+    }
+    div.innerHTML = html;
+    logs.appendChild(div);
+    logs.scrollTop = logs.scrollHeight;
 }
-function move(dir, state) { socket.emit('move', { dir, state }); }
-function sendMsg() {
-    const inp = document.getElementById('chatInput');
-    socket.emit('send-chat', inp.value);
-    inp.value = '';
+
+function connect() {
+    const h = document.getElementById('host').value.split(':');
+    socket.emit('start-bot', { 
+        host: h[0], 
+        port: h[1] || 25565, 
+        username: document.getElementById('username').value, 
+        password: document.getElementById('password').value 
+    });
 }
+
+function disconnect() { socket.emit('stop-bot'); }
+function move(dir) { socket.emit('move', dir); }
+
+socket.on('log', d => addLog(d.text));
+socket.on('status', d => {
+    statusText.style.color = d.connected ? "#00ff9d" : "#ff4b2b";
+    statusText.innerText = d.connected ? `● ${d.msg.toUpperCase()}` : `● ${d.msg.toUpperCase()}`;
+});
+
+chatInput.onkeypress = e => { 
+    if (e.key === "Enter" && chatInput.value) { 
+        socket.emit('send-chat', chatInput.value); 
+        chatInput.value = ''; 
+    } 
+};
