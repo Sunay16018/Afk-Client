@@ -15,7 +15,7 @@ io.on('connection', (socket) => {
             host: data.host.split(':')[0],
             port: parseInt(data.host.split(':')[1]) || 25565,
             username: data.username,
-            version: false,
+            version: false, // Otomatik sürüm algılama
             hideErrors: true
         });
 
@@ -27,9 +27,10 @@ io.on('connection', (socket) => {
         bot.on('spawn', () => {
             socket.emit('status', { user: data.username, online: true });
             const b = bots[data.username];
+            // Otomatik Login/Register
             if (b.settings.pass) {
-                setTimeout(() => bot.chat(`/login ${b.settings.pass}`), 2000);
-                setTimeout(() => bot.chat(`/register ${b.settings.pass} ${b.settings.pass}`), 2500);
+                setTimeout(() => bot.chat(`/register ${b.settings.pass} ${b.settings.pass}`), 2000);
+                setTimeout(() => bot.chat(`/login ${b.settings.pass}`), 3000);
             }
         });
 
@@ -52,7 +53,10 @@ io.on('connection', (socket) => {
             const b = bots[data.username];
             if (b?.settings.mine) {
                 const target = bot.blockAtCursor(4);
-                if (target && !bot.targetDigBlock) bot.dig(target, true).catch(() => {});
+                if (target && !bot.targetDigBlock) {
+                    bot.swingArm('right');
+                    bot.dig(target, true).catch(() => {});
+                }
             }
         });
 
@@ -60,13 +64,18 @@ io.on('connection', (socket) => {
             socket.emit('status', { user: data.username, online: false });
             delete bots[data.username];
         });
+
+        bot.on('error', (err) => socket.emit('log', { user: 'SİSTEM', msg: `§cHata: ${err.message}` }));
     });
 
     socket.on('chat', (d) => bots[d.user]?.instance.chat(d.msg));
     socket.on('quit', (u) => bots[u]?.instance.quit());
     socket.on('move', (d) => {
         const b = bots[d.user]?.instance;
-        if (b) { b.setControlState(d.dir, true); setTimeout(() => b.setControlState(d.dir, false), 250); }
+        if (b) { 
+            b.setControlState(d.dir, true); 
+            setTimeout(() => b.setControlState(d.dir, false), 300); 
+        }
     });
     socket.on('update-config', (d) => { if(bots[d.user]) bots[d.user].settings = d.config; });
 });
