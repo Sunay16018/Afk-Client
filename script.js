@@ -1,63 +1,58 @@
 const socket = io();
 
-function connect() {
+function connectBot() {
     const host = document.getElementById('host').value;
     const user = document.getElementById('user').value;
     if(host && user) socket.emit('start-bot', { host, username: user });
 }
 
-function toggleMenu() {
-    const m = document.getElementById('settings-menu');
-    m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
-}
+function openMenu() { document.getElementById('modal').style.display = 'flex'; }
+function closeMenu() { document.getElementById('modal').style.display = 'none'; }
 
-function saveSettings() {
+function save() {
     const user = document.getElementById('bot-sel').value;
-    if(!user) return alert("Önce bir bot seç!");
+    if(!user) return alert("Bot seçilmedi!");
 
-    const autoMsgs = [];
-    document.querySelectorAll('.msg-row').forEach(row => {
-        autoMsgs.push({
-            text: row.querySelector('.msg-txt').value,
-            time: parseInt(row.querySelector('.msg-time').value)
-        });
-    });
-
-    const settings = {
-        mathOn: document.getElementById('m-on').checked,
-        mathSec: parseFloat(document.getElementById('m-sec').value),
-        autoRecon: document.getElementById('recon-on').checked,
-        mineMode: document.getElementById('mine-on').checked,
-        autoMsgs: autoMsgs
+    const config = {
+        math: document.getElementById('m-on').checked,
+        delay: parseFloat(document.getElementById('m-delay').value) || 0,
+        recon: document.getElementById('r-on').checked,
+        mining: document.getElementById('min-on').checked,
+        msgs: Array.from(document.querySelectorAll('.msg-item')).map(el => ({
+            text: el.querySelector('.m-txt').value,
+            time: parseInt(el.querySelector('.m-time').value)
+        }))
     };
 
-    socket.emit('update-config', { user, settings });
-    toggleMenu();
+    socket.emit('update-config', { user, config });
+    closeMenu();
 }
 
 function move(dir) {
-    const u = document.getElementById('bot-sel').value;
-    if(u) socket.emit('move-bot', { username: u, dir });
+    const user = document.getElementById('bot-sel').value;
+    if(user) socket.emit('move-bot', { user, dir });
 }
 
 socket.on('status', (d) => {
-    if (d.connected && !document.getElementById(`b-${d.username}`)) {
-        document.getElementById('bot-list').innerHTML += `<div class="card">${d.username}</div>`;
-        let o = document.createElement('option'); o.value = d.username; o.innerText = d.username;
-        document.getElementById('bot-sel').appendChild(o);
+    if(d.connected) {
+        document.getElementById('status-tag').className = 'tag online';
+        document.getElementById('status-tag').innerText = 'ONLINE';
+        if(!document.getElementById('opt-'+d.username)) {
+            let o = document.createElement('option'); o.value = d.username; o.id = 'opt-'+d.username; o.innerText = d.username;
+            document.getElementById('bot-sel').appendChild(o);
+        }
     }
 });
 
 socket.on('log', (d) => {
     const l = document.getElementById('logs');
-    l.innerHTML += `<p><b>[${d.username}]</b> ${d.msg}</p>`;
+    l.innerHTML += `<div class="ln"><b>[${d.username}]</b> ${d.msg}</div>`;
     l.scrollTop = l.scrollHeight;
 });
 
 document.getElementById('chat-in').onkeydown = (e) => {
-    if (e.key === 'Enter') {
-        const u = document.getElementById('bot-sel').value;
-        socket.emit('send-chat', { username: u, msg: e.target.value });
+    if(e.key === 'Enter' && e.target.value) {
+        socket.emit('send-chat', { user: document.getElementById('bot-sel').value, msg: e.target.value });
         e.target.value = '';
     }
 };
