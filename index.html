@@ -2,50 +2,50 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>AFK PRO V1.21</title>
+    <title>Neon Bot Panel</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body oncontextmenu="return false;">
-    <div class="container">
+    <div class="glass-app">
         <aside class="sidebar">
-            <h1 class="logo">BOT<span>1.21</span></h1>
-            <div class="form">
+            <h1 class="logo">AFK<span>CYBER</span></h1>
+            <div class="input-stack">
                 <input type="text" id="host" placeholder="Server IP:Port">
                 <input type="text" id="user" placeholder="Kullanıcı Adı">
                 <input type="password" id="pass" placeholder="Şifre">
-                <button onclick="connect()" id="main-btn">BAĞLAN</button>
+                <button onclick="connect()" id="conn-btn">SİSTEME GİR</button>
             </div>
             
-            <div class="math-config">
-                <label>MATEMATİK ÇÖZÜCÜ</label>
+            <div class="math-card">
+                <small>MATEMATİK MODÜLÜ</small>
                 <div class="row">
                     <button id="m-btn" class="off" onclick="toggleMath()">KAPALI</button>
-                    <input type="number" id="m-time" value="1" step="0.5" title="Saniye">
+                    <input type="number" id="m-time" value="1" step="0.5">
                 </div>
             </div>
 
-            <div class="arrows">
-                <button class="w" onclick="move('forward')">W</button>
+            <div class="control-grid">
+                <button class="btn-w" onclick="move('forward')">W</button>
                 <div class="row">
                     <button onclick="move('left')">A</button>
                     <button onclick="move('back')">S</button>
                     <button onclick="move('right')">D</button>
                 </div>
                 <div class="row">
-                    <button class="gray" onclick="move('left-turn')">SOL</button>
-                    <button class="gray" onclick="move('right-turn')">SAĞ</button>
+                    <button class="btn-gray" onclick="move('left-turn')">SOL</button>
+                    <button class="btn-gray" onclick="move('right-turn')">SAĞ</button>
                 </div>
-                <button class="blue" onclick="move('jump')">ZIPLA</button>
-                <button class="red" onclick="move('stop')">DURDUR</button>
+                <button class="btn-blue" onclick="move('jump')">ZIPLA</button>
+                <button class="btn-red" onclick="move('stop')">DURDUR</button>
             </div>
-            <div id="blist"></div>
+            <div id="bot-list"></div>
         </aside>
 
-        <main class="viewport">
-            <div id="logs"></div>
-            <div class="input-bar">
-                <select id="bselect"></select>
-                <input type="text" id="chat-in" placeholder="Sunucuya mesaj gönder..." autocomplete="off">
+        <main class="main-terminal">
+            <div id="logs" class="log-container"></div>
+            <div class="action-bar">
+                <select id="bot-select"></select>
+                <input type="text" id="chat-input" placeholder="Mesaj yazın..." autocomplete="off">
             </div>
         </main>
     </div>
