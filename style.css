@@ -1,162 +1,18 @@
-/* CYBER-AFK ULTIMATE STYLE
-   - Metin seçimi ve kopyalama imkansız
-   - Terminal sabit ve kaydırılabilir
-   - Neon animasyonlar
-*/
-
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;700&display=swap');
-
-:root {
-    --bg-main: #05070a;
-    --sidebar-bg: #0d1117;
-    --accent: #00f2ff;
-    --accent-glow: rgba(0, 242, 255, 0.4);
-    --border: #1f2937;
-    --danger: #ff4757;
-    --success: #2ed573;
-}
-
-/* TÜM SEÇİMLERİ VE ÇEVİRİYİ ENGELLE */
-* {
-    margin: 0; padding: 0; box-sizing: border-box;
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -webkit-touch-callout: none !important;
-    cursor: default;
-}
-
-body {
-    background: var(--bg-main);
-    color: #e6edf3;
-    font-family: 'Inter', sans-serif;
-    height: 100vh;
-    width: 100vw;
-    display: flex;
-    overflow: hidden; /* Sayfa dışına taşmayı engeller */
-}
-
-/* YAN PANEL (SIDEBAR) */
-.sidebar {
-    width: 300px;
-    background: var(--sidebar-bg);
-    border-right: 1px solid var(--border);
-    padding: 25px;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    box-shadow: 5px 0 20px rgba(0,0,0,0.5);
-    z-index: 10;
-}
-
-.logo {
-    font-size: 22px;
-    font-weight: 800;
-    margin-bottom: 30px;
-    color: #fff;
-    text-align: center;
-}
-
-.logo span { color: var(--accent); text-shadow: 0 0 10px var(--accent-glow); }
-
-/* INPUT & BUTTON STİLLERİ */
-input, select, button {
-    width: 100%;
-    background: #161b22;
-    border: 1px solid var(--border);
-    color: #fff;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 8px var(--accent-glow);
-    outline: none;
-}
-
-#add-bot {
-    background: linear-gradient(135deg, #00f2ff, #0072ff);
-    border: none;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    cursor: pointer;
-}
-
-#add-bot:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--accent-glow); }
-
-/* BOT LİSTESİ KARTLARI (Animasyonlu) */
-.bot-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--border);
-    padding: 12px;
-    border-radius: 10px;
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-left: 4px solid var(--accent);
-    animation: slideIn 0.3s ease-out forwards;
-}
-
-@keyframes slideIn {
-    from { opacity: 0; transform: translateX(-20px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-.bot-card button {
-    width: auto; margin: 0; padding: 5px 10px;
-    background: rgba(255, 71, 87, 0.2);
-    color: var(--danger);
-    border: 1px solid var(--danger);
-}
-
-/* ANA İÇERİK (TERMİNAL) */
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-}
-
-#logs {
-    flex: 1;
-    padding: 25px;
-    overflow-y: auto;
-    font-family: 'Fira Code', monospace;
-    font-size: 13.5px;
-    line-height: 1.6;
-    background: radial-gradient(circle at top, #0d1117 0%, #05070a 100%);
-}
-
-/* MESAJ SATIRI */
-.log-line {
-    margin-bottom: 5px;
-    animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-/* ALT MESAJ BARI (SABİT) */
-.chat-bar {
-    height: 80px;
-    background: var(--sidebar-bg);
-    padding: 15px 25px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 12px;
-    flex-shrink: 0;
-}
-
-#chat-input { flex: 1; margin: 0; border-radius: 30px; padding: 0 20px; }
-#target-bot { width: 140px; margin: 0; border-radius: 30px; }
-
-/* ÖZEL SCROLLBAR */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-                                 
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none !important; -webkit-user-select: none !important; }
+body { background: #05070a; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; overflow: hidden; }
+.sidebar { width: 300px; background: #0d1117; padding: 20px; border-right: 1px solid #333; flex-shrink: 0; overflow-y: auto; }
+.logo { font-size: 20px; text-align: center; margin-bottom: 20px; color: #00f2ff; }
+.logo span { color: #fff; }
+input, select, .sidebar button { width: 100%; background: #161b22; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; margin-bottom: 8px; outline: none; }
+#add-bot { background: #238636; border: none; font-weight: bold; cursor: pointer; }
+.move-panel { margin: 15px 0; border-top: 1px solid #333; padding-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+.move-panel h3 { font-size: 11px; color: #888; text-align: center; }
+.row { display: flex; gap: 5px; }
+.row button { flex: 1; padding: 8px; font-size: 10px; cursor: pointer; }
+.main-content { flex: 1; display: flex; flex-direction: column; background: #000; }
+#logs { flex: 1; padding: 20px; overflow-y: auto; font-family: monospace; font-size: 13px; line-height: 1.5; }
+.chat-bar { height: 100px; background: #0d1117; padding: 20px; border-top: 1px solid #333; display: flex; gap: 10px; flex-shrink: 0; }
+#chat-input { flex: 1; height: 60px; background: #161b22 !important; color: #fff !important; border: 1px solid #444; border-radius: 10px; padding: 0 15px; font-size: 16px; user-select: text !important; }
+#target-bot { width: 130px; height: 60px; border-radius: 10px; }
+.bot-card { background: #1a1f26; padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #00f2ff; }
+.bot-card button { width: auto; background: #da3633; border: none; padding: 3px 8px; margin: 0; cursor: pointer; }
