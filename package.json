@@ -1,6 +1,6 @@
 {
-  "name": "cyber-afk-ultra-blue",
-  "version": "2.0.0",
+  "name": "cybercore-ultra-v4",
+  "version": "4.0.0",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "dependencies": {
