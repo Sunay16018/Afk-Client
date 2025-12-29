@@ -24,7 +24,7 @@ io.on('connection', (socket) => {
         socket.emit('status', { username: botId, connected: true });
 
         bot.on('spawn', () => {
-            socket.emit('log', { username: botId, msg: '§b[SİSTEM] Bot başarıyla bağlandı.' });
+            socket.emit('log', { username: botId, msg: '§b[SİSTEM] Bot bağlandı.' });
             const p = bots[botId].pass;
             if (p) {
                 setTimeout(() => {
@@ -34,20 +34,33 @@ io.on('connection', (socket) => {
             }
         });
 
-        bot.on('messagestr', (msg) => {
+        // MESAJ KONTROL VE MATEMATİK FİLTRESİ
+        bot.on('messagestr', (msg, position, jsonMsg) => {
             socket.emit('log', { username: botId, msg: msg });
             const bD = bots[botId];
-            if (bD && bD.mathOn) {
-                let formula = msg.replace(/x/g, '*').replace(/:/g, '/').replace(/√/g, 'Math.sqrt').replace(/\^/g, '**');
-                const mathMatch = formula.match(/(\(?\d+[\d\s\+\-\*\/\.\^\(\)Math\.sqrt\*\*]*\d+\)?)/);
-                if (mathMatch) {
-                    try {
-                        const result = eval(mathMatch[0]);
-                        if (typeof result === 'number' && !isNaN(result)) {
-                            setTimeout(() => bot.chat(result.toString()), bD.mathSec * 1000);
-                        }
-                    } catch (e) {}
-                }
+            
+            // 1. Kendi yazdığımız mesajları veya boş mesajları görmezden gel (Spam Engeli)
+            if (!bD || !bD.mathOn || position === 'game_info') return;
+
+            // 2. Matematiksel bir işlem mi kontrol et (En az bir operatör içermeli)
+            const hasOperator = /[\+\-\*\/\^x\:]/.test(msg);
+            if (!hasOperator) return;
+
+            let formula = msg.replace(/x/g, '*').replace(/:/g, '/').replace(/√/g, 'Math.sqrt').replace(/\^/g, '**');
+            const mathMatch = formula.match(/(\(?\d+[\d\s\+\-\*\/\.\^\(\)Math\.sqrt\*\*]*\d+\)?)/);
+            
+            if (mathMatch) {
+                try {
+                    const result = eval(mathMatch[0]);
+                    // Sadece geçerli bir sayı ise ve bot o an meşgul değilse cevapla
+                    if (typeof result === 'number' && !isNaN(result)) {
+                        // Kendi cevabımızı tetiklememek için kısa bir cooldown (bekleme)
+                        setTimeout(() => {
+                            // Cevabı gönderirken tekrar tetiklenmemesi için kontrol
+                            bot.chat(result.toString());
+                        }, bD.mathSec * 1000);
+                    }
+                } catch (e) { /* İşlem hatasıysa sessiz kal */ }
             }
         });
 
@@ -69,3 +82,4 @@ io.on('connection', (socket) => {
     socket.on('stop-bot', (u) => { if (bots[u]) bots[u].instance.quit(); });
 });
 http.listen(3000);
+                    
