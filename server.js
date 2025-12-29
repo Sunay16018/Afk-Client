@@ -15,24 +15,26 @@ io.on('connection', (socket) => {
             host: data.host.split(':')[0],
             port: parseInt(data.host.split(':')[1]) || 25565,
             username: data.username,
-            version: false
+            version: false,
+            hideErrors: true
         });
 
         bots[data.username] = {
             instance: bot,
             settings: { math: false, delay: 0, recon: false, mine: false, msgs: [] },
+            intervals: [],
             lastAns: ""
         };
 
-        // Maden Modu Döngüsü (Her 100ms'de bir kontrol eder)
+        // GERÇEK MADEN KIRMA MODU
         bot.on('physicsTick', () => {
             const b = bots[data.username];
             if (b && b.settings.mine) {
-                bot.swingArm('right'); // Sürekli kol sallar
-                // Eğer bot bir bloğa bakıyorsa kırmaya çalışır
                 const target = bot.blockAtCursor(4);
-                if (target) {
-                    bot.dig(target, true, 'ignore');
+                if (target && bot.canDigBlock(target)) {
+                    if (!bot.targetDigBlock) {
+                        bot.dig(target, true).catch(() => {});
+                    }
                 }
             }
         });
@@ -41,24 +43,18 @@ io.on('connection', (socket) => {
             const b = bots[data.username];
             if (!b) return;
             const txt = json.toString();
-
-            // Direkt toHTML() ile renklendirilmiş mesajı gönder
             socket.emit('log', { user: data.username, msg: json.toHTML() });
 
-            // Matematik Sistemi (Geliştirilmiş - Çoklu işlem desteği)
+            // GELİŞMİŞ MATEMATİK (Çoklu işlem destekli)
             if (b.settings.math) {
                 if (b.lastAns && txt.includes(b.lastAns)) return;
-                
-                // 1+1+1+1 gibi uzun işlemleri de kapsayan genişletilmiş regex
-                const cleanTxt = txt.replace(/x/g, '*').replace(/:/g, '/');
-                const mathMatch = cleanTxt.match(/(\d+(?:\s*[\+\-\*\/]\s*\d+)+)/);
-                
+                const mathMatch = txt.replace(/x/g, '*').replace(/:/g, '/').match(/(\d+(?:\s*[\+\-\*\/]\s*\d+)+)/);
                 if (mathMatch) {
                     try {
-                        const result = eval(mathMatch[0]);
-                        if (!isNaN(result)) {
-                            b.lastAns = result.toString();
-                            setTimeout(() => bot.chat(result.toString()), b.settings.delay * 1000);
+                        const res = eval(mathMatch[0]);
+                        if (!isNaN(res)) {
+                            b.lastAns = res.toString();
+                            setTimeout(() => bot.chat(res.toString()), b.settings.delay * 1000);
                         }
                     } catch (e) {}
                 }
@@ -75,17 +71,28 @@ io.on('connection', (socket) => {
     });
 
     socket.on('update-config', (d) => {
-        if (bots[d.user]) bots[d.user].settings = d.config;
+        const b = bots[d.user];
+        if (!b) return;
+        b.settings = d.config;
+        b.intervals.forEach(clearInterval);
+        b.intervals = [];
+        b.settings.msgs.forEach(m => {
+            if (m.txt && m.sec > 0) {
+                b.intervals.push(setInterval(() => b.instance.chat(m.txt), m.sec * 1000));
+            }
+        });
     });
 
     socket.on('move', (d) => {
         const b = bots[d.user]?.instance;
-        if (!b) return;
-        b.setControlState(d.dir, true);
-        setTimeout(() => b.setControlState(d.dir, false), 200); // Stabil kısa adım
+        if (b) {
+            b.setControlState(d.dir, true);
+            setTimeout(() => b.setControlState(d.dir, false), 250);
+        }
     });
 
     socket.on('chat', (d) => { if(bots[d.user]) bots[d.user].instance.chat(d.msg); });
+    socket.on('quit-bot', (u) => { if(bots[u]) bots[u].instance.quit(); });
 });
 
-http.listen(3000);
+http.listen(3000, () => console.log('AFK CLIENT: http://localhost:3000'));
