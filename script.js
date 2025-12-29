@@ -5,11 +5,11 @@ const targetBot = document.getElementById('target-bot');
 const chatInput = document.getElementById('chat-input');
 
 document.getElementById('add-bot').onclick = () => {
-    const host = document.getElementById('host').value;
-    const user = document.getElementById('user').value;
-    const pass = document.getElementById('pass').value;
-    if(!host || !user) return;
-    socket.emit('start-bot', { host, username: user, password: pass });
+    socket.emit('start-bot', {
+        host: document.getElementById('host').value,
+        username: document.getElementById('user').value,
+        password: document.getElementById('pass').value
+    });
 };
 
 socket.on('status', (d) => {
@@ -30,15 +30,23 @@ socket.on('status', (d) => {
             targetBot.appendChild(o);
             targetBot.value = d.username;
         }
+        chatInput.focus();
     } else {
         card?.remove();
         opt?.remove();
     }
 });
 
-function stopBot(user) { socket.emit('stop-bot', user); }
+function move(dir) {
+    const selected = targetBot.value;
+    if (selected) socket.emit('move-bot', { username: selected, dir: dir });
+}
 
-chatInput.onkeypress = (e) => {
+function stopBot(user) {
+    socket.emit('stop-bot', user);
+}
+
+chatInput.onkeydown = (e) => {
     if (e.key === 'Enter' && chatInput.value && targetBot.value) {
         socket.emit('send-chat', { username: targetBot.value, msg: chatInput.value });
         chatInput.value = '';
@@ -47,11 +55,12 @@ chatInput.onkeypress = (e) => {
 
 socket.on('log', (d) => {
     const div = document.createElement('div');
-    div.innerHTML = `<span style="color:#58a6ff">[${d.username}]</span> ${d.msg}`;
+    div.innerHTML = `<span style="color:#00f2ff">[${d.username}]</span> ${d.msg}`;
     logs.appendChild(div);
     logs.scrollTop = logs.scrollHeight;
 });
 
+// Güvenlik: Kopyalama ve Seçim Engeli
 document.addEventListener('keydown', e => {
     if (e.ctrlKey && ['u','s','c','a','i'].includes(e.key)) e.preventDefault();
 });
