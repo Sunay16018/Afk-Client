@@ -3,27 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="google" content="notranslate">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AFK PANEL PRO</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body oncontextmenu="return false;">
     <div class="sidebar">
-        <h2 style="color:#58a6ff; margin-bottom:20px;">AFK<span>PRO</span></h2>
-        <input type="text" id="host" placeholder="IP:Port">
-        <input type="text" id="user" placeholder="Bot İsmi">
+        <h2 class="logo">AFK<span>PRO</span></h2>
+        <input type="text" id="host" placeholder="Sunucu IP:Port">
+        <input type="text" id="user" placeholder="Kullanıcı Adı">
         <input type="password" id="pass" placeholder="Şifre">
-        <button id="add-bot" style="background:#238636; color:white; font-weight:bold; cursor:pointer;">BAĞLAN</button>
-        <div style="margin-top:20px;">
-            <h3 style="font-size:12px; color:#8b949e;">AKTİF HESAPLAR</h3>
-            <div id="bot-list"></div>
+        <button id="add-bot">BAĞLAN</button>
+
+        <div class="move-panel">
+            <h3>HAREKET</h3>
+            <button onclick="move('forward')">İLERİ (W)</button>
+            <div class="row">
+                <button onclick="move('left')">A</button>
+                <button onclick="move('back')">S</button>
+                <button onclick="move('right')">D</button>
+            </div>
+            <div class="row">
+                <button onclick="move('left-turn')" style="background:#444">SOLA BAK</button>
+                <button onclick="move('right-turn')" style="background:#444">SAĞA BAK</button>
+            </div>
+            <button onclick="move('jump')" style="background:#58a6ff">ZIPLA</button>
+            <button onclick="move('stop')" style="background:#da3633">DURDUR</button>
         </div>
+
+        <div id="bot-list"></div>
     </div>
 
     <div class="main-content">
         <div id="logs"></div>
         <div class="chat-bar">
-            <select id="target-bot"></select>
+            <select id="target-bot" onchange="this.blur()"></select>
             <input type="text" id="chat-input" placeholder="Mesaj yazın..." autocomplete="off">
         </div>
     </div>
