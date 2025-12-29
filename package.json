@@ -1,17 +1,14 @@
 {
-  "name": "afk-client-pro",
+  "name": "cyber-afk-bot",
   "version": "1.0.0",
-  "description": "Professional AFK Client for Render",
+  "description": "Professional Mineflayer AFK Client for Render.com",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "mineflayer": "^4.5.0",
-    "socket.io": "^4.6.1"
-  },
-  "engines": {
-    "node": ">=16.0.0"
+    "mineflayer": "^4.20.0",
+    "socket.io": "^4.7.2"
   }
 }
