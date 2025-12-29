@@ -1,58 +1,36 @@
 const socket = io();
-let selBot = "";
-const el = (i) => document.getElementById(i);
+let mining = false;
 
-function setModal(show) { el('modal').style.display = show ? 'flex' : 'none'; }
+socket.on('log', (data) => {
+    const term = document.getElementById('terminal');
+    const p = document.createElement('p');
+    p.innerHTML = `<span style="color:#555">[${data.time}]</span> ${data.msg}`;
+    if(data.type === 'error') p.style.color = '#f55';
+    term.appendChild(p);
+    term.scrollTop = term.scrollHeight; // Otomatik aşağı kaydır
+});
 
-function connect() {
-    socket.emit('start-bot', { host: el('ip').value, username: el('nick').value, pass: el('pass').value });
+function sendMove(dir) {
+    socket.emit('command', { type: 'move', val: dir });
 }
 
-function disconnect() { if(selBot) socket.emit('quit', selBot); }
-
-function move(dir) {
-    if(selBot) socket.emit('move-toggle', { user: selBot, dir: dir, state: true });
-}
-
-function allStop() {
-    if(!selBot) return;
-    ['forward','back','left','right','jump'].forEach(d => {
-        socket.emit('move-toggle', { user: selBot, dir: d, state: false });
-    });
-}
-
-function saveSettings() {
-    socket.emit('update-config', { user: selBot, config: { mine: el('mine-on').checked, math: el('m-on').checked } });
-    setModal(false);
+function toggleMining() {
+    mining = !mining;
+    socket.emit('command', { type: 'mining', val: mining });
+    alert(mining ? "Mining Başlatıldı!" : "Mining Durduruldu!");
 }
 
 function sendChat() {
-    const v = el('cin').value;
-    if(selBot && v.trim() !== "") {
-        socket.emit('chat', { user: selBot, msg: v });
-        el('cin').value = "";
+    const inp = document.getElementById('msgInput');
+    if(inp.value) {
+        socket.emit('command', { type: 'chat', val: inp.value });
+        inp.value = '';
     }
 }
 
-el('cin').onkeydown = (e) => { if(e.key === 'Enter') sendChat(); };
+function openModal() { document.getElementById('modal').style.display = 'flex'; }
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
-socket.on('status', d => {
-    const s = el('bot-sel');
-    if (d.online) {
-        if (!el("opt-"+d.user)) {
-            let o = document.createElement('option'); o.value = d.user; o.id = "opt-"+d.user; o.innerText = d.user;
-            s.appendChild(o);
-        }
-        selBot = d.user; s.value = d.user;
-    } else {
-        const o = el("opt-"+d.user); if(o) o.remove();
-        selBot = s.value;
-    }
+document.getElementById('msgInput').addEventListener('keyup', (e) => {
+    if(e.key === 'Enter') sendChat();
 });
-
-socket.on('log', d => {
-    const l = el('logs');
-    l.innerHTML += `<div><span style="color:#0f9">></span> ${d.msg}</div>`;
-    l.scrollTop = l.scrollHeight;
-});
-    
