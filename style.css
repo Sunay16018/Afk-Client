@@ -1,18 +1,32 @@
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-body { background: #0a0a0f; color: #fff; }
-.header { height: 60px; background: #151525; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 2px solid #333; }
-.header h1 span { color: #00f2ff; }
-.main-container { display: flex; height: calc(100vh - 60px); }
-.sidebar { width: 300px; background: #12121e; padding: 20px; border-right: 1px solid #333; }
-.console { flex: 1; display: flex; flex-direction: column; background: #050505; }
-#logs { flex: 1; padding: 15px; overflow-y: auto; font-family: monospace; }
-input, button, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #444; background: #000; color: #fff; }
-.conn-btn { background: #007bff; border: none; font-weight: bold; cursor: pointer; }
-.d-pad { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
-.row { display: flex; gap: 5px; }
-.jmp { background: #28a745 !important; border: none; }
-.online { color: #00ff88; }
-.offline { color: #ff4757; }
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; }
-.modal-box { background: #1a1a2e; padding: 25px; border-radius: 10px; width: 350px; border: 1px solid #00f2ff; }
-.save-btn { background: #00f2ff; color: #000; font-weight: bold; }
+:root { --main: #00f2ff; --bg: #0c0c14; --side: #161625; --text: #eee; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+
+.app { display: flex; flex-direction: column; height: 100vh; }
+.navbar { height: 60px; background: var(--side); display: flex; justify-content: space-between; align-items: center; padding: 0 25px; border-bottom: 1px solid #333; }
+.brand { font-size: 22px; font-weight: bold; }
+.brand span { color: var(--main); }
+
+.content { flex: 1; display: flex; overflow: hidden; }
+.sidebar { width: 300px; background: var(--side); padding: 20px; border-right: 1px solid #222; overflow-y: auto; }
+.terminal { flex: 1; display: flex; flex-direction: column; background: #000; }
+#logs { flex: 1; padding: 15px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 13px; line-height: 1.5; }
+
+input, button, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #333; background: #050505; color: #fff; outline: none; }
+.btn-primary { background: var(--main); color: #000; font-weight: bold; border: none; cursor: pointer; }
+.btn-danger { background: #ff4757; border: none; cursor: pointer; color: #fff; }
+
+.controller { display: flex; flex-direction: column; align-items: center; margin: 20px 0; gap: 5px; }
+.key-row { display: flex; gap: 5px; }
+.key { width: 60px; height: 50px; background: #222; border-bottom: 3px solid var(--main); cursor: pointer; }
+.jump { width: 190px; background: #0055ff !important; border: none; }
+
+.chat-input { padding: 15px; background: var(--side); border-top: 1px solid #333; }
+.badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.online { background: #00ff88; color: #000; }
+.offline { background: #ff4757; color: #fff; }
+
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100; }
+.modal-content { background: #1a1a2e; padding: 30px; border-radius: 15px; width: 380px; border: 1px solid var(--main); }
+.field { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.auto-row { display: flex; gap: 8px; }
