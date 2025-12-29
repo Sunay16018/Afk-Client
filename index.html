@@ -1,43 +1,51 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <title>Minecraft AFK Client</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Render Minecraft AFK Dashboard</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="controls">
-            <h2>Bot Kontrol Paneli</h2>
-            <div id="connection-modal" class="modal">
-                <input type="text" id="server-ip" placeholder="Sunucu IP">
-                <input type="text" id="bot-username" placeholder="Kullanıcı Adı">
-                <input type="password" id="bot-password" placeholder="Şifre">
-                <button id="connect-btn">Bağlan</button>
-            </div>
-            <div class="toggle-switches">
-                <label>
-                    <input type="checkbox" id="auto-mine"> Oto Maden
-                </label>
-                <label>
-                    <input type="checkbox" id="auto-defend"> Oto Savunma
-                </label>
-            </div>
-            <button id="disconnect-btn">Bağlantı Kes</button>
-        </div>
+  <div class="container">
+    <!-- Controls -->
+    <section class="panel controls">
+      <h2>Kontroller</h2>
+      <input id="host" placeholder="Sunucu IP">
+      <input id="port" type="number" placeholder="Port" value="25565">
+      <input id="username" placeholder="Kullanıcı Adı">
+      <input id="password" type="password" placeholder="Şifre">
+      <button id="connect">Bağlan</button>
+      <button id="disconnect">Kes</button>
 
-        <div class="radar-inventory">
-            <h3>Radar & Envanter</h3>
-            <div id="nearby-entities"></div>
-            <div id="inventory-content"></div>
-        </div>
+      <label><input type="checkbox" id="autoMine"> Oto‑Maden</label>
+      <label><input type="checkbox" id="autoDefend"> Oto‑Savunma</label>
+      <label><input type="checkbox" id="autoChat"> Oto‑Mesaj</label>
+    </section>
 
-        <div class="terminal">
-            <h3>Sunucu Konsolu</h3>
-            <div id="chat-log"></div>
-        </div>
+    <!-- Radar / Inventory -->
+    <section class="panel radar">
+      <h2>Radar / Envanter</h2>
+      <div id="radar"></div>
+      <div id="inventory"></div>
+    </section>
+
+    <!-- Terminal -->
+    <section class="panel terminal">
+      <h2>Terminal</h2>
+      <div id="log"></div>
+      <input id="msg" placeholder="Mesaj gönder">
+    </section>
+  </div>
+
+  <!-- Modal (settings / login) -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Ayarlar</h3>
+      <button id="closeModal">Kapat</button>
     </div>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="script.js"></script>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
