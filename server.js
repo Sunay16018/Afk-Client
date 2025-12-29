@@ -24,7 +24,7 @@ io.on('connection', (socket) => {
         socket.emit('status', { username: botId, connected: true });
 
         bot.on('spawn', () => {
-            socket.emit('log', { username: botId, msg: '§a[SİSTEM] Bot başarıyla doğdu.' });
+            socket.emit('log', { username: botId, msg: '§a[SİSTEM] Bot bağlandı.' });
             if (data.password) {
                 setTimeout(() => {
                     bot.chat(`/register ${data.password} ${data.password}`);
@@ -35,7 +35,6 @@ io.on('connection', (socket) => {
 
         bot.on('message', (jsonMsg) => socket.emit('log', { username: botId, msg: jsonMsg.toHTML() }));
 
-        // Sunucudan atılma veya bağlantı kopma durumları
         const removeBot = () => {
             if (bots[botId]) {
                 socket.emit('status', { username: botId, connected: false });
@@ -43,29 +42,9 @@ io.on('connection', (socket) => {
             }
         };
 
-        bot.on('kicked', (reason) => {
-            socket.emit('log', { username: botId, msg: `§c[ATILDI] Sebep: ${reason}` });
-            removeBot();
-        });
-
-        bot.on('end', () => {
-            socket.emit('log', { username: botId, msg: '§7[AYRILDI] Bot sunucudan ayrıldı.' });
-            removeBot();
-        });
-
-        bot.on('error', (err) => {
-            socket.emit('log', { username: botId, msg: `§cHata: ${err.message}` });
-            removeBot();
-        });
-    });
-
-    // KES BUTONU (Kesin çözüm için end() ve quit() beraber)
-    socket.on('stop-bot', (user) => {
-        if (bots[user]) {
-            bots[user].quit(); // Mineflayer çıkış komutu
-            socket.emit('status', { username: user, connected: false });
-            delete bots[user];
-        }
+        bot.on('kicked', (reason) => removeBot());
+        bot.on('end', () => removeBot());
+        bot.on('error', () => removeBot());
     });
 
     socket.on('move-bot', (d) => {
@@ -89,7 +68,10 @@ io.on('connection', (socket) => {
     socket.on('send-chat', (d) => {
         if (bots[d.username]) bots[d.username].chat(d.msg);
     });
+
+    socket.on('stop-bot', (user) => {
+        if (bots[user]) { bots[user].quit(); delete bots[user]; socket.emit('status', { username: user, connected: false }); }
+    });
 });
 
-http.listen(process.env.PORT || 3000, () => console.log("Sistem Aktif"));
-      
+http.listen(process.env.PORT || 3000);
