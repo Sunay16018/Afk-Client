@@ -1,35 +1,49 @@
 const socket = io();
-let mOn = false;
 
-function start(isMulti) {
+function connect() {
     const host = document.getElementById('host').value;
     const user = document.getElementById('user').value;
-    if(!host || !user) return alert("Bilgileri doldur!");
-    socket.emit('start-bot', { host, username: user, isMulti });
+    if(host && user) socket.emit('start-bot', { host, username: user });
 }
 
-function toggleM() {
-    mOn = !mOn;
-    document.getElementById('m-toggle').innerText = mOn ? "AÇIK" : "KAPALI";
-    document.getElementById('m-toggle').className = mOn ? "on" : "off";
-    sync();
+function toggleMenu() {
+    const m = document.getElementById('settings-menu');
+    m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
 }
 
-function sync() {
+function saveSettings() {
     const user = document.getElementById('bot-sel').value;
-    const delay = document.getElementById('m-delay').value;
-    if(user) socket.emit('update-settings', { user, mathOn: mOn, mathSec: delay });
+    if(!user) return alert("Önce bir bot seç!");
+
+    const autoMsgs = [];
+    document.querySelectorAll('.msg-row').forEach(row => {
+        autoMsgs.push({
+            text: row.querySelector('.msg-txt').value,
+            time: parseInt(row.querySelector('.msg-time').value)
+        });
+    });
+
+    const settings = {
+        mathOn: document.getElementById('m-on').checked,
+        mathSec: parseFloat(document.getElementById('m-sec').value),
+        autoRecon: document.getElementById('recon-on').checked,
+        mineMode: document.getElementById('mine-on').checked,
+        autoMsgs: autoMsgs
+    };
+
+    socket.emit('update-config', { user, settings });
+    toggleMenu();
 }
 
-function move(dir, type) {
-    const user = document.getElementById('bot-sel').value;
-    if(user) socket.emit('move-bot', { username: user, dir, type });
+function move(dir) {
+    const u = document.getElementById('bot-sel').value;
+    if(u) socket.emit('move-bot', { username: u, dir });
 }
 
 socket.on('status', (d) => {
     if (d.connected && !document.getElementById(`b-${d.username}`)) {
-        document.getElementById('bot-list').innerHTML += `<div class="card" id="b-${d.username}">${d.username}</div>`;
-        let o = document.createElement('option'); o.value = d.username; o.innerText = d.username; o.id = `o-${d.username}`;
+        document.getElementById('bot-list').innerHTML += `<div class="card">${d.username}</div>`;
+        let o = document.createElement('option'); o.value = d.username; o.innerText = d.username;
         document.getElementById('bot-sel').appendChild(o);
     }
 });
@@ -42,8 +56,8 @@ socket.on('log', (d) => {
 
 document.getElementById('chat-in').onkeydown = (e) => {
     if (e.key === 'Enter') {
-        const user = document.getElementById('bot-sel').value;
-        socket.emit('send-chat', { username: user, msg: e.target.value });
+        const u = document.getElementById('bot-sel').value;
+        socket.emit('send-chat', { username: u, msg: e.target.value });
         e.target.value = '';
     }
 };
