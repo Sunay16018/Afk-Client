@@ -21,7 +21,7 @@ io.on('connection', (socket) => {
 
         bots[data.username] = { 
             instance: bot, 
-            settings: { math: false, delay: 0, mine: false, pass: data.pass || "" },
+            settings: { math: false, mine: false, pass: data.pass || "" },
             isMining: false 
         };
 
@@ -32,28 +32,18 @@ io.on('connection', (socket) => {
             }
         });
 
-        // GELİŞMİŞ MİNİNG SİSTEMİ (FIX)
+        // Mining Sistemi (Geliştirilmiş bekleme mantığı)
         bot.on('physicsTick', async () => {
             const b = bots[data.username];
             if (!b || !b.settings.mine || b.isMining) return;
-
             const block = bot.blockAtCursor(4);
             if (block && block.name !== 'air') {
                 b.isMining = true;
                 try {
                     bot.swingArm('right');
-                    await bot.dig(block); // Blok kırılana kadar bekler
-                } catch (err) {
-                    // Blok kırılamazsa veya iptal olursa buraya düşer
-                } finally {
-                    b.isMining = false;
-                }
+                    await bot.dig(block);
+                } catch (e) {} finally { b.isMining = false; }
             }
-        });
-
-        bot.on('message', (json) => {
-            socket.emit('log', { user: data.username, msg: json.toHTML() });
-            // Matematik çözücü aktif...
         });
 
         bot.on('kicked', (reason) => {
@@ -64,19 +54,30 @@ io.on('connection', (socket) => {
             socket.emit('status', { user: data.username, online: false });
             delete bots[data.username];
         });
+
+        bot.on('message', (json) => socket.emit('log', { user: data.username, msg: json.toHTML() }));
     });
 
-    // HAREKET SİSTEMİ (GELİŞMİŞ)
-    socket.on('move-start', (d) => {
-        if(bots[d.user]) bots[d.user].instance.setControlState(d.dir, true);
-    });
-
-    socket.on('move-stop', (d) => {
-        if(bots[d.user]) bots[d.user].instance.setControlState(d.dir, false);
+    // Hareket Kontrolü (Aç/Kapat Mantığı)
+    socket.on('move-toggle', (d) => {
+        const bot = bots[d.user]?.instance;
+        if (bot) {
+            // d.state true ise yürür, false ise durur
+            bot.setControlState(d.dir, d.state);
+        }
     });
 
     socket.on('chat', (d) => { if(bots[d.user]) bots[d.user].instance.chat(d.msg); });
-    socket.on('quit', (u) => { if(bots[u]) bots[u].instance.quit(); });
+
+    // ANINDA KESME (Bağlantı Kes Fix)
+    socket.on('quit', (u) => {
+        if(bots[u]) {
+            bots[u].instance.quit();
+            delete bots[u];
+            socket.emit('status', { user: u, online: false });
+        }
+    });
+
     socket.on('update-config', (d) => { if(bots[d.user]) bots[d.user].settings = d.config; });
 });
 
