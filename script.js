@@ -12,11 +12,16 @@ function connect() {
 function disconnect() { if(selBot) socket.emit('quit', selBot); }
 function move(dir) { if(selBot) socket.emit('move', { user: selBot, dir }); }
 function openSet() { el('modal').style.display = 'flex'; }
+function closeSet() { el('modal').style.display = 'none'; }
 
 function save() {
-    const config = { math: el('m-on').checked, delay: el('m-del').value, mine: el('mine-on').checked };
+    const config = { 
+        math: el('m-on').checked, 
+        delay: el('m-del').value, 
+        mine: el('mine-on').checked 
+    };
     socket.emit('update-config', { user: selBot, config });
-    el('modal').style.display = 'none';
+    closeSet();
 }
 
 socket.on('status', d => {
@@ -35,7 +40,8 @@ socket.on('status', d => {
 
 socket.on('log', d => {
     const l = el('logs');
-    l.innerHTML += `<div><span style="color:var(--accent)">[${d.user}]</span> ${d.msg}</div>`;
+    // Minecraft renk kodlarını basitçe temizle/düzenle
+    l.innerHTML += `<div><span style="color:var(--mc-green)">[${d.user}]</span> ${d.msg}</div>`;
     l.scrollTop = l.scrollHeight;
 });
 
