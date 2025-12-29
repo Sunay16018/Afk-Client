@@ -7,51 +7,52 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="main-layout">
-        <aside class="control-panel">
-            <div class="brand">AFK <span>CLIENT</span></div>
+    <div class="pro-layout">
+        <aside class="sidebar">
+            <h1 class="mc-font">AFK <span>CLIENT</span></h1>
             
-            <div class="group">
-                <input type="text" id="ip" placeholder="IP:Port">
-                <input type="text" id="nick" placeholder="İsim">
+            <div class="box">
+                <input type="text" id="ip" placeholder="Server IP:Port">
+                <input type="text" id="nick" placeholder="Bot İsmi">
                 <input type="password" id="pass" placeholder="Şifre">
-                <button class="btn connect" onclick="connect()">SİSTEMİ AÇ</button>
-                <button class="btn disconnect" onclick="disconnect()">BAĞLANTIYI KES</button>
+                <button class="mc-btn green" onclick="connect()">BAĞLAN</button>
+                <button class="mc-btn red" onclick="disconnect()">BAĞLANTI KES</button>
             </div>
 
-            <div class="group">
-                <label>BOT SEÇİNİZ</label>
+            <div class="box">
+                <label class="mc-font">AKTİF BOT:</label>
                 <select id="bot-sel" onchange="selBot = this.value"></select>
             </div>
 
-            <div class="dpad-container">
-                <button class="ctrl-btn up" onclick="move('forward')">▲</button>
-                <div class="dpad-mid">
-                    <button class="ctrl-btn left" onclick="move('left')">◀</button>
-                    <button class="ctrl-btn down" onclick="move('back')">▼</button>
-                    <button class="ctrl-btn right" onclick="move('right')">▶</button>
+            <div class="dpad">
+                <button class="dp-btn" onclick="move('forward')">▲</button>
+                <div class="dp-row">
+                    <button class="dp-btn" onclick="move('left')">◀</button>
+                    <button class="dp-btn" onclick="move('back')">▼</button>
+                    <button class="dp-btn" onclick="move('right')">▶</button>
                 </div>
-                <button class="ctrl-btn jump-btn" onclick="move('jump')">ZIPLA (SPACE)</button>
+                <button class="mc-btn blue" style="margin-top:10px;" onclick="move('jump')">ZIPLA</button>
             </div>
 
-            <button class="btn settings" onclick="openSet()">⚙ AYARLAR</button>
+            <button class="mc-btn gray" onclick="openSet()">⚙ AYARLAR</button>
         </aside>
 
-        <section class="terminal">
-            <div id="logs" class="log-screen"></div>
-            <div class="chat-bar">
-                <input type="text" id="cin" placeholder="Buraya yaz ve Enter'a bas...">
+        <main class="terminal-view">
+            <div id="logs" class="mc-font logs"></div>
+            <div class="input-container">
+                <input type="text" id="cin" placeholder="Mesaj gönder...">
             </div>
-        </section>
+        </main>
     </div>
 
     <div id="modal" class="modal">
-        <div class="modal-content">
-            <h3>AYARLAR</h3>
-            <div class="row"><label>Matematik:</label><input type="checkbox" id="m-on"></div>
-            <div class="row"><label>Gecikme (sn):</label><input type="number" id="m-del" value="0"></div>
-            <div class="row"><label>Maden Modu:</label><input type="checkbox" id="mine-on"></div>
-            <button class="btn connect" onclick="save()">KAYDET VE KAPAT</button>
+        <div class="modal-box mc-font">
+            <h2>AYARLAR</h2>
+            <div class="set-row">Matematik: <input type="checkbox" id="m-on"></div>
+            <div class="set-row">Gecikme: <input type="number" id="m-del" value="0"></div>
+            <div class="set-row">Maden Modu: <input type="checkbox" id="mine-on"></div>
+            <button class="mc-btn green" onclick="save()">KAYDET</button>
+            <button class="mc-btn red" onclick="closeSet()">KAPAT</button>
         </div>
     </div>
 
