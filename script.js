@@ -1,22 +1,17 @@
 const socket = io();
+const term = document.getElementById('terminal');
 
-socket.on('log', (htmlMesaj) => {
-    const term = document.getElementById('terminal');
-    const div = document.createElement('div');
-    // HTML'i doğrudan yansıtıyoruz
-    div.innerHTML = htmlMesaj;
-    term.appendChild(div);
-    
-    // Otomatik kaydırma
-    term.scrollTop = term.scrollHeight;
+socket.on('log', (data) => {
+    const entry = document.createElement('div');
+    entry.textContent = `> ${data}`;
+    term.appendChild(entry);
+    term.scrollTop = term.scrollHeight; // Terminali hep en altta tutar
 });
 
-// Bot listesi ve diğer fonksiyonlar...
-socket.on('bot-listesi-guncelle', (liste) => {
-    const select = document.getElementById('botListesi');
-    const mevcutSecim = select.value;
-    select.innerHTML = liste.map(bot => `<option value="${bot}">${bot}</option>`).join('');
-    if (liste.includes(mevcutSecim)) select.value = mevcutSecim;
-    document.getElementById('seciliBotIsmi').innerText = select.value || "YOK";
-});
-// (Geri kalan hareket, mesaj-gonder, modal fonksiyonları öncekiyle aynıdır)
+function move(dir) { socket.emit('move', dir); }
+function stopBot() { socket.emit('stop'); }
+function mineBlock() { socket.emit('mine'); }
+function sendChat() {
+    const val = document.getElementById('chatMsg').value;
+    if(val) { socket.emit('send-chat', val); document.getElementById('chatMsg').value = ''; }
+}
