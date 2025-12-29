@@ -1,32 +1,32 @@
-:root { --yesil: #0f9; --arka: #080808; }
-body { background: var(--arka); color: #eee; font-family: 'Segoe UI', sans-serif; margin: 0; }
+:root { --neon: #0f9; --bg: #000; --danger: #f44; }
+body { background: var(--bg); color: var(--neon); font-family: 'VT323', monospace; margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
-.terminal-ekran { 
-    height: 450px; background: #000; border: 1px solid #222; 
-    overflow-y: auto; padding: 15px; font-family: monospace; line-height: 1.5;
+.dashboard { display: flex; width: 100%; padding: 20px; gap: 20px; }
+.side-panel { flex: 1; border: 2px solid var(--neon); padding: 15px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 0 10px var(--neon); }
+
+/* Hareket Tuşları */
+.move-controls { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.mid-row { display: flex; gap: 5px; }
+
+/* Terminal Ayarları */
+.terminal-wrapper { flex: 1.5; }
+.terminal-box { 
+    height: 450px; /* Sabit Yükseklik */
+    background: #050505; 
+    border: 2px solid var(--neon); 
+    padding: 10px; 
+    overflow-y: auto; 
+    font-size: 1.1rem;
+    box-shadow: inset 0 0 15px rgba(0, 255, 153, 0.2);
 }
 
-/* Minecraft Orijinal Renk Kodları */
-.mc-color-black { color: #000000; }
-.mc-color-dark_blue { color: #0000AA; }
-.mc-color-dark_green { color: #00AA00; }
-.mc-color-dark_aqua { color: #00AAAA; }
-.mc-color-dark_red { color: #AA0000; }
-.mc-color-dark_purple { color: #AA00AA; }
-.mc-color-gold { color: #FFAA00; }
-.mc-color-gray { color: #AAAAAA; }
-.mc-color-dark_gray { color: #555555; }
-.mc-color-blue { color: #5555FF; }
-.mc-color-green { color: #55FF55; }
-.mc-color-aqua { color: #55FFFF; }
-.mc-color-red { color: #FF5555; }
-.mc-color-light_purple { color: #FF55FF; }
-.mc-color-yellow { color: #FFFF55; }
-.mc-color-white { color: #FFFFFF; }
-.mc-bold { font-weight: bold; }
-.mc-italic { font-style: italic; }
-.mc-strikethrough { text-decoration: line-through; }
-.mc-underline { text-decoration: underline; }
+button { 
+    background: transparent; color: var(--neon); border: 2px solid var(--neon); 
+    padding: 8px 15px; cursor: pointer; font-family: 'VT323'; font-size: 1.2rem;
+}
+button:hover { background: var(--neon); color: #000; }
+.danger-btn { border-color: var(--danger); color: var(--danger); width: 100%; }
+.danger-btn:hover { background: var(--danger); color: #fff; }
 
-.satir { border-bottom: 1px solid #111; padding: 2px 0; }
-/* ... Diğer UI stilleri öncekiyle aynı ... */
+.chat-area { display: flex; gap: 5px; }
+#chatMsg { background: #111; border: 1px solid var(--neon); color: var(--neon); padding: 5px; flex: 1; }
