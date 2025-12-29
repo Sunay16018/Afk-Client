@@ -24,7 +24,7 @@ io.on('connection', (socket) => {
         socket.emit('status', { username: botId, connected: true });
 
         bot.on('spawn', () => {
-            socket.emit('log', { username: botId, msg: '§a[SİSTEM] Bot bağlandı.' });
+            socket.emit('log', { username: botId, msg: '§a✔ Bağlantı başarılı.' });
             if (data.password) {
                 setTimeout(() => {
                     bot.chat(`/register ${data.password} ${data.password}`);
@@ -35,16 +35,16 @@ io.on('connection', (socket) => {
 
         bot.on('message', (jsonMsg) => socket.emit('log', { username: botId, msg: jsonMsg.toHTML() }));
 
-        const removeBot = () => {
+        const cleanup = () => {
             if (bots[botId]) {
                 socket.emit('status', { username: botId, connected: false });
                 delete bots[botId];
             }
         };
 
-        bot.on('kicked', (reason) => removeBot());
-        bot.on('end', () => removeBot());
-        bot.on('error', () => removeBot());
+        bot.on('kicked', (r) => { socket.emit('log', { username: botId, msg: `§c✘ Atıldı.` }); cleanup(); });
+        bot.on('end', cleanup);
+        bot.on('error', cleanup);
     });
 
     socket.on('move-bot', (d) => {
@@ -52,26 +52,15 @@ io.on('connection', (socket) => {
         if (!bot || !bot.entity) return;
         if (d.dir === 'jump') {
             bot.setControlState('jump', true);
-            setTimeout(() => bot.setControlState('jump', false), 500);
-        } else if (d.dir === 'left-turn') {
-            bot.look(bot.entity.yaw + 0.5, bot.entity.pitch);
-        } else if (d.dir === 'right-turn') {
-            bot.look(bot.entity.yaw - 0.5, bot.entity.pitch);
-        } else if (d.dir === 'stop') {
-            bot.clearControlStates();
-        } else {
-            bot.clearControlStates();
-            bot.setControlState(d.dir, true);
-        }
+            setTimeout(() => bot.setControlState('jump', false), 400);
+        } else if (d.dir === 'left-turn') { bot.look(bot.entity.yaw + 0.8, 0); }
+        else if (d.dir === 'right-turn') { bot.look(bot.entity.yaw - 0.8, 0); }
+        else if (d.dir === 'stop') { bot.clearControlStates(); }
+        else { bot.clearControlStates(); bot.setControlState(d.dir, true); }
     });
 
-    socket.on('send-chat', (d) => {
-        if (bots[d.username]) bots[d.username].chat(d.msg);
-    });
-
-    socket.on('stop-bot', (user) => {
-        if (bots[user]) { bots[user].quit(); delete bots[user]; socket.emit('status', { username: user, connected: false }); }
-    });
+    socket.on('send-chat', (d) => { if (bots[d.username]) bots[d.username].chat(d.msg); });
+    socket.on('stop-bot', (user) => { if (bots[user]) { bots[user].quit(); } });
 });
 
-http.listen(process.env.PORT || 3000);
+http.listen(3000);
