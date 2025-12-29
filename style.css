@@ -1,205 +1,162 @@
-/* CYBER-DASHBOARD ULTIMATE STYLE 
-   - Seçim Engelli (No-Select)
-   - Dinamik Animasyonlar
-   - Glassmorphism Etkisi
+/* CYBER-AFK ULTIMATE STYLE
+   - Metin seçimi ve kopyalama imkansız
+   - Terminal sabit ve kaydırılabilir
+   - Neon animasyonlar
 */
 
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;700&display=swap');
 
 :root {
-    --bg: #05070a;
+    --bg-main: #05070a;
     --sidebar-bg: #0d1117;
     --accent: #00f2ff;
-    --accent-glow: rgba(0, 242, 255, 0.3);
+    --accent-glow: rgba(0, 242, 255, 0.4);
+    --border: #1f2937;
     --danger: #ff4757;
     --success: #2ed573;
-    --border: #1f2937;
-    --glass: rgba(22, 27, 34, 0.8);
 }
 
-/* 1. TÜM METİN SEÇİMİNİ VE ÇEVİRİYİ ENGELE */
+/* TÜM SEÇİMLERİ VE ÇEVİRİYİ ENGELLE */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    margin: 0; padding: 0; box-sizing: border-box;
     user-select: none !important;
     -webkit-user-select: none !important;
-    -ms-user-select: none !important;
-    -moz-user-select: none !important;
+    -webkit-touch-callout: none !important;
     cursor: default;
 }
 
 body {
-    background: var(--bg);
-    background-image: radial-gradient(circle at 50% 50%, #111827 0%, #05070a 100%);
+    background: var(--bg-main);
     color: #e6edf3;
     font-family: 'Inter', sans-serif;
     height: 100vh;
+    width: 100vw;
     display: flex;
-    overflow: hidden;
+    overflow: hidden; /* Sayfa dışına taşmayı engeller */
 }
 
-/* 2. YAN PANEL (SIDEBAR) */
+/* YAN PANEL (SIDEBAR) */
 .sidebar {
-    width: 320px;
+    width: 300px;
     background: var(--sidebar-bg);
     border-right: 1px solid var(--border);
-    padding: 30px 20px;
+    padding: 25px;
     display: flex;
     flex-direction: column;
-    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-    z-index: 100;
+    flex-shrink: 0;
+    box-shadow: 5px 0 20px rgba(0,0,0,0.5);
+    z-index: 10;
 }
 
 .logo {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 800;
+    margin-bottom: 30px;
+    color: #fff;
     text-align: center;
-    margin-bottom: 40px;
-    letter-spacing: -1px;
-    color: white;
 }
 
-.logo span {
-    color: var(--accent);
-    text-shadow: 0 0 15px var(--accent-glow);
-}
+.logo span { color: var(--accent); text-shadow: 0 0 10px var(--accent-glow); }
 
-/* GİRDİ ALANLARI */
-input, select {
+/* INPUT & BUTTON STİLLERİ */
+input, select, button {
     width: 100%;
     background: #161b22;
     border: 1px solid var(--border);
-    color: white;
-    padding: 12px 15px;
+    color: #fff;
+    padding: 12px;
     border-radius: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     font-size: 14px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
 }
 
 input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 10px var(--accent-glow);
-    background: #1c2128;
+    box-shadow: 0 0 8px var(--accent-glow);
+    outline: none;
 }
 
 #add-bot {
     background: linear-gradient(135deg, #00f2ff, #0072ff);
-    color: white;
     border: none;
-    padding: 14px;
-    border-radius: 8px;
-    font-weight: 700;
+    font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
-    transition: all 0.3s;
 }
 
-#add-bot:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(0, 242, 255, 0.4);
-}
+#add-bot:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--accent-glow); }
 
-/* 3. AKTİF BOT KARTLARI (ANIMASYONLU) */
+/* BOT LİSTESİ KARTLARI (Animasyonlu) */
 .bot-card {
-    background: var(--glass);
+    background: rgba(255,255,255,0.03);
     border: 1px solid var(--border);
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    backdrop-filter: blur(10px);
-    animation: slideIn 0.4s ease forwards;
     border-left: 4px solid var(--accent);
+    animation: slideIn 0.3s ease-out forwards;
 }
 
 @keyframes slideIn {
-    from { opacity: 0; transform: translateX(-30px); }
+    from { opacity: 0; transform: translateX(-20px); }
     to { opacity: 1; transform: translateX(0); }
 }
 
 .bot-card button {
-    background: rgba(255, 71, 87, 0.1);
+    width: auto; margin: 0; padding: 5px 10px;
+    background: rgba(255, 71, 87, 0.2);
     color: var(--danger);
     border: 1px solid var(--danger);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
 }
 
-.bot-card button:hover {
-    background: var(--danger);
-    color: white;
-}
-
-/* 4. TERMİNAL ALANI */
+/* ANA İÇERİK (TERMİNAL) */
 .main-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    position: relative;
+    height: 100vh;
 }
 
 #logs {
     flex: 1;
-    padding: 30px;
+    padding: 25px;
     overflow-y: auto;
     font-family: 'Fira Code', monospace;
-    font-size: 14px;
-    background: rgba(0,0,0,0.3);
-    scroll-behavior: smooth;
+    font-size: 13.5px;
+    line-height: 1.6;
+    background: radial-gradient(circle at top, #0d1117 0%, #05070a 100%);
 }
 
-/* MESAJ SATIRI ANIMASYONU */
+/* MESAJ SATIRI */
 .log-line {
-    margin-bottom: 8px;
-    animation: fadeIn 0.3s ease;
-    border-bottom: 1px solid rgba(255,255,255,0.02);
-    padding-bottom: 4px;
+    margin-bottom: 5px;
+    animation: fadeIn 0.2s ease;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* 5. ALT MESAJ BARI */
+/* ALT MESAJ BARI (SABİT) */
 .chat-bar {
+    height: 80px;
     background: var(--sidebar-bg);
-    padding: 20px 30px;
-    display: flex;
-    gap: 15px;
-    border-top: 1px solid var(--border);
-}
-
-#chat-input {
-    flex: 1;
-    margin-bottom: 0;
-    border-radius: 50px;
     padding: 15px 25px;
-    background: #05070a;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
 }
 
-#target-bot {
-    width: 140px;
-    margin-bottom: 0;
-    border-radius: 50px;
-}
+#chat-input { flex: 1; margin: 0; border-radius: 30px; padding: 0 20px; }
+#target-bot { width: 140px; margin: 0; border-radius: 30px; }
 
 /* ÖZEL SCROLLBAR */
-::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-/* TRANSLATE KUTUSUNU GİZLEME (Google Translate Engelleme) */
-.goog-te-banner-frame.skiptranslate, .goog-te-gadget { display: none !important; }
-body { top: 0px !important; }
-    
+                                 
