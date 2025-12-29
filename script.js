@@ -2,33 +2,38 @@ const socket = io();
 let selBot = "";
 const el = (i) => document.getElementById(i);
 
-// KLAVYE KONTROLÜ (W, A, S, D, SPACE)
-const keyMap = {
-    'w': 'forward', 'W': 'forward', 'ArrowUp': 'forward',
-    's': 'back', 'S': 'back', 'ArrowDown': 'back',
-    'a': 'left', 'A': 'left', 'ArrowLeft': 'left',
-    'd': 'right', 'D': 'right', 'ArrowRight': 'right',
-    ' ': 'jump'
-};
-
-document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT') return; // Yazı yazarken bot hareket etmesin
-    const dir = keyMap[e.key];
-    if (dir && selBot) socket.emit('move-start', { user: selBot, dir });
-});
-
-document.addEventListener('keyup', (e) => {
-    const dir = keyMap[e.key];
-    if (dir && selBot) socket.emit('move-stop', { user: selBot, dir });
-});
-
-// PANEL TUŞLARI İÇİN (Mouse ile basılı tutma desteği)
-function moveBtn(dir, state) {
-    if (selBot) socket.emit(state === 'start' ? 'move-start' : 'move-stop', { user: selBot, dir });
+// AYARLAR MENÜSÜ AÇ/KAPAT
+function toggleModal(show) {
+    el('modal').style.display = show ? 'flex' : 'none';
 }
 
 function connect() {
     socket.emit('start-bot', { host: el('ip').value, username: el('nick').value, pass: el('pass').value });
+}
+
+// ANINDA BAĞLANTI KES
+function disconnect() {
+    if(selBot) socket.emit('quit', selBot);
+}
+
+// HAREKET SİSTEMİ (Basınca başlar, Stop deyince durur)
+function toggleMove(dir) {
+    if(!selBot) return;
+    socket.emit('move-toggle', { user: selBot, dir: dir, state: true });
+}
+
+function allStop() {
+    if(!selBot) return;
+    const dirs = ['forward', 'back', 'left', 'right', 'jump'];
+    dirs.forEach(d => {
+        socket.emit('move-toggle', { user: selBot, dir: d, state: false });
+    });
+}
+
+function saveSettings() {
+    const config = { math: el('m-on').checked, mine: el('mine-on').checked };
+    socket.emit('update-config', { user: selBot, config });
+    toggleModal(false);
 }
 
 function sendChat() {
@@ -49,6 +54,9 @@ socket.on('status', d => {
             s.appendChild(o);
         }
         selBot = d.user; s.value = d.user;
+    } else {
+        const o = el("opt-"+d.user); if(o) o.remove();
+        selBot = s.value;
     }
 });
 
