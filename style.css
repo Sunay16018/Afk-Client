@@ -1,18 +1,253 @@
-* { box-sizing: border-box; margin: 0; padding: 0; user-select: none !important; -webkit-user-select: none !important; }
-body { background: #05070a; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; overflow: hidden; }
-.sidebar { width: 300px; background: #0d1117; padding: 20px; border-right: 1px solid #333; flex-shrink: 0; overflow-y: auto; }
-.logo { font-size: 20px; text-align: center; margin-bottom: 20px; color: #00f2ff; }
-.logo span { color: #fff; }
-input, select, .sidebar button { width: 100%; background: #161b22; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; margin-bottom: 8px; outline: none; }
-#add-bot { background: #238636; border: none; font-weight: bold; cursor: pointer; }
-.move-panel { margin: 15px 0; border-top: 1px solid #333; padding-top: 10px; display: flex; flex-direction: column; gap: 5px; }
-.move-panel h3 { font-size: 11px; color: #888; text-align: center; }
-.row { display: flex; gap: 5px; }
-.row button { flex: 1; padding: 8px; font-size: 10px; cursor: pointer; }
-.main-content { flex: 1; display: flex; flex-direction: column; background: #000; }
-#logs { flex: 1; padding: 20px; overflow-y: auto; font-family: monospace; font-size: 13px; line-height: 1.5; }
-.chat-bar { height: 100px; background: #0d1117; padding: 20px; border-top: 1px solid #333; display: flex; gap: 10px; flex-shrink: 0; }
-#chat-input { flex: 1; height: 60px; background: #161b22 !important; color: #fff !important; border: 1px solid #444; border-radius: 10px; padding: 0 15px; font-size: 16px; user-select: text !important; }
-#target-bot { width: 130px; height: 60px; border-radius: 10px; }
-.bot-card { background: #1a1f26; padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #00f2ff; }
-.bot-card button { width: auto; background: #da3633; border: none; padding: 3px 8px; margin: 0; cursor: pointer; }
+/* AFK PRO TERMINAL - ULTIMATE STYLE
+   - Yazı seçimi, kopyalama ve sağ tık tamamen engelli
+   - Hareketli ve neon efektli arayüz
+   - Sabit terminal ve büyük mesaj alanı
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;700&display=swap');
+
+:root {
+    --bg-dark: #05070a;
+    --panel-bg: #0d1117;
+    --card-bg: #161b22;
+    --accent: #00f2ff;
+    --accent-glow: rgba(0, 242, 255, 0.3);
+    --danger: #ff4757;
+    --success: #2ed573;
+    --border: #30363d;
+    --text-main: #e6edf3;
+}
+
+/* 1. SEÇİM VE KOPYALAMAYI HER YERDE KAPAT */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -ms-user-select: none !important;
+    -moz-user-select: none !important;
+    -webkit-touch-callout: none !important;
+    cursor: default; /* Yazı imlecini (I) gizler, normal ok bırakır */
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    overflow: hidden;
+}
+
+/* 2. YAN PANEL (SIDEBAR) */
+.sidebar {
+    width: 310px;
+    background: var(--panel-bg);
+    border-right: 1px solid var(--border);
+    padding: 25px 20px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+    z-index: 10;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 25px;
+    color: #fff;
+    letter-spacing: -1px;
+}
+
+.logo span {
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* GİRDİ KUTULARI (Login & Settings) */
+input, select {
+    width: 100%;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+    outline: none;
+}
+
+#add-bot {
+    background: linear-gradient(135deg, var(--accent), #0072ff);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: 0.3s;
+}
+
+#add-bot:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px var(--accent-glow);
+}
+
+/* 3. HAREKET PANELİ (GAMEPAD TARZI) */
+.move-panel {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.move-panel h3 {
+    font-size: 11px;
+    color: #8b949e;
+    text-align: center;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.row {
+    display: flex;
+    gap: 5px;
+}
+
+.move-panel button {
+    flex: 1;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 10px 5px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.move-panel button:hover {
+    background: #30363d;
+    border-color: var(--accent);
+}
+
+/* 4. TERMİNAL ALANI */
+.main-terminal {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: radial-gradient(circle at top, #0d1117 0%, #05070a 100%);
+}
+
+#logs {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    scroll-behavior: smooth;
+}
+
+.log-line {
+    margin-bottom: 6px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 5. ALT MESAJ BARI (BÜYÜTÜLDÜ) */
+.chat-bar {
+    height: 100px; /* Sabit yükseklik */
+    background: var(--panel-bg);
+    padding: 20px 30px;
+    border-top: 2px solid var(--border);
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+#chat-input {
+    flex: 1;
+    height: 60px; /* Mesaj kutusu yüksekliği */
+    background: var(--bg-dark) !important;
+    color: #fff !important;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0 25px;
+    font-size: 16px;
+    user-select: text !important; /* YAZI YAZILABİLMESİ İÇİN ŞART */
+    cursor: text;
+}
+
+#target-bot {
+    width: 150px;
+    height: 60px;
+    margin: 0;
+    border-radius: 12px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* 6. BOT KARTLARI (LİSTE) */
+.bot-card {
+    background: var(--card-bg);
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--accent);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.bot-card button {
+    width: auto;
+    background: rgba(231, 76, 60, 0.2);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.bot-card button:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* ÖZEL SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+  
