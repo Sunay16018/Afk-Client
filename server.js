@@ -1,79 +1,113 @@
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+const io = require('socket.io')(http, { cors: { origin: "*" } });
 const mineflayer = require('mineflayer');
 
 app.use(express.static(__dirname));
 let bots = {};
 
 io.on('connection', (socket) => {
+    console.log('Kullanıcı panele bağlandı.');
+
     socket.on('start-bot', (data) => {
-        if (bots[data.username]) return;
+        if (!data.host || !data.username) return;
+        if (bots[data.username]) {
+            socket.emit('log', { user: 'SİSTEM', msg: '§cBu bot zaten aktif!' });
+            return;
+        }
 
-        const bot = mineflayer.createBot({
-            host: data.host.split(':')[0],
-            port: parseInt(data.host.split(':')[1]) || 25565,
-            username: data.username,
-            version: false,
-            hideErrors: true
-        });
+        try {
+            socket.emit('log', { user: 'SİSTEM', msg: `§e${data.host} sunucusuna bağlanılıyor...` });
+            
+            const bot = mineflayer.createBot({
+                host: data.host.split(':')[0],
+                port: parseInt(data.host.split(':')[1]) || 25565,
+                username: data.username,
+                version: false,
+                hideErrors: true
+            });
 
-        bots[data.username] = {
-            instance: bot,
-            settings: { math: false, delay: 0, recon: false, mine: false, msgs: [] },
-            intervals: [],
-            lastAns: ""
-        };
+            bots[data.username] = {
+                instance: bot,
+                settings: { math: false, delay: 0, recon: false, mine: false, msgs: [] },
+                intervals: [],
+                lastAns: ""
+            };
 
-        // GERÇEK MADEN KIRMA MODU
-        bot.on('physicsTick', () => {
-            const b = bots[data.username];
-            if (b && b.settings.mine) {
-                const target = bot.blockAtCursor(4);
-                if (target && bot.canDigBlock(target)) {
-                    if (!bot.targetDigBlock) {
-                        bot.dig(target, true).catch(() => {});
+            bot.on('login', () => {
+                socket.emit('log', { user: data.username, msg: '§aGiriş yapıldı, harita yükleniyor...' });
+            });
+
+            bot.on('spawn', () => {
+                socket.emit('status', { user: data.username, online: true });
+                socket.emit('log', { user: data.username, msg: '§a✔ Bot başarıyla doğdu!' });
+            });
+
+            bot.on('error', (err) => {
+                socket.emit('log', { user: data.username, msg: `§cHata: ${err.message}` });
+            });
+
+            bot.on('kicked', (reason) => {
+                socket.emit('log', { user: data.username, msg: `§cAtıldı: ${reason}` });
+            });
+
+            bot.on('end', () => {
+                const b = bots[data.username];
+                socket.emit('status', { user: data.username, online: false });
+                socket.emit('log', { user: data.username, msg: '§6Bağlantı kesildi.' });
+                
+                if (b && b.settings.recon) {
+                    socket.emit('log', { user: data.username, msg: '§75 saniye içinde tekrar bağlanılacak...' });
+                    setTimeout(() => socket.emit('start-bot', data), 5000);
+                }
+                delete bots[data.username];
+            });
+
+            // MADEN MODU (Fizik Tick - Gerçek Kazma)
+            bot.on('physicsTick', () => {
+                const b = bots[data.username];
+                if (b && b.settings.mine) {
+                    bot.swingArm('right');
+                    const target = bot.blockAtCursor(4);
+                    if (target && bot.canDigBlock(target) && !bot.targetDigBlock) {
+                        bot.dig(target, true).catch(err => {});
                     }
                 }
-            }
-        });
+            });
 
-        bot.on('message', (json) => {
-            const b = bots[data.username];
-            if (!b) return;
-            const txt = json.toString();
-            socket.emit('log', { user: data.username, msg: json.toHTML() });
+            bot.on('message', (json) => {
+                const b = bots[data.username];
+                if (!b) return;
+                const txt = json.toString();
+                socket.emit('log', { user: data.username, msg: json.toHTML() });
 
-            // GELİŞMİŞ MATEMATİK (Çoklu işlem destekli)
-            if (b.settings.math) {
-                if (b.lastAns && txt.includes(b.lastAns)) return;
-                const mathMatch = txt.replace(/x/g, '*').replace(/:/g, '/').match(/(\d+(?:\s*[\+\-\*\/]\s*\d+)+)/);
-                if (mathMatch) {
-                    try {
-                        const res = eval(mathMatch[0]);
-                        if (!isNaN(res)) {
-                            b.lastAns = res.toString();
-                            setTimeout(() => bot.chat(res.toString()), b.settings.delay * 1000);
-                        }
-                    } catch (e) {}
+                // MATEMATİK SİSTEMİ
+                if (b.settings.math) {
+                    if (b.lastAns && txt.includes(b.lastAns)) return;
+                    const cleanTxt = txt.replace(/x/g, '*').replace(/:/g, '/').replace(/=/g, '');
+                    const mathMatch = cleanTxt.match(/(\d+(?:\s*[\+\-\*\/]\s*\d+)+)/);
+                    if (mathMatch) {
+                        try {
+                            const result = eval(mathMatch[0]);
+                            if (typeof result === 'number' && !isNaN(result)) {
+                                b.lastAns = result.toString();
+                                setTimeout(() => bot.chat(result.toString()), b.settings.delay * 1000);
+                            }
+                        } catch (e) {}
+                    }
                 }
-            }
-        });
-
-        bot.on('spawn', () => socket.emit('status', { user: data.username, online: true }));
-        bot.on('end', () => {
-            const b = bots[data.username];
-            socket.emit('status', { user: data.username, online: false });
-            if (b && b.settings.recon) setTimeout(() => socket.emit('start-bot', data), 5000);
-            delete bots[data.username];
-        });
+            });
+        } catch (e) {
+            socket.emit('log', { user: 'SİSTEM', msg: `§cBaşlatma hatası: ${e.message}` });
+        }
     });
 
     socket.on('update-config', (d) => {
         const b = bots[d.user];
         if (!b) return;
         b.settings = d.config;
+        
         b.intervals.forEach(clearInterval);
         b.intervals = [];
         b.settings.msgs.forEach(m => {
@@ -81,13 +115,14 @@ io.on('connection', (socket) => {
                 b.intervals.push(setInterval(() => b.instance.chat(m.txt), m.sec * 1000));
             }
         });
+        socket.emit('log', { user: d.user, msg: '§7Ayarlar güncellendi.' });
     });
 
     socket.on('move', (d) => {
         const b = bots[d.user]?.instance;
         if (b) {
             b.setControlState(d.dir, true);
-            setTimeout(() => b.setControlState(d.dir, false), 250);
+            setTimeout(() => b.setControlState(d.dir, false), 300);
         }
     });
 
@@ -95,4 +130,9 @@ io.on('connection', (socket) => {
     socket.on('quit-bot', (u) => { if(bots[u]) bots[u].instance.quit(); });
 });
 
-http.listen(3000, () => console.log('AFK CLIENT: http://localhost:3000'));
+// RENDER İÇİN KRİTİK AYAR: process.env.PORT
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, () => {
+    console.log(`Server çalışıyor: Port ${PORT}`);
+});
+        
