@@ -2,94 +2,42 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberAFK Panel</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+    <title>Minecraft AFK Client</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div class="dashboard">
-    <div class="panel-left">
-        <h1 class="title">CYBER<span>AFK</span></h1>
-        <div id="statusIndicator" class="status-offline">BAĞLI DEĞİL</div>
-
-        <div class="controls-grid">
-            <div class="spacer"></div>
-            <button onmousedown="move('forward', true)" onmouseup="move('forward', false)">W</button>
-            <div class="spacer"></div>
-            
-            <button onmousedown="move('left', true)" onmouseup="move('left', false)">A</button>
-            <button onmousedown="move('back', true)" onmouseup="move('back', false)">S</button>
-            <button onmousedown="move('right', true)" onmouseup="move('right', false)">D</button>
+    <div class="container">
+        <div class="controls">
+            <h2>Bot Kontrol Paneli</h2>
+            <div id="connection-modal" class="modal">
+                <input type="text" id="server-ip" placeholder="Sunucu IP">
+                <input type="text" id="bot-username" placeholder="Kullanıcı Adı">
+                <input type="password" id="bot-password" placeholder="Şifre">
+                <button id="connect-btn">Bağlan</button>
+            </div>
+            <div class="toggle-switches">
+                <label>
+                    <input type="checkbox" id="auto-mine"> Oto Maden
+                </label>
+                <label>
+                    <input type="checkbox" id="auto-defend"> Oto Savunma
+                </label>
+            </div>
+            <button id="disconnect-btn">Bağlantı Kes</button>
         </div>
-        <button class="jump-btn" onmousedown="move('jump', true)" onmouseup="move('jump', false)">ZIPLA [SPACE]</button>
 
-        <div class="menu-buttons">
-            <button class="btn-connect" onclick="toggleModal('loginModal')">🌐 SUNUCUYA BAĞLAN</button>
-            <button class="btn-settings" onclick="toggleModal('settingsModal')">🛠️ AYARLAR</button>
-            <button class="btn-disconnect" onclick="disconnectBot()">🔌 BAĞLANTIYI KES</button>
+        <div class="radar-inventory">
+            <h3>Radar & Envanter</h3>
+            <div id="nearby-entities"></div>
+            <div id="inventory-content"></div>
         </div>
-    </div>
 
-    <div class="panel-right">
-        <div id="terminal" class="terminal-display">
-            <div class="sys-msg">> Sistem Hazır. Bağlantı bekleniyor...</div>
-        </div>
-        <div class="chat-input-wrapper">
-            <input type="text" id="chatInp" placeholder="Sohbet veya komut yaz..." onkeypress="handleEnter(event)">
-            <button onclick="sendChat()">GÖNDER</button>
+        <div class="terminal">
+            <h3>Sunucu Konsolu</h3>
+            <div id="chat-log"></div>
         </div>
     </div>
-</div>
-
-<div id="loginModal" class="modal">
-    <div class="modal-box">
-        <h2>GİRİŞ BİLGİLERİ</h2>
-        <input type="text" id="ip" placeholder="Sunucu IP Adresi (örn: play.sunucu.com)">
-        <input type="text" id="user" placeholder="Kullanıcı Adı">
-        <input type="password" id="pass" placeholder="Şifre (/login ...)">
-        <div class="modal-actions">
-            <button class="btn-save" onclick="connectBot()">BAĞLAN</button>
-            <button class="btn-cancel" onclick="toggleModal('loginModal')">İPTAL</button>
-        </div>
-    </div>
-</div>
-
-<div id="settingsModal" class="modal">
-    <div class="modal-box">
-        <h2>BOT AYARLARI</h2>
-        
-        <label class="check-container">🧮 Matematik Çözücü
-            <input type="checkbox" id="setMath">
-            <span class="checkmark"></span>
-        </label>
-        <input type="number" id="setMathDelay" placeholder="Gecikme (ms)" value="2000">
-        
-        <hr>
-        
-        <label class="check-container">⛏️ Oto-Maden (Önündekini Kır)
-            <input type="checkbox" id="setMine">
-            <span class="checkmark"></span>
-        </label>
-        
-        <hr>
-
-        <label class="check-container">📢 Oto-Mesaj
-            <input type="checkbox" id="setMsg">
-            <span class="checkmark"></span>
-        </label>
-        <input type="text" id="setMsgText" placeholder="Mesaj..." value="AFK Botu Aktif">
-        <input type="number" id="setMsgTime" placeholder="Süre (sn)" value="60">
-
-        <div class="modal-actions">
-            <button class="btn-save" onclick="saveSettings()">KAYDET & GÖNDER</button>
-            <button class="btn-cancel" onclick="toggleModal('settingsModal')">KAPAT</button>
-        </div>
-    </div>
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="script.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
