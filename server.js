@@ -19,7 +19,10 @@ io.on('connection', (socket) => {
             hideErrors: true
         });
 
-        bots[data.username] = { instance: bot, settings: { math: false, delay: 0, mine: false, pass: data.pass || "" } };
+        bots[data.username] = { 
+            instance: bot, 
+            settings: { math: false, delay: 0, mine: false, pass: data.pass || "", autoMsg: "", autoMsgInterval: null } 
+        };
 
         bot.on('spawn', () => {
             socket.emit('status', { user: data.username, online: true });
@@ -30,9 +33,21 @@ io.on('connection', (socket) => {
             }
         });
 
+        // ATILMA SEBEBİ BURADA YAKALANIYOR
+        bot.on('kicked', (reason) => {
+            const cleanReason = JSON.parse(reason).extra ? JSON.parse(reason).extra.map(e => e.text).join('') : reason;
+            socket.emit('log', { user: 'SİSTEM', msg: `§c§lATILDIN! Sebep: §e${cleanReason}` });
+        });
+
+        bot.on('end', () => {
+            socket.emit('status', { user: data.username, online: false });
+            delete bots[data.username];
+        });
+
         bot.on('message', (json) => {
             socket.emit('log', { user: data.username, msg: json.toHTML() });
             const b = bots[data.username];
+            // Profesyonel Matematik Çözücü
             if (b?.settings.math) {
                 const txt = json.toString().replace(/x/g, '*').replace(/:/g, '/');
                 const mathMatch = txt.match(/(\d+(?:\s*[\+\-\*\/]\s*\d+)+)/);
@@ -55,31 +70,32 @@ io.on('connection', (socket) => {
                 }
             }
         });
-
-        bot.on('end', () => {
-            socket.emit('status', { user: data.username, online: false });
-            delete bots[data.username];
-        });
     });
 
+    // CHAT GÖNDERME KODU
     socket.on('chat', (d) => {
         if(bots[d.user]) bots[d.user].instance.chat(d.msg);
     });
 
-    socket.on('quit', (u) => {
-        if(bots[u]) bots[u].instance.quit();
-    });
-
     socket.on('move', (d) => {
         const b = bots[d.user]?.instance;
-        if (b) { 
-            b.setControlState(d.dir, true); 
-            setTimeout(() => b.setControlState(d.dir, false), 300); 
+        if (b) { b.setControlState(d.dir, true); setTimeout(() => b.setControlState(d.dir, false), 400); }
+    });
+
+    socket.on('update-config', (d) => {
+        if(bots[d.user]) {
+            bots[d.user].settings = d.config;
+            // Oto Mesaj Döngüsü
+            clearInterval(bots[d.user].settings.autoMsgInterval);
+            if(d.config.autoMsg && d.config.autoMsg.trim() !== "") {
+                bots[d.user].settings.autoMsgInterval = setInterval(() => {
+                    bots[d.user].instance.chat(d.config.autoMsg);
+                }, 30000); // Varsayılan 30 saniye
+            }
         }
     });
 
-    socket.on('update-config', (d) => { if(bots[d.user]) bots[d.user].settings = d.config; });
+    socket.on('quit', (u) => { if(bots[u]) bots[u].instance.quit(); });
 });
 
-const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log(`SYSTEM_LIVE_ON_PORT_${PORT}`));
+http.listen(process.env.PORT || 3000);
