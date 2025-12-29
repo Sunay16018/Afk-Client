@@ -2,31 +2,30 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #000; color: #fff; height: 100vh; overflow: hidden; font-family: 'Silkscreen'; }
 
-.wrapper { display: flex; height: 100vh; padding: 10px; gap: 10px; }
-.sidebar { width: 300px; background: #111; border: 4px solid #333; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-.card { background: #1a1a1a; padding: 10px; border: 2px solid #222; }
-input, select { width: 100%; padding: 8px; margin-bottom: 5px; background: #000; color: #0f9; border: 1px solid #444; font-family: 'VT323'; font-size: 18px; }
+.layout { display: flex; height: 100vh; padding: 10px; gap: 10px; }
+.sidebar { width: 300px; display: flex; flex-direction: column; gap: 10px; border-right: 2px solid #222; }
+.card { background: #111; padding: 10px; border: 2px solid #333; }
+input, select { width: 100%; padding: 10px; background: #000; color: #0f9; border: 1px solid #444; font-family: 'VT323'; font-size: 18px; outline: none; }
 
-.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-.btn { border: 3px solid #000; color: #fff; padding: 10px; cursor: pointer; font-size: 10px; }
+.btn { border: 3px solid #000; color: #fff; padding: 10px; cursor: pointer; font-family: 'Silkscreen'; font-size: 10px; }
 .green { background: #2d7d32; } .red { background: #a32b2b; } .blue { background: #2b56a3; } .gray { background: #444; }
 
 /* D-PAD */
-.dpad-box { display: flex; flex-direction: column; align-items: center; gap: 5px; background: #000; padding: 10px; }
+.dpad-box { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px; background: #111; }
 .dp-mid { display: flex; gap: 5px; }
 .dp { width: 50px; height: 50px; background: #222; border: 3px solid #000; color: #fff; cursor: pointer; }
-#stop-btn { background: #a32b2b; font-weight: bold; }
+.stop { background: #a32b2b; }
 
-/* Terminal */
-.console { flex: 1; display: flex; flex-direction: column; background: #050505; border: 4px solid #333; height: 500px; max-height: 500px; align-self: center; }
-.logs { flex: 1; padding: 10px; overflow-y: auto; font-size: 18px; color: #bbb; font-family: 'VT323'; }
-.chat-area { display: flex; border-top: 2px solid #333; padding: 5px; }
-.chat-area input { flex: 1; }
+/* Terminal (SABİT) */
+.console { flex: 1; display: flex; justify-content: center; align-items: center; }
+.terminal { width: 100%; max-width: 600px; height: 500px; background: #050505; border: 4px solid #333; display: flex; flex-direction: column; border-radius: 8px; }
+.term-head { background: #1a1a1a; padding: 10px; text-align: center; color: #0f9; font-size: 12px; }
+.logs { flex: 1; padding: 15px; overflow-y: scroll; font-family: 'VT323'; font-size: 20px; color: #aaa; }
+.chat-bar { display: flex; padding: 10px; background: #111; border-top: 2px solid #333; }
+.chat-bar input { flex: 1; margin: 0; }
 
-/* Modal (Açılma Sorunu Giderildi) */
-.modal-overlay { 
-    position: fixed; inset: 0; background: rgba(0,0,0,0.9); 
-    display: none; /* JS ile açılacak */
-    align-items: center; justify-content: center; z-index: 1000; 
-}
-.modal-box { background: #111; padding: 20px; border: 4px solid #0f9; width: 300px; display: flex; flex-direction: column; gap: 15px; }
+/* Modal */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { background: #111; padding: 30px; border: 4px solid #0f9; width: 320px; text-align: center; }
+.row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+    
