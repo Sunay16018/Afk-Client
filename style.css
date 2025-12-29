@@ -1,37 +1,59 @@
-:root { --accent: #00f2ff; --bg: #050505; --side: #0f0f15; --glass: rgba(255, 255, 255, 0.05); }
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-body { background: var(--bg); color: #fff; height: 100vh; overflow: hidden; }
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&display=swap');
 
-.main-layout { display: flex; height: 100vh; padding: 15px; gap: 15px; }
+:root {
+    --mc-green: #3fb53f;
+    --mc-red: #b3312c;
+    --mc-blue: #3f3fb5;
+    --mc-gray: #4a4a4a;
+    --border: #1e1e1e;
+}
 
-/* Sol Panel */
-.control-panel { width: 300px; background: var(--side); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; gap: 20px; border: 1px solid #222; }
-.brand { font-size: 24px; font-weight: 900; text-align: center; }
-.brand span { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #121212; color: #fff; height: 100vh; overflow: hidden; font-family: 'Silkscreen', cursive; }
 
-input, select { background: #000; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 10px; width: 100%; outline: none; transition: 0.3s; }
-input:focus { border-color: var(--accent); }
+.pro-layout { display: flex; height: 100vh; padding: 15px; gap: 15px; }
 
-.btn { padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 5px; }
-.connect { background: var(--accent); color: #000; }
-.disconnect { background: #ff4757; color: #fff; }
-.settings { background: #222; color: #fff; }
-.btn:hover { opacity: 0.8; transform: scale(0.98); }
+/* Font Ayarı */
+.mc-font { font-family: 'VT323', monospace; letter-spacing: 1px; }
 
-/* D-PAD (Hareket Butonları) */
-.dpad-container { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 10px 0; }
-.dpad-mid { display: flex; gap: 8px; }
-.ctrl-btn { width: 55px; height: 50px; background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 10px; font-size: 20px; cursor: pointer; border-bottom: 4px solid var(--accent); }
-.ctrl-btn:active { border-bottom: 0; transform: translateY(3px); }
-.jump-btn { width: 181px; font-size: 14px; background: #222; border-bottom: 4px solid #fff; }
+/* Yan Panel */
+.sidebar { width: 320px; background: #1a1a1a; border: 4px solid #000; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+h1 { font-size: 26px; text-align: center; margin-bottom: 10px; }
+h1 span { color: var(--mc-green); }
 
-/* Terminal */
-.terminal { flex: 1; display: flex; flex-direction: column; background: #000; border-radius: 20px; border: 1px solid #222; overflow: hidden; position: relative; }
-.log-screen { flex: 1; padding: 25px; overflow-y: auto; font-family: 'Fira Code', monospace; font-size: 14px; line-height: 1.6; color: #aaa; }
-.chat-bar { padding: 20px; background: #0a0a0a; border-top: 1px solid #222; }
-.chat-bar input { border: none; background: var(--glass); font-size: 16px; }
+.box { background: #262626; padding: 10px; border: 2px solid #000; border-radius: 4px; }
+
+input, select { 
+    width: 100%; padding: 10px; margin-bottom: 8px; background: #000; color: var(--mc-green);
+    border: 2px solid var(--mc-gray); font-family: 'VT323'; font-size: 18px; outline: none;
+}
+
+/* Minecraft Buton Stili */
+.mc-btn { 
+    width: 100%; padding: 12px; border: 4px solid #000; font-family: 'Silkscreen'; cursor: pointer;
+    font-size: 14px; text-shadow: 2px 2px #000; color: #fff; transition: 0.1s; position: relative;
+}
+.mc-btn:active { transform: scale(0.95); }
+.green { background: var(--mc-green); border-color: #55ff55 #227722 #227722 #55ff55; }
+.red { background: var(--mc-red); border-color: #ff5555 #772222 #772222 #ff5555; }
+.blue { background: var(--mc-blue); border-color: #5555ff #222277 #222277 #5555ff; }
+.gray { background: var(--mc-gray); border-color: #777 #222 #222 #777; }
+
+/* D-PAD Hareket */
+.dpad { display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 10px 0; }
+.dp-row { display: flex; gap: 5px; }
+.dp-btn { 
+    width: 60px; height: 55px; background: #333; border: 4px solid #000; color: #fff;
+    font-size: 20px; cursor: pointer; border-color: #555 #111 #111 #555;
+}
+
+/* Terminal (Geniş ve Ferah) */
+.terminal-view { flex: 1; background: #000; border: 4px solid var(--mc-gray); display: flex; flex-direction: column; position: relative; }
+.logs { flex: 1; padding: 20px; overflow-y: auto; font-size: 20px; line-height: 1.4; color: #eee; }
+.input-container { padding: 15px; background: #1a1a1a; border-top: 4px solid var(--mc-gray); }
+.input-container input { margin: 0; font-size: 20px; border-color: var(--mc-green); }
 
 /* Modal */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: #111; padding: 30px; border-radius: 20px; border: 1px solid var(--accent); width: 340px; }
-.modal-content .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100; }
+.modal-box { background: #1a1a1a; padding: 30px; border: 4px solid var(--mc-green); width: 350px; text-align: center; }
+.set-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 22px; }
