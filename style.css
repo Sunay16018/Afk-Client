@@ -1,88 +1,41 @@
-:root {
-    --bg-color: #050505;
-    --panel-color: #111;
-    --neon-green: #00ff9d;
-    --neon-blue: #00d4ff;
-    --neon-red: #ff3333;
-    --text-color: #e0e0e0;
+body {
+    background-color: black;
+    color: #0f9;
+    font-family: 'Courier New', monospace;
+    margin: 0;
+    padding: 20px;
 }
 
-body { margin: 0; background: var(--bg-color); color: var(--text-color); font-family: 'Orbitron', sans-serif; height: 100vh; overflow: hidden; }
-
-.dashboard { display: flex; height: 100vh; gap: 2px; }
-
-/* SOL PANEL */
-.panel-left {
-    width: 350px; background: var(--panel-color); padding: 20px;
-    display: flex; flex-direction: column; gap: 15px; border-right: 2px solid var(--neon-green);
-    box-shadow: 10px 0 20px rgba(0,255,157,0.1);
+.container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
 }
 
-.title { margin: 0; text-align: center; color: var(--neon-green); font-size: 2.5rem; letter-spacing: 3px; }
-.title span { color: #fff; }
-
-#statusIndicator {
-    text-align: center; padding: 10px; font-weight: bold; border-radius: 5px;
-    background: #000; border: 1px solid #333;
-}
-.status-offline { color: var(--neon-red); border-color: var(--neon-red) !important; }
-.status-online { color: var(--neon-green); border-color: var(--neon-green) !important; }
-
-/* Butonlar ve Kontroller */
-.controls-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin: 20px 0; }
-button {
-    background: #222; border: 1px solid var(--neon-green); color: var(--neon-green);
-    padding: 10px; cursor: pointer; font-family: 'Orbitron'; transition: 0.2s;
-    text-transform: uppercase; font-weight: bold;
-}
-button:active { background: var(--neon-green); color: #000; }
-button:hover { box-shadow: 0 0 10px var(--neon-green); }
-
-.jump-btn { width: 100%; margin-bottom: 20px; }
-
-.menu-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
-.btn-connect { border-color: var(--neon-blue); color: var(--neon-blue); }
-.btn-connect:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 15px var(--neon-blue); }
-
-.btn-disconnect { border-color: var(--neon-red); color: var(--neon-red); }
-.btn-disconnect:hover { background: var(--neon-red); color: #fff; box-shadow: 0 0 15px var(--neon-red); }
-
-/* SAĞ PANEL (SOHBET) */
-.panel-right { flex: 1; display: flex; flex-direction: column; background: #000; }
-
-.terminal-display {
-    flex: 1; overflow-y: auto; padding: 15px;
-    font-family: 'VT323', monospace; font-size: 1.3rem;
-    display: flex; flex-direction: column; gap: 5px;
-}
-/* Scrollbar */
-.terminal-display::-webkit-scrollbar { width: 8px; }
-.terminal-display::-webkit-scrollbar-thumb { background: #333; }
-
-.sys-msg { color: #888; font-style: italic; }
-.chat-entry .user { color: var(--neon-blue); font-weight: bold; }
-.chat-entry .msg { color: #fff; }
-
-.chat-input-wrapper {
-    padding: 15px; background: #111; border-top: 1px solid var(--neon-green); display: flex; gap: 10px;
-}
-input {
-    flex: 1; background: #000; border: 1px solid #444; color: #fff;
-    padding: 10px; font-family: 'VT323'; font-size: 1.2rem;
+.controls, .radar-inventory, .terminal {
+    background-color: #111;
+    border: 1px solid #0f9;
+    padding: 15px;
 }
 
-/* MODAL */
+input, button {
+    background-color: #222;
+    color: #0f9;
+    border: 1px solid #0f9;
+    margin: 5px 0;
+}
+
 .modal {
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85); z-index: 100;
-    justify-content: center; align-items: center;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #111;
+    padding: 20px;
+    z-index: 1000;
 }
-.modal-box {
-    background: #111; border: 2px solid var(--neon-green); padding: 30px;
-    width: 400px; display: flex; flex-direction: column; gap: 15px;
-    box-shadow: 0 0 30px rgba(0,255,157,0.2);
+
+#chat-log {
+    height: 300px;
+    overflow-y: auto;
 }
-.modal-box h2 { color: var(--neon-green); margin: 0; text-align: center; }
-.modal-actions { display: flex; gap: 10px; margin-top: 10px; }
-.modal-actions button { flex: 1; }
-.check-container { display: flex; align-items: center; gap: 10px; cursor: pointer; }
