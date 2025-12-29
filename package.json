@@ -1,17 +1,15 @@
 {
-  "name": "cyber-afk-client",
-  "version": "2.1.0",
-  "description": "Render.com Uyumlu Mineflayer Panel",
+  "name": "minecraft-afk-client",
+  "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "mineflayer": "^4.20.1",
-    "socket.io": "^4.7.2"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "mineflayer": "^4.9.1", 
+    "mineflayer-pathfinder": "^2.4.2",
+    "socket.io": "^4.7.2",
+    "mathjs": "^11.8.0"
   }
 }
