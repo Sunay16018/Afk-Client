@@ -2,64 +2,61 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>PRO AFK PANEL</title>
+    <title>AFK PRO PANEL</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="wrapper">
-        <main class="main-panel">
-            <h1 class="mc-font">AFK <span>PRO</span></h1>
+    <div class="app-wrapper">
+        <div class="left-side">
+            <h1 class="mc-font">AFK <span>CLIENT</span></h1>
             
             <div class="card">
-                <div class="input-group">
-                    <input type="text" id="ip" placeholder="Server IP:Port">
-                    <input type="text" id="nick" placeholder="Bot Nickname">
-                    <input type="password" id="pass" placeholder="Auto-Login Pass">
-                </div>
-                <div class="button-group">
-                    <button class="btn btn-g" onclick="connect()">BAĞLAN</button>
-                    <button class="btn btn-r" onclick="disconnect()">KES</button>
+                <input type="text" id="ip" placeholder="Server IP:Port">
+                <input type="text" id="nick" placeholder="Bot İsmi">
+                <input type="password" id="pass" placeholder="Oto-Şifre">
+                <div class="btn-row">
+                    <button class="mc-btn green" onclick="connect()">BAĞLAN</button>
+                    <button class="mc-btn red" onclick="disconnect()">KES</button>
                 </div>
             </div>
 
             <div class="card">
-                <label class="mc-font">HEDEF BOT SEÇ:</label>
+                <label class="mc-font">BOT SEÇ:</label>
                 <select id="bot-sel" onchange="selBot = this.value"></select>
             </div>
 
-            <div class="dpad-wrapper">
-                <div class="dpad">
-                    <button class="dp-btn" onclick="move('forward')">▲</button>
-                    <div class="dp-row">
-                        <button class="dp-btn" onclick="move('left')">◀</button>
-                        <button class="dp-btn" onclick="move('back')">▼</button>
-                        <button class="dp-btn" onclick="move('right')">▶</button>
-                    </div>
-                    <button class="btn btn-b jump-btn" onclick="move('jump')">ZIPLA</button>
+            <div class="dpad-box">
+                <button class="dp" onclick="move('forward')">▲</button>
+                <div class="dp-row">
+                    <button class="dp" onclick="move('left')">◀</button>
+                    <button class="dp" onclick="move('back')">▼</button>
+                    <button class="dp" onclick="move('right')">▶</button>
+                </div>
+                <button class="mc-btn blue jump" onclick="move('jump')">ZIPLA</button>
+            </div>
+
+            <button class="mc-btn gray" onclick="openSet()">⚙ AYARLAR</button>
+        </div>
+
+        <div class="right-side">
+            <div class="terminal-box">
+                <div class="term-head mc-font">SUNUCU MESAJLARI</div>
+                <div id="logs" class="logs mc-mono"></div>
+                
+                <div class="chat-input-area">
+                    <input type="text" id="cin" placeholder="Mesaj yaz ve Enter bas...">
+                    <button onclick="sendChat()">GÖNDER</button>
                 </div>
             </div>
-
-            <button class="btn btn-gray" onclick="openSet()">⚙ AYARLAR</button>
-        </main>
-
-        <aside class="side-terminal">
-            <div class="term-box">
-                <div class="term-header mc-font">SUNUCU SOHBETİ</div>
-                <div id="logs" class="logs mc-mono"></div>
-            </div>
-            <div class="chat-box">
-                <input type="text" id="cin" placeholder="Mesaj yaz ve Enter'la...">
-            </div>
-        </aside>
+        </div>
     </div>
 
     <div id="modal" class="modal">
-        <div class="modal-content mc-font">
-            <h3>MODÜL AYARLARI</h3>
-            <div class="row">Matematik: <input type="checkbox" id="m-on"></div>
-            <div class="row">Maden: <input type="checkbox" id="mine-on"></div>
-            <div class="row">Gecikme: <input type="number" id="m-del" value="0"></div>
-            <button class="btn btn-g" onclick="save()">KAYDET</button>
+        <div class="modal-box mc-font">
+            <h3>MODÜLLER</h3>
+            <label>Matematik <input type="checkbox" id="m-on"></label>
+            <label>Maden <input type="checkbox" id="mine-on"></label>
+            <button class="mc-btn green" onclick="save()">KAYDET</button>
         </div>
     </div>
 
