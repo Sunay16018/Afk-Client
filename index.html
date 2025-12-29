@@ -1,44 +1,37 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" class="notranslate" translate="no">
 <head>
     <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL | MULTI-BOT DASHBOARD</title>
+    <title>AFK BOT PANEL</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Fira+Code&display=swap" rel="stylesheet">
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-    <aside class="sidebar">
-        <div class="logo">
-            <h2 style="color: var(--accent); margin-bottom: 30px;">BOT<span style="color: white;">CONTROL</span></h2>
+    <div class="sidebar">
+        <h2 class="logo">AFK<span>PRO</span></h2>
+        
+        <div class="input-group">
+            <input type="text" id="host" placeholder="Sunucu IP:Port">
+            <input type="text" id="user" placeholder="Bot İsmi">
+            <input type="password" id="pass" placeholder="Şifre">
+            <button id="add-bot">BAĞLAN</button>
         </div>
 
-        <h3>YENİ HESAP EKLE</h3>
-        <input type="text" id="host" placeholder="IP:Port (play.sunucu.com)">
-        <input type="text" id="user" placeholder="Kullanıcı Adı">
-        <input type="password" id="pass" placeholder="Sunucu Şifresi">
-        <button id="add-bot" class="btn-primary">SİSTEME BAĞLA</button>
-
-        <div style="margin-top: 30px;">
-            <h3>AKTİF OLANLAR</h3>
-            <div id="bot-list">
-                </div>
+        <div class="bot-list-container">
+            <h3>AKTİF HESAPLAR</h3>
+            <div id="bot-list"></div>
         </div>
-    </aside>
+    </div>
 
-    <main class="main-terminal">
-        <div id="logs">
-            <div style="color: #555;">[SİSTEM] Kontrol paneli hazır. Bağlantı bekleniyor...</div>
+    <div class="main-content">
+        <div id="logs"></div>
+        <div class="chat-bar">
+            <select id="target-bot"></select>
+            <input type="text" id="chat-input" placeholder="Mesaj gönder..." autocomplete="off">
         </div>
-
-        <div class="input-area">
-            <select id="target-bot">
-                <option value="">Bot Seç...</option>
-            </select>
-            <input type="text" id="chat-input" placeholder="Seçili bot ile mesaj gönder veya komut kullan...">
-        </div>
-    </main>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
