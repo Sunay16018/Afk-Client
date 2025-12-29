@@ -2,42 +2,45 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>AFK PANEL MINI</title>
+    <title>Master Bot Control</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body oncontextmenu="return false;">
-    <div class="sidebar">
-        <h2 style="color:#00f2ff; text-align:center;">AFK<span>PRO</span></h2>
-        <input type="text" id="host" placeholder="Sunucu IP:Port">
-        <input type="text" id="user" placeholder="Kullanıcı Adı">
-        <input type="password" id="pass" placeholder="Şifre">
-        <button id="add-bot">BAĞLAN</button>
-
-        <div class="move-panel">
-            <button onclick="move('forward')">W</button>
-            <div class="row">
-                <button onclick="move('left')">A</button>
-                <button onclick="move('back')">S</button>
-                <button onclick="move('right')">D</button>
+    <div class="master-container">
+        <aside class="side">
+            <h2 class="brand">AFK<span>MASTER</span></h2>
+            <div class="inputs">
+                <input type="text" id="host" placeholder="IP:Port">
+                <input type="text" id="user" placeholder="Bot İsmi">
+                <input type="password" id="pass" placeholder="Şifre">
+                <button id="connect-btn">BAĞLAN</button>
             </div>
-            <div class="row">
-                <button onclick="move('left-turn')">SOLA BAK</button>
-                <button onclick="move('right-turn')">SAĞA BAK</button>
+            
+            <div class="controls">
+                <div class="btn-row"><button onclick="move('forward')">W</button></div>
+                <div class="btn-row">
+                    <button onclick="move('left')">A</button>
+                    <button onclick="move('back')">S</button>
+                    <button onclick="move('right')">D</button>
+                </div>
+                <div class="btn-row">
+                    <button onclick="move('left-turn')" class="alt">SOLA</button>
+                    <button onclick="move('jump')" class="blue">ZIPLA</button>
+                    <button onclick="move('right-turn')" class="alt">SAĞA</button>
+                </div>
+                <button onclick="move('stop')" class="red">DURDUR</button>
             </div>
-            <button onclick="move('jump')" style="background:#0072ff">ZIPLA</button>
-            <button onclick="move('stop')" style="background:#da3633">DUR</button>
-        </div>
-        <div id="bot-list"></div>
-    </div>
+            <div id="bot-list"></div>
+        </aside>
 
-    <div class="main-content">
-        <div id="logs"></div>
-        <div class="chat-bar">
-            <select id="target-bot" onchange="this.blur()"></select>
-            <input type="text" id="chat-input" placeholder="Mesaj yaz..." autocomplete="off">
-        </div>
+        <section class="main">
+            <div id="terminal" class="term"></div>
+            <div class="chat-area">
+                <select id="bot-select"></select>
+                <input type="text" id="chat-in" placeholder="Mesajı gönder..." autocomplete="off">
+            </div>
+        </section>
     </div>
-
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
