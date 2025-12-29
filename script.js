@@ -9,24 +9,26 @@ function connect() {
 function disconnect() { if(selBot) socket.emit('quit', selBot); }
 function move(dir) { if(selBot) socket.emit('move', { user: selBot, dir }); }
 function openSet() { el('modal').style.display = 'flex'; }
+
 function save() {
-    socket.emit('update-config', { user: selBot, config: { math: el('m-on').checked, mine: el('mine-on').checked } });
+    const config = { 
+        math: el('m-on').checked, 
+        mine: el('mine-on').checked,
+        autoMsg: el('auto-msg').value 
+    };
+    socket.emit('update-config', { user: selBot, config });
     el('modal').style.display = 'none';
 }
 
-// MESAJ GÖNDERME FONKSİYONU
 function sendChat() {
-    const msg = el('cin').value;
-    if(selBot && msg.trim() !== "") {
-        socket.emit('chat', { user: selBot, msg: msg });
+    const val = el('cin').value;
+    if(selBot && val.trim() !== "") {
+        socket.emit('chat', { user: selBot, msg: val });
         el('cin').value = "";
     }
 }
 
-// Enter tuşu ile gönderme
-el('cin').onkeydown = (e) => {
-    if(e.key === 'Enter') sendChat();
-};
+el('cin').onkeydown = (e) => { if(e.key === 'Enter') sendChat(); };
 
 socket.on('status', d => {
     const s = el('bot-sel');
@@ -44,6 +46,6 @@ socket.on('status', d => {
 
 socket.on('log', d => {
     const l = el('logs');
-    l.innerHTML += `<div><span style="color:#00ffcc">></span> ${d.msg}</div>`;
+    l.innerHTML += `<div><span style="color:#0f9">></span> ${d.msg}</div>`;
     l.scrollTop = l.scrollHeight;
 });
