@@ -6,46 +6,60 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="header">
-        <button class="set-btn" onclick="openMenu()">⚙ AYARLAR</button>
-        <h1>AFK <span>CLIENT</span></h1>
-        <div id="stat" class="offline">ÇEVRİMDIŞI</div>
-    </div>
+    <div class="app">
+        <header class="navbar">
+            <div class="brand">AFK <span>CLIENT</span></div>
+            <div class="nav-right">
+                <div id="stat" class="badge offline">ÇEVRİMDIŞI</div>
+                <button class="icon-btn" onclick="openMenu()">⚙</button>
+            </div>
+        </header>
 
-    <div class="main-container">
-        <div class="sidebar">
-            <input type="text" id="ip" placeholder="Sunucu IP:Port">
-            <input type="text" id="nick" placeholder="Bot İsmi">
-            <button onclick="start()" class="conn-btn">BAĞLAN</button>
-            
-            <div class="d-pad">
-                <button onclick="mv('forward')">W</button>
-                <div class="row">
-                    <button onclick="mv('left')">A</button>
-                    <button onclick="mv('back')">S</button>
-                    <button onclick="mv('right')">D</button>
+        <main class="content">
+            <aside class="sidebar">
+                <div class="input-group">
+                    <input type="text" id="ip" placeholder="Sunucu IP:Port">
+                    <input type="text" id="nick" placeholder="Kullanıcı Adı">
+                    <button onclick="conn()" class="btn-primary">SİSTEMİ AÇ</button>
+                    <button onclick="disc()" class="btn-danger">BAĞLANTIYI KES</button>
                 </div>
-                <button onclick="mv('jump')" class="jmp">ZIPLA</button>
-            </div>
-            <select id="bot-list"></select>
-        </div>
 
-        <div class="console">
-            <div id="logs"></div>
-            <div class="chat-bar">
-                <input type="text" id="msg-in" placeholder="Sohbete yaz...">
-            </div>
-        </div>
+                <div class="controller">
+                    <button class="key" onclick="mv('forward')">W</button>
+                    <div class="key-row">
+                        <button class="key" onclick="mv('left')">A</button>
+                        <button class="key" onclick="mv('back')">S</button>
+                        <button class="key" onclick="mv('right')">D</button>
+                    </div>
+                    <button class="key jump" onclick="mv('jump')">ZIPLA</button>
+                </div>
+                <select id="bot-list"></select>
+            </aside>
+
+            <section class="terminal">
+                <div id="logs"></div>
+                <div class="chat-input">
+                    <input type="text" id="msg-in" placeholder="Sohbete mesaj gönder...">
+                </div>
+            </section>
+        </main>
     </div>
 
     <div id="modal" class="modal">
-        <div class="modal-box">
-            <h2>AYARLAR</h2>
-            <div class="opt"><label>Matematik Sistemi <input type="checkbox" id="m-on"></label></div>
-            <div class="opt"><label>Gecikme (sn) <input type="number" id="m-del" value="0"></label></div>
-            <div class="opt"><label>Oto Yeniden Bağlanma <input type="checkbox" id="r-on"></label></div>
-            <div class="opt"><label>Maden Modu (Sürekli) <input type="checkbox" id="mine-on"></label></div>
-            <button onclick="save()" class="save-btn">KAYDET</button>
+        <div class="modal-content">
+            <h3>⚙ Ayarlar Menüsü</h3>
+            <div class="field"><label>Matematik Sistemi <input type="checkbox" id="m-on"></label></div>
+            <div class="field"><label>Gecikme (sn) <input type="number" id="m-del" value="0"></label></div>
+            <div class="field"><label>Oto Bağlanma <input type="checkbox" id="r-on"></label></div>
+            <div class="field"><label>Maden (Kazma) Modu <input type="checkbox" id="mine-on"></label></div>
+            <hr>
+            <h4>Otomatik Mesaj</h4>
+            <div class="auto-row">
+                <input type="text" id="otxt" placeholder="Mesajınız">
+                <input type="number" id="osec" placeholder="Saniye" style="width: 70px;">
+            </div>
+            <button onclick="save()" class="btn-primary">KAYDET</button>
+            <button onclick="closeMenu()" class="btn-close">KAPAT</button>
         </div>
     </div>
 
