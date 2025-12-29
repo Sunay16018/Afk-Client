@@ -1,78 +1,83 @@
 const socket = io();
 
-// Elementler
-const term = document.getElementById('terminal');
-const statusDiv = document.getElementById('statusIndicator');
+// Bağlantı Modal Kontrolleri
+const connectionModal = document.getElementById('connection-modal');
+const connectBtn = document.getElementById('connect-btn');
+const disconnectBtn = document.getElementById('disconnect-btn');
 
-// Log Yazdırma
-function log(html) {
-    const div = document.createElement('div');
-    div.innerHTML = html;
-    term.appendChild(div);
-    term.scrollTop = term.scrollHeight;
-}
+// Form Elemanları
+const serverIpInput = document.getElementById('server-ip');
+const botUsernameInput = document.getElementById('bot-username');
+const botPasswordInput = document.getElementById('bot-password');
 
-// Socket Olayları
-socket.on('log', (msg) => log(`<span class="sys-msg">> ${msg}</span>`));
-socket.on('chat-log', (data) => {
-    log(`<span class="chat-entry"><span class="user">[${data.user}]</span> <span class="msg">${data.msg}</span></span>`);
-});
+// Toggle Switchler
+const autoMineToggle = document.getElementById('auto-mine');
+const autoDefendToggle = document.getElementById('auto-defend');
 
-socket.on('status', (state) => {
-    if(state === 'connected') {
-        statusDiv.innerText = "BAĞLI 🟢";
-        statusDiv.className = "status-online";
-    } else {
-        statusDiv.innerText = "BAĞLI DEĞİL 🔴";
-        statusDiv.className = "status-offline";
-    }
-});
+// Log ve Bilgilendirme Alanları
+const chatLog = document.getElementById('chat-log');
+const nearbyEntitiesDiv = document.getElementById('nearby-entities');
+const inventoryContentDiv = document.getElementById('inventory-content');
 
-// Kontroller
-function toggleModal(id) {
-    const el = document.getElementById(id);
-    el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';
-}
-
-function connectBot() {
-    const ip = document.getElementById('ip').value;
-    const user = document.getElementById('user').value;
-    const pass = document.getElementById('pass').value;
-
-    if(!ip || !user) return alert("IP ve Kullanıcı Adı gerekli!");
-
-    socket.emit('connect-bot', { host: ip, username: user, password: pass });
-    toggleModal('loginModal');
-}
-
-function disconnectBot() {
-    socket.emit('disconnect-bot');
-}
-
-function saveSettings() {
-    const settings = {
-        mathEnabled: document.getElementById('setMath').checked,
-        mathDelay: parseInt(document.getElementById('setMathDelay').value) || 2000,
-        autoMine: document.getElementById('setMine').checked,
-        autoMsgEnabled: document.getElementById('setMsg').checked,
-        autoMsgText: document.getElementById('setMsgText').value,
-        autoMsgTime: parseInt(document.getElementById('setMsgTime').value) || 60
+// Bağlantı Butonu Event Listener
+connectBtn.addEventListener('click', () => {
+    const config = {
+        host: serverIpInput.value,
+        username: botUsernameInput.value,
+        password: botPasswordInput.value
     };
-    socket.emit('update-settings', settings);
-    toggleModal('settingsModal');
-}
+    socket.emit('connect_minecraft', config);
+});
 
-function move(dir, state) {
-    socket.emit('move', { dir, state });
-}
+// Bağlantı Kes Butonu Event Listener
+disconnectBtn.addEventListener('click', () => {
+    socket.emit('disconnect_minecraft');
+});
 
-function sendChat() {
-    const inp = document.getElementById('chatInp');
-    if(inp.value) {
-        socket.emit('send-chat', inp.value);
-        inp.value = '';
-    }
-}
-function handleEnter(e) {
-    if(e.key === 'Enter') sendChat();
-}
+// Oto Maden Toggle Event Listener
+autoMineToggle.addEventListener('change', (e) => {
+    socket.emit('toggle_auto_mine', e.target.checked);
+});
+
+// Oto Savunma Toggle Event Listener
+autoDefendToggle.addEventListener('change', (e) => {
+    socket.emit('toggle_auto_defend', e.target.checked);
+});
+
+// Sunucu Durum Bildirimleri
+socket.on('bot_status', (message) => {
+    const statusEntry = document.createElement('div');
+    statusEntry.textContent = `[STATUS] ${message}`;
+    statusEntry.style.color = '#0f9';
+    chatLog.appendChild(statusEntry);
+    chatLog.scrollTop = chatLog.scrollHeight;
+});
+
+// Bot Hata Bildirimleri
+socket.on('bot_error', (errorMessage) => {
+    const errorEntry = document.createElement('div');
+    errorEntry.textContent = `[ERROR] ${errorMessage}`;
+    errorEntry.style.color = 'red';
+    chatLog.appendChild(errorEntry);
+    chatLog.scrollTop = chatLog.scrollHeight;
+});
+
+// Yakındaki Varlıkları Güncelleme
+socket.on('nearby_entities', (entities) => {
+    nearbyEntitiesDiv.innerHTML = '';
+    entities.forEach(entity => {
+        const entityDiv = document.createElement('div');
+        entityDiv.textContent = `${entity.name} (${entity.distance.toFixed(2)}m)`;
+        nearbyEntitiesDiv.appendChild(entityDiv);
+    });
+});
+
+// Envanter İçeriğini Güncelleme
+socket.on('inventory_update', (inventory) => {
+    inventoryContentDiv.innerHTML = '';
+    inventory.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.textContent = `${item.name} (${item.count})`;
+        inventoryContentDiv.appendChild(itemDiv);
+    });
+});
