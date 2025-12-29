@@ -2,22 +2,24 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>CyberCore Multi-Version</title>
+    <title>CyberCore Elite V8</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <div class="app">
         <aside class="side">
-            <h2 class="neon">AFK<span>UNI</span></h2>
-            <div class="inputs">
+            <h2 class="neon">AFK<span>PRO</span></h2>
+            <div class="form">
                 <input type="text" id="host" placeholder="Server IP">
-                <input type="text" id="user" placeholder="Kullanıcı Adı">
-                <input type="password" id="pass" placeholder="Şifre">
-                <button onclick="start()" id="s-btn">SİSTEMİ BAŞLAT</button>
+                <input type="text" id="user" placeholder="Bot Ön İsim">
+                <div class="row">
+                    <button onclick="start(false)" class="blue-btn">TEK BOT</button>
+                    <button onclick="start(true)" class="purple-btn">10 BOT (RANDOM)</button>
+                </div>
             </div>
 
             <div class="module">
-                <p>MATEMATİK SİSTEMİ</p>
+                <span>MATEMATİK KORUMALI</span>
                 <div class="flex">
                     <button id="m-toggle" class="off" onclick="toggleM()">KAPALI</button>
                     <input type="number" id="m-delay" value="0" step="0.1">
@@ -25,27 +27,22 @@
             </div>
 
             <div class="pad">
-                <button class="key w" onclick="move('forward')">W</button>
+                <button class="key" onmousedown="move('forward','start')" onmouseup="move('forward','stop')" onclick="move('forward','single')">W</button>
                 <div class="flex">
-                    <button class="key" onclick="move('left')">A</button>
-                    <button class="key" onclick="move('back')">S</button>
-                    <button class="key" onclick="move('right')">D</button>
+                    <button class="key" onmousedown="move('left','start')" onmouseup="move('left','stop')" onclick="move('left','single')">A</button>
+                    <button class="key" onmousedown="move('back','start')" onmouseup="move('back','stop')" onclick="move('back','single')">S</button>
+                    <button class="key" onmousedown="move('right','start')" onmouseup="move('right','stop')" onclick="move('right','single')">D</button>
                 </div>
-                <div class="flex">
-                    <button class="key gray" onclick="move('left-turn')">SOL</button>
-                    <button class="key gray" onclick="move('right-turn')">SAĞ</button>
-                </div>
-                <button class="key blue" onclick="move('jump')">ZIPLA</button>
-                <button class="key red" onclick="move('stop')">DURDUR</button>
+                <button class="red-btn" onclick="move('stop','all')">HEPSİNİ DURDUR</button>
             </div>
-            <div id="active-list"></div>
+            <div id="bot-list"></div>
         </aside>
 
         <section class="main">
-            <div id="logs" class="terminal"></div>
-            <div class="input-bar">
+            <div id="logs"></div>
+            <div class="bar">
                 <select id="bot-sel"></select>
-                <input type="text" id="chat-in" placeholder="Mesaj gönder..." autocomplete="off">
+                <input type="text" id="chat-in" placeholder="Mesaj yazın...">
             </div>
         </section>
     </div>
