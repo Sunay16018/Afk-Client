@@ -2,72 +2,50 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>CyberCore Elite V10</title>
+    <title>AFK CLIENT</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="glass-container">
-        <nav class="navbar">
-            <button class="icon-btn" onclick="openMenu()">⚙ Ayarlar</button>
-            <div class="logo">CYBER<span>AFK</span></div>
-            <div id="status-tag" class="tag offline">OFFLINE</div>
-        </nav>
+    <div class="header">
+        <button class="set-btn" onclick="openMenu()">⚙ AYARLAR</button>
+        <h1>AFK <span>CLIENT</span></h1>
+        <div id="stat" class="offline">ÇEVRİMDIŞI</div>
+    </div>
 
-        <div class="layout">
-            <aside class="sidebar">
-                <div class="card">
-                    <input type="text" id="host" placeholder="Server IP:Port">
-                    <input type="text" id="user" placeholder="Bot İsmi">
-                    <button onclick="connectBot()" class="main-btn">BAŞLAT</button>
+    <div class="main-container">
+        <div class="sidebar">
+            <input type="text" id="ip" placeholder="Sunucu IP:Port">
+            <input type="text" id="nick" placeholder="Bot İsmi">
+            <button onclick="start()" class="conn-btn">BAĞLAN</button>
+            
+            <div class="d-pad">
+                <button onclick="mv('forward')">W</button>
+                <div class="row">
+                    <button onclick="mv('left')">A</button>
+                    <button onclick="mv('back')">S</button>
+                    <button onclick="mv('right')">D</button>
                 </div>
+                <button onclick="mv('jump')" class="jmp">ZIPLA</button>
+            </div>
+            <select id="bot-list"></select>
+        </div>
 
-                <div class="controller">
-                    <button class="k" onclick="move('forward')">W</button>
-                    <div class="k-row">
-                        <button class="k" onclick="move('left')">A</button>
-                        <button class="k" onclick="move('back')">S</button>
-                        <button class="k" onclick="move('right')">D</button>
-                    </div>
-                    <button class="k jmp" onclick="move('jump')">ZIPLA</button>
-                </div>
-                <div id="bot-list" class="list"></div>
-            </aside>
-
-            <main class="console">
-                <div id="logs" class="log-area"></div>
-                <div class="input-row">
-                    <select id="bot-sel"></select>
-                    <input type="text" id="chat-in" placeholder="Sohbete mesaj gönder...">
-                </div>
-            </main>
+        <div class="console">
+            <div id="logs"></div>
+            <div class="chat-bar">
+                <input type="text" id="msg-in" placeholder="Sohbete yaz...">
+            </div>
         </div>
     </div>
 
-    <div id="modal" class="modal-overlay">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2>Bot Konfigürasyonu</h2>
-                <button onclick="closeMenu()">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="group">
-                    <label>🔢 Matematik Çözücü <input type="checkbox" id="m-on"></label>
-                    <input type="number" id="m-delay" placeholder="Gecikme (sn)" value="0">
-                </div>
-                <div class="group">
-                    <label>🔄 Oto Bağlanma <input type="checkbox" id="r-on"></label>
-                    <label>⛏ Maden Modu <input type="checkbox" id="min-on"></label>
-                </div>
-                <hr>
-                <h4>📢 Otomatik Mesaj</h4>
-                <div id="msg-list">
-                    <div class="msg-item">
-                        <input type="text" class="m-txt" placeholder="Mesaj içeriği">
-                        <input type="number" class="m-time" placeholder="sn">
-                    </div>
-                </div>
-                <button onclick="save()" class="save-btn">TÜMÜNÜ KAYDET</button>
-            </div>
+    <div id="modal" class="modal">
+        <div class="modal-box">
+            <h2>AYARLAR</h2>
+            <div class="opt"><label>Matematik Sistemi <input type="checkbox" id="m-on"></label></div>
+            <div class="opt"><label>Gecikme (sn) <input type="number" id="m-del" value="0"></label></div>
+            <div class="opt"><label>Oto Yeniden Bağlanma <input type="checkbox" id="r-on"></label></div>
+            <div class="opt"><label>Maden Modu (Sürekli) <input type="checkbox" id="mine-on"></label></div>
+            <button onclick="save()" class="save-btn">KAYDET</button>
         </div>
     </div>
 
