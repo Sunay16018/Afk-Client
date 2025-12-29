@@ -1,110 +1,79 @@
+const mineflayer = require('mineflayer');
 const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io');
-const mineflayer = require('mineflayer');
 const path = require('path');
+const { Server } = require('socket.io');
 
-const uygulama = express();
-const sunucu = http.createServer(uygulama);
-const io = new Server(sunucu);
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+const PORT = process.env.PORT || 3000;
 
-uygulama.use(express.static(__dirname));
-let aktifBotlar = {};
+// Tüm dosyalar ana dizinde olduğu için kök dizini servis ediyoruz
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/style.css', (req, res) => res.sendFile(path.join(__dirname, 'style.css')));
+app.get('/script.js', (req, res) => res.sendFile(path.join(__dirname, 'script.js')));
 
-io.on('connection', (socket) => {
-    socket.emit('bot-listesi-guncelle', Object.keys(aktifBotlar));
+let bot;
 
-    socket.on('bot-baslat', (veri) => {
-        const { ip, port, isim, sifre } = veri;
-        if (aktifBotlar[isim]) return socket.emit('log', '<span style="color:#f33">[HATA] Bot zaten aktif!</span>');
-
-        const bot = mineflayer.createBot({
-            host: ip,
-            port: parseInt(port) || 25565,
-            username: isim
-        });
-
-        // Sohbet Dönüştürücü Hazırla
-        const MesajParser = require('prismarine-chat')(bot.version || '1.20.1');
-
-        bot.ayarlar = {
-            kazmaAktif: false,
-            otoMesajAktif: false,
-            otoMesajMetni: "",
-            otoMesajSuresi: 30,
-            matematikAktif: false,
-            matematikGecikme: 2
-        };
-
-        // TÜM MESAJLARI YAKALA (Sistem, Sohbet, Duyuru)
-        bot.on('message', (jsonMsg) => {
-            // Minecraft JSON mesajını HTML'e çevir
-            const htmlMesaj = jsonMsg.toHTML();
-            socket.emit('log', `<div class="satir"><strong>[${isim}]</strong> ${htmlMesaj}</div>`);
-
-            // Matematik Çözücü için düz metin kontrolü
-            if (bot.ayarlar.matematikAktif) {
-                const duzMetin = jsonMsg.toString();
-                const matRegex = /(\d+)\s*([\+\-\*\/x])\s*(\d+)/;
-                const eslesme = duzMetin.match(matRegex);
-                if (eslesme) {
-                    let n1 = parseInt(eslesme[1]), n2 = parseInt(eslesme[3]), op = eslesme[2], sonuc;
-                    if (op === '+') sonuc = n1 + n2;
-                    else if (op === '-') sonuc = n1 - n2;
-                    else if (op === '*' || op === 'x') sonuc = n1 * n2;
-                    else if (op === '/') sonuc = Math.floor(n1 / n2);
-                    if (sonuc !== undefined) {
-                        setTimeout(() => bot.chat(`${sonuc}`), bot.ayarlar.matematikGecikme * 1000);
-                    }
-                }
-            }
-        });
-
-        bot.on('spawn', () => {
-            io.emit('bot-listesi-guncelle', Object.keys(aktifBotlar));
-            if (sifre) setTimeout(() => bot.chat(`/login ${sifre}`), 2500);
-            
-            setInterval(() => {
-                if (bot.players) {
-                    socket.emit('bilgi-guncelle', { isim, oyuncuSayisi: Object.keys(bot.players).length });
-                }
-            }, 3000);
-        });
-
-        bot.on('physicsTick', async () => {
-            if (!bot.ayarlar.kazmaAktif || bot.kaziyor) return;
-            const blok = bot.blockAtCursor(4);
-            if (blok && blok.type !== 0) {
-                try {
-                    bot.kaziyor = true;
-                    bot.swingArm('right');
-                    await bot.dig(blok);
-                } catch (e) {} finally { bot.kaziyor = false; }
-            }
-        });
-
-        bot.on('kicked', (sebep) => {
-            socket.emit('log', `<span style="color:#f33">[SİSTEM] ${isim} Atıldı: ${sebep}</span>`);
-            delete aktifBotlar[isim];
-            io.emit('bot-listesi-guncelle', Object.keys(aktifBotlar));
-        });
-
-        aktifBotlar[isim] = bot;
+function createBot() {
+    bot = mineflayer.createBot({
+        host: 'SUNUCU_IP_ADRESI', // Burayı değiştirin
+        port: 25565,
+        username: 'CyberAFK_Bot',
+        version: '1.19.2'
     });
 
-    // ... (Diğer durdurma, hareket ve ayar soketleri aynı kalıyor)
-    socket.on('bot-durdur', (isim) => { if (aktifBotlar[isim]) { aktifBotlar[isim].quit(); delete aktifBotlar[isim]; io.emit('bot-listesi-guncelle', Object.keys(aktifBotlar)); } });
-    socket.on('mesaj-gonder', ({ isim, mesaj }) => { if (aktifBotlar[isim]) aktifBotlar[isim].chat(mesaj); });
-    socket.on('hareket', ({ isim, yon, durum }) => { if (aktifBotlar[isim]) aktifBotlar[isim].setControlState(yon, durum); });
-    socket.on('ayarlari-uygula', ({ isim, yeniAyarlar }) => {
-        const bot = aktifBotlar[isim];
-        if (!bot) return;
-        bot.ayarlar = { ...bot.ayarlar, ...yeniAyarlar };
-        if (bot.otoInterval) clearInterval(bot.otoInterval);
-        if (bot.ayarlar.otoMesajAktif && bot.ayarlar.otoMesajMetni) {
-            bot.otoInterval = setInterval(() => bot.chat(bot.ayarlar.otoMesajMetni), bot.ayarlar.otoMesajSuresi * 1000);
+    bot.on('spawn', () => io.emit('log', '🤖 Bot sunucuya giriş yaptı!'));
+
+    bot.on('chat', (username, message) => {
+        if (username === bot.username) return;
+        // Matematik Çözücü
+        const mathMatch = message.match(/(\d+)\s*([\+\-\*\/])\s*(\d+)/);
+        if (mathMatch) {
+            const num1 = parseInt(mathMatch[1]);
+            const op = mathMatch[2];
+            const num2 = parseInt(mathMatch[3]);
+            let res = (op === '+') ? num1 + num2 : (op === '-') ? num1 - num2 : (op === '*') ? num1 * num2 : Math.floor(num1 / num2);
+            bot.chat(`Cevap: ${res}`);
+            io.emit('log', `🧠 Matematik: ${num1}${op}${num2}=${res}`);
         }
+    });
+
+    bot.on('kicked', (reason) => {
+        console.log(`\x1b[31mATILMA SEBEBİ: [${reason}]\x1b[0m`);
+        io.emit('log', `❌ ATILMA: ${reason}`);
+    });
+
+    bot.on('end', () => {
+        io.emit('log', '⚠️ Bağlantı koptu, 5sn sonra reconnect...');
+        setTimeout(createBot, 5000);
+    });
+}
+
+io.on('connection', (socket) => {
+    socket.on('send-chat', (msg) => bot?.chat(msg));
+    socket.on('move', (dir) => {
+        const state = !bot.getControlState(dir);
+        bot.setControlState(dir, state);
+        io.emit('log', `🚶 ${dir.toUpperCase()}: ${state ? 'AÇIK' : 'KAPALI'}`);
+    });
+    socket.on('stop', () => {
+        bot.clearControlStates();
+        io.emit('log', '🛑 DURDURULDU');
+    });
+    socket.on('mine', async () => {
+        const block = bot.blockAtCursor(4);
+        if (!block) return io.emit('log', '⛏️ Blok yok!');
+        try {
+            io.emit('log', `⛏️ Kırılıyor: ${block.name}`);
+            await bot.dig(block); // %100 Asenkron kırma
+            io.emit('log', `✅ Kırıldı!`);
+        } catch (err) { io.emit('log', `❌ Hata: ${err.message}`); }
     });
 });
 
-sunucu.listen(process.env.PORT || 3000);
+server.listen(PORT, () => {
+    console.log(`Bot Paneli http://localhost:${PORT} adresinde aktif.`);
+    createBot();
+});
