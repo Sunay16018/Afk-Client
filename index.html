@@ -2,39 +2,40 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>CyberCore AFK v2</title>
+    <title>CyberCore AFK PRO</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="sidebar">
-        <div class="logo">CYBERCORE AI</div>
-        
-        <input type="text" id="host" placeholder="IP:Port (play.server.com)">
-        <input type="text" id="username" placeholder="Kullanıcı Adı">
-        <input type="password" id="password" placeholder="Şifre">
-        
-        <button onclick="connect()" class="btn btn-primary">SİSTEMİ BAŞLAT</button>
-        <button onclick="disconnect()" class="btn btn-danger">BAĞLANTIYI KES</button>
+    <div class="dashboard">
+        <div class="sidebar">
+            <h2 style="color: var(--blue); text-align: center;">CYBERCORE</h2>
+            <div id="status-text" class="status" style="color: #ff4b2b;">● ÇEVRİMDIŞI</div>
+            
+            <input type="text" id="host" placeholder="Server IP:Port">
+            <input type="text" id="username" placeholder="Bot İsmi">
+            <input type="password" id="password" placeholder="Şifre (/login)">
+            
+            <button onclick="connect()" class="btn">SİSTEMİ BAĞLA</button>
+            <button onclick="disconnect()" class="btn" style="background:#ff4b2b; color:#fff;">KES</button>
 
-        <div class="move-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
-            <div style="grid-column: 2"><button onclick="move('forward')" class="btn btn-primary">↑</button></div>
-            <button onclick="move('left')" class="btn btn-primary">←</button>
-            <button onclick="move('back')" class="btn btn-primary">↓</button>
-            <button onclick="move('right')" class="btn btn-primary">→</button>
-            <button onclick="move('jump')" class="btn btn-primary" style="grid-column: span 3">ZIPLA</button>
-        </div>
-    </div>
-
-    <div class="main-content">
-        <div class="terminal-container">
-            <div class="terminal-header">
-                <span id="status-text" style="color: #ff4b2b;">● SİSTEM ÇEVRİMDIŞI</span>
-                <span style="color: #4b5563;">CONSOLE v2.0.0</span>
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top:20px;">
+                <button onclick="move('forward')" class="btn" style="grid-column: 2">↑</button>
+                <button onclick="move('left')" class="btn">←</button>
+                <button onclick="move('back')" class="btn">↓</button>
+                <button onclick="move('right')" class="btn">→</button>
+                <button onclick="move('jump')" class="btn" style="grid-column: span 3">ZIPLA</button>
             </div>
-            <div id="logs"></div>
-            <div style="padding: 15px; background: #0a0a0a; display: flex; gap: 10px; border-top: 1px solid #1e3a5f;">
-                <span style="color: var(--neon-blue);">➜</span>
-                <input type="text" id="chat-input" placeholder="Komut veya mesaj gönder..." style="flex:1; border:none; background:transparent;">
+        </div>
+
+        <div class="main-view">
+            <div class="terminal-container">
+                <div id="logs"></div>
+            </div>
+
+            <div class="chat-controls">
+                <span style="color: var(--blue); font-weight: bold;">CMD></span>
+                <input type="text" id="chat-input" placeholder="Mesaj gönder veya komut yaz..." autocomplete="off">
+                <button onclick="sendMsg()" class="btn">GÖNDER</button>
             </div>
         </div>
     </div>
