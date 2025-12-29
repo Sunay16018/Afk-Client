@@ -62,14 +62,24 @@ io.on('connection', (socket) => {
         });
     });
 
-    socket.on('chat', (d) => bots[d.user]?.instance.chat(d.msg));
-    socket.on('quit', (u) => bots[u]?.instance.quit());
+    socket.on('chat', (d) => {
+        if(bots[d.user]) bots[d.user].instance.chat(d.msg);
+    });
+
+    socket.on('quit', (u) => {
+        if(bots[u]) bots[u].instance.quit();
+    });
+
     socket.on('move', (d) => {
         const b = bots[d.user]?.instance;
-        if (b) { b.setControlState(d.dir, true); setTimeout(() => b.setControlState(d.dir, false), 300); }
+        if (b) { 
+            b.setControlState(d.dir, true); 
+            setTimeout(() => b.setControlState(d.dir, false), 300); 
+        }
     });
+
     socket.on('update-config', (d) => { if(bots[d.user]) bots[d.user].settings = d.config; });
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log(`PORT_OK:${PORT}`));
+http.listen(PORT, () => console.log(`SYSTEM_LIVE_ON_PORT_${PORT}`));
