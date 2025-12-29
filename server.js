@@ -9,15 +9,16 @@ app.use(express.static(__dirname));
 let bots = {};
 
 io.on('connection', (socket) => {
-    // BOT BAŞLATMA
     socket.on('start-bot', (data) => {
-        const botId = data.username; // Her botu kullanıcı adıyla ayırıyoruz
-        
-        if (bots[botId]) return socket.emit('log', { msg: `§c[HATA] ${botId} zaten bağlı!` });
+        const botId = data.username;
+        if (bots[botId]) return;
+
+        // Bot bağlanmaya çalıştığı an listeye ekle
+        socket.emit('status', { username: botId, connected: true });
 
         const bot = mineflayer.createBot({
-            host: data.host,
-            port: parseInt(data.port) || 25565,
+            host: data.host.split(':')[0],
+            port: parseInt(data.host.split(':')[1]) || 25565,
             username: data.username,
             version: false
         });
@@ -25,48 +26,44 @@ io.on('connection', (socket) => {
         bots[botId] = bot;
 
         bot.on('spawn', () => {
-            socket.emit('status', { username: botId, connected: true });
-            socket.emit('log', { msg: `§a[SİSTEM] ${botId} sunucuya girdi.` });
+            socket.emit('log', { username: botId, msg: '§a[SİSTEM] Sunucuya giriş yapıldı!' });
             
-            // Otomatik Login
-            if (data.password) {
-                setTimeout(() => {
+            // Otomatik Login (Sunucunun hazır olması için 2 saniye bekler)
+            setTimeout(() => {
+                if (data.password) {
                     bot.chat(`/register ${data.password} ${data.password}`);
                     bot.chat(`/login ${data.password}`);
-                }, 2000);
-            }
+                    socket.emit('log', { username: botId, msg: '§e[SİSTEM] Login komutları gönderildi.' });
+                }
+            }, 2000);
         });
 
         bot.on('message', (jsonMsg) => {
             socket.emit('log', { username: botId, msg: jsonMsg.toHTML() });
         });
 
+        bot.on('error', (err) => {
+            socket.emit('log', { username: botId, msg: `§cHata: ${err.message}` });
+        });
+
         bot.on('kicked', (reason) => {
-            socket.emit('log', { msg: `§c[KİCK] ${botId} atıldı: ${reason}` });
+            socket.emit('log', { username: botId, msg: `§cAtıldı: ${reason}` });
         });
 
         bot.on('end', () => {
             socket.emit('status', { username: botId, connected: false });
             delete bots[botId];
-            socket.emit('log', { msg: `§7[BİLGİ] ${botId} bağlantısı koptu.` });
         });
-
-        bot.on('error', (err) => socket.emit('log', { msg: `§c[HATA] ${err.message}` }));
     });
 
-    // MESAJ GÖNDERME (Hangi botla yazacağını seçer)
-    socket.on('send-chat', (data) => {
-        const bot = bots[data.username];
-        if (bot) bot.chat(data.msg);
+    socket.on('send-chat', (d) => {
+        if (bots[d.username]) bots[d.username].chat(d.msg);
     });
 
-    // BAĞLANTI KES
-    socket.on('stop-bot', (username) => {
-        if (bots[username]) {
-            bots[username].quit();
-            delete bots[username];
-        }
+    socket.on('stop-bot', (user) => {
+        if (bots[user]) { bots[user].quit(); delete bots[user]; }
     });
 });
 
-http.listen(process.env.PORT || 3000, () => console.log("7/24 Sistem Aktif."));
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, () => console.log(`Sunucu ${PORT} portunda aktif.`));
