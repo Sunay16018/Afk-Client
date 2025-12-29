@@ -1,78 +1,59 @@
 const socket = io();
-let mathEnabled = false;
+let mOn = false;
 
-function startSystem() {
+function start() {
     const host = document.getElementById('host').value;
     const user = document.getElementById('user').value;
     const pass = document.getElementById('pass').value;
-    const btn = document.getElementById('start-btn');
-
-    if(!host || !user) {
-        alert("Lütfen IP ve Bot İsmi girin!");
-        return;
-    }
-
-    btn.innerText = "BAĞLANILIYOR...";
-    btn.style.opacity = "0.5";
+    if(!host || !user) return alert("Bilgileri doldur!");
     
+    document.getElementById('s-btn').innerText = "BAĞLANILIYOR...";
     socket.emit('start-bot', { host, username: user, password: pass });
 }
 
-function toggleMath() {
-    mathEnabled = !mathEnabled;
-    const btn = document.getElementById('math-toggle');
-    btn.innerText = mathEnabled ? "AÇIK" : "KAPALI";
-    btn.className = mathEnabled ? "on" : "off";
-    syncSettings();
+function toggleM() {
+    mOn = !mOn;
+    document.getElementById('m-toggle').innerText = mOn ? "AÇIK" : "KAPALI";
+    document.getElementById('m-toggle').className = mOn ? "on" : "off";
+    sync();
 }
 
-function syncSettings() {
-    const user = document.getElementById('active-bot-select').value;
-    const delay = document.getElementById('math-delay').value;
-    if(user) socket.emit('update-settings', { user, mathOn: mathEnabled, mathSec: delay });
+function sync() {
+    const user = document.getElementById('bot-sel').value;
+    const delay = document.getElementById('m-delay').value;
+    if(user) socket.emit('update-settings', { user, mathOn: mOn, mathSec: delay });
 }
 
 socket.on('status', (d) => {
-    const btn = document.getElementById('start-btn');
-    if (d.connected) {
-        btn.innerText = "SİSTEMİ AÇ";
-        btn.style.opacity = "1";
-        
-        if (!document.getElementById(`card-${d.username}`)) {
-            document.getElementById('bot-list').innerHTML += `
-                <div class="bot-card" id="card-${d.username}">
-                    <span>${d.username}</span>
-                    <button onclick="socket.emit('stop-bot','${d.username}')">X</button>
-                </div>`;
-            const opt = document.createElement('option');
-            opt.value = d.username; opt.innerText = d.username; opt.id = `opt-${d.username}`;
-            document.getElementById('active-bot-select').appendChild(opt);
-        }
-    } else {
-        document.getElementById(`card-${d.username}`)?.remove();
-        document.getElementById(`opt-${d.username}`)?.remove();
+    document.getElementById('s-btn').innerText = "SİSTEMİ BAŞLAT";
+    if (d.connected && !document.getElementById(`b-${d.username}`)) {
+        document.getElementById('active-list').innerHTML += `<div class="card" id="b-${d.username}">${d.username} <button onclick="socket.emit('stop-bot','${d.username}')">X</button></div>`;
+        let o = document.createElement('option'); o.value = d.username; o.innerText = d.username; o.id = `o-${d.username}`;
+        document.getElementById('bot-sel').appendChild(o);
+    } else if(!d.connected) {
+        document.getElementById(`b-${d.username}`)?.remove();
+        document.getElementById(`o-${d.username}`)?.remove();
     }
 });
 
 socket.on('log', (d) => {
     const l = document.getElementById('logs');
-    const p = document.createElement('p');
-    p.innerHTML = `<b style="color:#00f2ff">[${d.username}]</b> ${d.msg}`;
+    const p = document.createElement('div');
+    p.className = 'msg-line';
+    p.innerHTML = `<span class="u">[${d.username}]</span> ${d.msg}`;
     l.appendChild(p);
     l.scrollTop = l.scrollHeight;
 });
 
-function sendMove(dir) {
-    const user = document.getElementById('active-bot-select').value;
-    if(user) socket.emit('move-bot', { username: user, dir });
+function move(dir) {
+    const u = document.getElementById('bot-sel').value;
+    if(u) socket.emit('move-bot', { username: u, dir });
 }
 
-document.getElementById('chat-msg').onkeydown = (e) => {
-    if (e.key === 'Enter' && e.target.value.trim()) {
-        const user = document.getElementById('active-bot-select').value;
-        if(user) {
-            socket.emit('send-chat', { username: user, msg: e.target.value });
-            e.target.value = '';
-        }
+document.getElementById('chat-in').onkeydown = (e) => {
+    if (e.key === 'Enter' && e.target.value) {
+        const u = document.getElementById('bot-sel').value;
+        socket.emit('send-chat', { username: u, msg: e.target.value });
+        e.target.value = '';
     }
 };
