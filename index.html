@@ -2,50 +2,71 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>AFK CLIENT</title>
+    <title>CyberCore Elite V9</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app">
-        <aside class="side">
-            <h2 class="neon">AFK<span>PRO</span></h2>
-            <div class="form">
-                <input type="text" id="host" placeholder="Server IP">
-                <input type="text" id="user" placeholder="Bot Ön İsim">
-                <div class="row">
-                    <button onclick="start(false)" class="blue-btn">TEK BOT</button>
-                    <button onclick="start(true)" class="purple-btn">10 BOT (RANDOM)</button>
-                </div>
-            </div>
-
-            <div class="module">
-                <span>MATEMATİK KORUMALI</span>
-                <div class="flex">
-                    <button id="m-toggle" class="off" onclick="toggleM()">KAPALI</button>
-                    <input type="number" id="m-delay" value="0" step="0.1">
-                </div>
-            </div>
-
-            <div class="pad">
-                <button class="key" onmousedown="move('forward','start')" onmouseup="move('forward','stop')" onclick="move('forward','single')">W</button>
-                <div class="flex">
-                    <button class="key" onmousedown="move('left','start')" onmouseup="move('left','stop')" onclick="move('left','single')">A</button>
-                    <button class="key" onmousedown="move('back','start')" onmouseup="move('back','stop')" onclick="move('back','single')">S</button>
-                    <button class="key" onmousedown="move('right','start')" onmouseup="move('right','stop')" onclick="move('right','single')">D</button>
-                </div>
-                <button class="red-btn" onclick="move('stop','all')">HEPSİNİ DURDUR</button>
-            </div>
-            <div id="bot-list"></div>
+        <header class="top-nav">
+            <button class="settings-trigger" onclick="toggleMenu()">⚙ Ayarlar</button>
+            <h2 class="neon">AFK<span>CORE</span></h2>
         </aside>
 
-        <section class="main">
-            <div id="logs"></div>
-            <div class="bar">
-                <select id="bot-sel"></select>
-                <input type="text" id="chat-in" placeholder="Mesaj yazın...">
-            </div>
-        </section>
+        <div class="content">
+            <aside class="side">
+                <div class="form">
+                    <input type="text" id="host" placeholder="Server IP">
+                    <input type="text" id="user" placeholder="Kullanıcı Adı">
+                    <button onclick="connect()" class="blue-btn">SİSTEMİ BAŞLAT</button>
+                </div>
+
+                <div class="move-pad">
+                    <button class="key" onclick="move('forward')">W</button>
+                    <div class="row">
+                        <button class="key" onclick="move('left')">A</button>
+                        <button class="key" onclick="move('back')">S</button>
+                        <button class="key" onclick="move('right')">D</button>
+                    </div>
+                    <button class="key jump" onclick="move('jump')">ZIPLA</button>
+                </div>
+                <div id="bot-list"></div>
+            </aside>
+
+            <main class="terminal">
+                <div id="logs"></div>
+                <div class="bar">
+                    <select id="bot-sel"></select>
+                    <input type="text" id="chat-in" placeholder="Mesaj yaz...">
+                </div>
+            </main>
+        </div>
     </div>
+
+    <div id="settings-menu" class="modal">
+        <div class="modal-content">
+            <h3>⚙ Bot Ayarları</h3>
+            <div class="opt">
+                <label>Matematik Modu: <input type="checkbox" id="m-on"></label>
+                <label>Gecikme (sn): <input type="number" id="m-sec" value="0" style="width:50px"></label>
+            </div>
+            <div class="opt">
+                <label>Oto Bağlanma: <input type="checkbox" id="recon-on"></label>
+                <label>Maden Modu (Kazma): <input type="checkbox" id="mine-on"></label>
+            </div>
+            <div class="auto-msg-section">
+                <h4>Otomatik Mesajlar</h4>
+                <div id="msg-inputs">
+                    <div class="msg-row">
+                        <input type="text" class="msg-txt" placeholder="Mesaj">
+                        <input type="number" class="msg-time" placeholder="sn" style="width:50px">
+                    </div>
+                </div>
+            </div>
+            <button onclick="saveSettings()" class="save-btn">AYARLARI KAYDET</button>
+            <button onclick="toggleMenu()" class="close-btn">KAPAT</button>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
