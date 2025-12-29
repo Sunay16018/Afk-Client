@@ -2,61 +2,57 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>AFK PRO PANEL</title>
+    <title>AFK PRO v2</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-wrapper">
-        <div class="left-side">
-            <h1 class="mc-font">AFK <span>CLIENT</span></h1>
-            
-            <div class="card">
+    <div class="main-container">
+        <div class="ui-panel">
+            <h1 class="mc">AFK <span>PRO</span></h1>
+            <div class="group">
                 <input type="text" id="ip" placeholder="Server IP:Port">
                 <input type="text" id="nick" placeholder="Bot İsmi">
-                <input type="password" id="pass" placeholder="Oto-Şifre">
-                <div class="btn-row">
-                    <button class="mc-btn green" onclick="connect()">BAĞLAN</button>
-                    <button class="mc-btn red" onclick="disconnect()">KES</button>
+                <input type="password" id="pass" placeholder="Şifre">
+                <div class="row">
+                    <button class="btn green" onclick="connect()">BAĞLAN</button>
+                    <button class="btn red" onclick="disconnect()">KES</button>
                 </div>
             </div>
-
-            <div class="card">
-                <label class="mc-font">BOT SEÇ:</label>
+            <div class="group">
+                <label class="mc">SEÇİLİ BOT:</label>
                 <select id="bot-sel" onchange="selBot = this.value"></select>
             </div>
-
-            <div class="dpad-box">
+            <div class="dpad">
                 <button class="dp" onclick="move('forward')">▲</button>
-                <div class="dp-row">
+                <div class="dp-mid">
                     <button class="dp" onclick="move('left')">◀</button>
                     <button class="dp" onclick="move('back')">▼</button>
                     <button class="dp" onclick="move('right')">▶</button>
                 </div>
-                <button class="mc-btn blue jump" onclick="move('jump')">ZIPLA</button>
+                <button class="btn blue" onclick="move('jump')">ZIPLA</button>
             </div>
-
-            <button class="mc-btn gray" onclick="openSet()">⚙ AYARLAR</button>
+            <button class="btn gray" onclick="openSet()">⚙ AYARLAR</button>
         </div>
 
-        <div class="right-side">
-            <div class="terminal-box">
-                <div class="term-head mc-font">SUNUCU MESAJLARI</div>
-                <div id="logs" class="logs mc-mono"></div>
-                
-                <div class="chat-input-area">
-                    <input type="text" id="cin" placeholder="Mesaj yaz ve Enter bas...">
-                    <button onclick="sendChat()">GÖNDER</button>
+        <div class="console-panel">
+            <div class="term-container">
+                <div class="term-header mc">SUNUCU LOGLARI</div>
+                <div id="logs" class="logs mono"></div>
+                <div class="input-row">
+                    <input type="text" id="cin" placeholder="Mesaj yaz ve Enter'a bas...">
+                    <button onclick="sendChat()" class="send-btn">GÖNDER</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="modal" class="modal">
-        <div class="modal-box mc-font">
-            <h3>MODÜLLER</h3>
+        <div class="modal-box mc">
+            <h3>MODÜL AYARLARI</h3>
             <label>Matematik <input type="checkbox" id="m-on"></label>
-            <label>Maden <input type="checkbox" id="mine-on"></label>
-            <button class="mc-btn green" onclick="save()">KAYDET</button>
+            <label>Maden Modu <input type="checkbox" id="mine-on"></label>
+            <input type="text" id="auto-msg" placeholder="Oto Mesaj Yaz">
+            <button class="btn green" onclick="save()">KAYDET</button>
         </div>
     </div>
 
