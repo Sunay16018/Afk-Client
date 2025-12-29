@@ -13,9 +13,6 @@ io.on('connection', (socket) => {
         const botId = data.username;
         if (bots[botId]) return;
 
-        // Anında listede gözükmesi için sinyal gönder
-        socket.emit('status', { username: botId, connected: true });
-
         const bot = mineflayer.createBot({
             host: data.host.split(':')[0],
             port: parseInt(data.host.split(':')[1]) || 25565,
@@ -24,42 +21,75 @@ io.on('connection', (socket) => {
         });
 
         bots[botId] = bot;
+        socket.emit('status', { username: botId, connected: true });
 
         bot.on('spawn', () => {
-            socket.emit('log', { username: botId, msg: '§a[SİSTEM] Sunucuya girildi.' });
-            setTimeout(() => {
-                if (data.password) {
+            socket.emit('log', { username: botId, msg: '§a[SİSTEM] Bot başarıyla doğdu.' });
+            if (data.password) {
+                setTimeout(() => {
                     bot.chat(`/register ${data.password} ${data.password}`);
                     bot.chat(`/login ${data.password}`);
-                    socket.emit('log', { username: botId, msg: '§e[SİSTEM] Login gönderildi.' });
-                }
-            }, 2000);
+                }, 2000);
+            }
         });
 
-        bot.on('message', (jsonMsg) => {
-            socket.emit('log', { username: botId, msg: jsonMsg.toHTML() });
+        bot.on('message', (jsonMsg) => socket.emit('log', { username: botId, msg: jsonMsg.toHTML() }));
+
+        // Sunucudan atılma veya bağlantı kopma durumları
+        const removeBot = () => {
+            if (bots[botId]) {
+                socket.emit('status', { username: botId, connected: false });
+                delete bots[botId];
+            }
+        };
+
+        bot.on('kicked', (reason) => {
+            socket.emit('log', { username: botId, msg: `§c[ATILDI] Sebep: ${reason}` });
+            removeBot();
+        });
+
+        bot.on('end', () => {
+            socket.emit('log', { username: botId, msg: '§7[AYRILDI] Bot sunucudan ayrıldı.' });
+            removeBot();
         });
 
         bot.on('error', (err) => {
             socket.emit('log', { username: botId, msg: `§cHata: ${err.message}` });
-            socket.emit('status', { username: botId, connected: false });
-            delete bots[botId];
+            removeBot();
         });
+    });
 
-        bot.on('end', () => {
-            socket.emit('status', { username: botId, connected: false });
-            delete bots[botId];
-        });
+    // KES BUTONU (Kesin çözüm için end() ve quit() beraber)
+    socket.on('stop-bot', (user) => {
+        if (bots[user]) {
+            bots[user].quit(); // Mineflayer çıkış komutu
+            socket.emit('status', { username: user, connected: false });
+            delete bots[user];
+        }
+    });
+
+    socket.on('move-bot', (d) => {
+        const bot = bots[d.username];
+        if (!bot || !bot.entity) return;
+        if (d.dir === 'jump') {
+            bot.setControlState('jump', true);
+            setTimeout(() => bot.setControlState('jump', false), 500);
+        } else if (d.dir === 'left-turn') {
+            bot.look(bot.entity.yaw + 0.5, bot.entity.pitch);
+        } else if (d.dir === 'right-turn') {
+            bot.look(bot.entity.yaw - 0.5, bot.entity.pitch);
+        } else if (d.dir === 'stop') {
+            bot.clearControlStates();
+        } else {
+            bot.clearControlStates();
+            bot.setControlState(d.dir, true);
+        }
     });
 
     socket.on('send-chat', (d) => {
         if (bots[d.username]) bots[d.username].chat(d.msg);
     });
-
-    socket.on('stop-bot', (user) => {
-        if (bots[user]) { bots[user].quit(); delete bots[user]; }
-    });
 });
 
-http.listen(process.env.PORT || 3000, () => console.log("Server Aktif"));
-            
+http.listen(process.env.PORT || 3000, () => console.log("Sistem Aktif"));
+      
