@@ -1,51 +1,52 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Render Minecraft AFK Dashboard</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>CyberCore AI Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <!-- Controls -->
-    <section class="panel controls">
-      <h2>Kontroller</h2>
-      <input id="host" placeholder="Sunucu IP">
-      <input id="port" type="number" placeholder="Port" value="25565">
-      <input id="username" placeholder="Kullanıcı Adı">
-      <input id="password" type="password" placeholder="Şifre">
-      <button id="connect">Bağlan</button>
-      <button id="disconnect">Kes</button>
+    <div class="app-wrapper">
+        <header>
+            <div class="logo">CYBER<span>CORE</span> AI</div>
+            <div id="status" class="status-badge">SİSTEM ÇEVRİMDIŞI</div>
+        </header>
 
-      <label><input type="checkbox" id="autoMine"> Oto‑Maden</label>
-      <label><input type="checkbox" id="autoDefend"> Oto‑Savunma</label>
-      <label><input type="checkbox" id="autoChat"> Oto‑Mesaj</label>
-    </section>
+        <main>
+            <section class="controls">
+                <button class="btn primary" onclick="openModal()">🌐 BAĞLAN</button>
+                <div class="movement-pad">
+                    <button class="move-btn" onmousedown="move('forward',true)" onmouseup="move('forward',false)">W</button>
+                    <div class="row">
+                        <button class="move-btn" onmousedown="move('left',true)" onmouseup="move('left',false)">A</button>
+                        <button class="move-btn" onmousedown="move('back',true)" onmouseup="move('back',false)">S</button>
+                        <button class="move-btn" onmousedown="move('right',true)" onmouseup="move('right',false)">D</button>
+                    </div>
+                </div>
+            </section>
 
-    <!-- Radar / Inventory -->
-    <section class="panel radar">
-      <h2>Radar / Envanter</h2>
-      <div id="radar"></div>
-      <div id="inventory"></div>
-    </section>
-
-    <!-- Terminal -->
-    <section class="panel terminal">
-      <h2>Terminal</h2>
-      <div id="log"></div>
-      <input id="msg" placeholder="Mesaj gönder">
-    </section>
-  </div>
-
-  <!-- Modal (settings / login) -->
-  <div id="modal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Ayarlar</h3>
-      <button id="closeModal">Kapat</button>
+            <section class="terminal-view">
+                <div id="logs" class="log-container"></div>
+                <div class="input-area">
+                    <input type="text" id="chatInput" placeholder="Sohbete mesaj gönder...">
+                    <button onclick="sendMsg()">GÖNDER</button>
+                </div>
+            </section>
+        </main>
     </div>
-  </div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js"></script>
+    <div id="modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>SUNUCU BAĞLANTISI</h3>
+            <input type="text" id="ip" placeholder="Server IP (play.sunucu.com)">
+            <input type="text" id="user" placeholder="Bot İsmi">
+            <input type="password" id="pass" placeholder="Şifre (/login)">
+            <button class="btn success" onclick="start()">BAŞLAT</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
