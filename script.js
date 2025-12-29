@@ -1,52 +1,56 @@
 const socket = io();
-const term = document.getElementById('terminal');
-const botSelect = document.getElementById('bot-select');
-const chatIn = document.getElementById('chat-in');
+let mathState = false;
 
-document.getElementById('connect-btn').onclick = () => {
+function connect() {
     socket.emit('start-bot', {
         host: document.getElementById('host').value,
         username: document.getElementById('user').value,
         password: document.getElementById('pass').value
     });
-};
+}
+
+function toggleMath() {
+    mathState = !mathState;
+    const b = document.getElementById('m-btn');
+    b.innerText = mathState ? "AÇIK" : "KAPALI";
+    b.className = mathState ? "on" : "off";
+    updateSettings();
+}
+
+function updateSettings() {
+    const user = document.getElementById('bselect').value;
+    const sec = document.getElementById('m-time').value;
+    if(user) socket.emit('update-settings', { user, mathOn: mathState, mathSec: sec });
+}
 
 socket.on('status', (d) => {
-    let card = document.getElementById(`card-${d.username}`);
-    let opt = document.getElementById(`opt-${d.username}`);
     if (d.connected) {
-        if (!card) {
-            const div = document.createElement('div');
-            div.id = `card-${d.username}`;
-            div.className = 'bot-card';
-            div.innerHTML = `<span>${d.username}</span><button onclick="stopBot('${d.username}')">KES</button>`;
-            document.getElementById('bot-list').appendChild(div);
-            
-            const o = document.createElement('option');
-            o.id = `opt-${d.username}`; o.value = d.username; o.innerText = d.username;
-            botSelect.appendChild(o);
-            botSelect.value = d.username;
+        if (!document.getElementById(`b-${d.username}`)) {
+            document.getElementById('blist').innerHTML += `<div class="card" id="b-${d.username}"><span>${d.username}</span><button onclick="socket.emit('stop-bot','${d.username}')">X</button></div>`;
+            const opt = document.createElement('option');
+            opt.value = d.username; opt.innerText = d.username; opt.id = `o-${d.username}`;
+            document.getElementById('bselect').appendChild(opt);
         }
-        chatIn.focus();
-    } else { card?.remove(); opt?.remove(); }
+        document.getElementById('chat-in').focus();
+    } else {
+        document.getElementById(`b-${d.username}`)?.remove();
+        document.getElementById(`o-${d.username}`)?.remove();
+    }
 });
 
 socket.on('log', (d) => {
-    const p = document.createElement('p');
-    p.innerHTML = `<b>${d.username}:</b> ${d.msg}`;
-    term.appendChild(p);
-
-    // OTOMATİK SİLME: Ekranda sadece son 20 mesaj kalır
-    while (term.childNodes.length > 20) { term.removeChild(term.firstChild); }
-    term.scrollTop = term.scrollHeight;
+    const l = document.getElementById('logs');
+    l.innerHTML += `<p><b>${d.username}:</b> ${d.msg}</p>`;
+    if(l.childNodes.length > 25) l.removeChild(l.firstChild);
+    l.scrollTop = l.scrollHeight;
 });
 
-function move(dir) { if(botSelect.value) socket.emit('move-bot', { username: botSelect.value, dir }); }
-function stopBot(user) { socket.emit('stop-bot', user); }
+function move(dir) { const u = document.getElementById('bselect').value; if(u) socket.emit('move-bot', { username: u, dir }); }
 
-chatIn.onkeydown = (e) => {
-    if (e.key === 'Enter' && chatIn.value && botSelect.value) {
-        socket.emit('send-chat', { username: botSelect.value, msg: chatIn.value });
-        chatIn.value = '';
+document.getElementById('chat-in').onkeydown = (e) => {
+    if (e.key === 'Enter' && e.target.value && document.getElementById('bselect').value) {
+        socket.emit('send-chat', { username: document.getElementById('bselect').value, msg: e.target.value });
+        e.target.value = '';
     }
 };
+    
