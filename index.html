@@ -3,77 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AFK CLIENT</title>
+    <title>AFK CLIENT PRO</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <header class="navbar">
+    <div class="main-layout">
+        <aside class="control-panel">
             <div class="brand">AFK <span>CLIENT</span></div>
-            <div class="nav-controls">
-                <div id="status-badge" class="badge offline">ÇEVRİMDIŞI</div>
-                <button class="settings-btn" onclick="openMenu()">⚙ Ayarlar</button>
+            
+            <div class="group">
+                <input type="text" id="ip" placeholder="IP:Port">
+                <input type="text" id="nick" placeholder="İsim">
+                <input type="password" id="pass" placeholder="Şifre">
+                <button class="btn connect" onclick="connect()">SİSTEMİ AÇ</button>
+                <button class="btn disconnect" onclick="disconnect()">BAĞLANTIYI KES</button>
             </div>
-        </header>
 
-        <div class="main-content">
-            <aside class="sidebar">
-                <div class="panel-box">
-                    <input type="text" id="ip" placeholder="Sunucu IP:Port">
-                    <input type="text" id="nick" placeholder="Bot İsmi">
-                    <button onclick="connect()" class="btn-green">BAĞLAN</button>
-                    <button onclick="disconnect()" class="btn-red">BAĞLANTIYI KES</button>
-                </div>
+            <div class="group">
+                <label>BOT SEÇİNİZ</label>
+                <select id="bot-sel" onchange="selBot = this.value"></select>
+            </div>
 
-                <div class="panel-box">
-                    <div class="d-pad">
-                        <button class="key-btn" onclick="mv('forward')">W</button>
-                        <div class="key-row">
-                            <button class="key-btn" onclick="mv('left')">A</button>
-                            <button class="key-btn" onclick="mv('back')">S</button>
-                            <button class="key-btn" onclick="mv('right')">D</button>
-                        </div>
-                        <button class="key-btn jump" onclick="mv('jump')">ZIPLA</button>
-                    </div>
+            <div class="dpad-container">
+                <button class="ctrl-btn up" onclick="move('forward')">▲</button>
+                <div class="dpad-mid">
+                    <button class="ctrl-btn left" onclick="move('left')">◀</button>
+                    <button class="ctrl-btn down" onclick="move('back')">▼</button>
+                    <button class="ctrl-btn right" onclick="move('right')">▶</button>
                 </div>
+                <button class="ctrl-btn jump-btn" onclick="move('jump')">ZIPLA (SPACE)</button>
+            </div>
 
-                <div class="panel-box">
-                    <label style="font-size:12px; color:#aaa;">Kontrol Edilen Bot:</label>
-                    <select id="bot-list"></select>
-                </div>
-            </aside>
+            <button class="btn settings" onclick="openSet()">⚙ AYARLAR</button>
+        </aside>
 
-            <section class="terminal-wrapper">
-                <div id="logs" class="logs-area">
-                    <div class="log-line">§7Sistem Render üzerinde hazır...</div>
-                </div>
-                <div class="chat-input-area">
-                    <input type="text" id="chat-msg" placeholder="Sohbet mesajı yaz... (Enter)">
-                </div>
-            </section>
-        </div>
+        <section class="terminal">
+            <div id="logs" class="log-screen"></div>
+            <div class="chat-bar">
+                <input type="text" id="cin" placeholder="Buraya yaz ve Enter'a bas...">
+            </div>
+        </section>
     </div>
 
-    <div id="settings-modal" class="modal">
+    <div id="modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Bot Ayarları</h3>
-                <button onclick="closeMenu()" class="close-icon">✕</button>
-            </div>
-            
-            <div class="setting-row"><label>Matematik Çözücü:</label><input type="checkbox" id="m-on"></div>
-            <div class="setting-row"><label>Cevap Gecikmesi (sn):</label><input type="number" id="m-del" value="0"></div>
-            <div class="setting-row"><label>Oto Yeniden Bağlanma:</label><input type="checkbox" id="r-on"></div>
-            <div class="setting-row"><label>Maden (Kazma) Modu:</label><input type="checkbox" id="mine-on"></div>
-            
-            <hr>
-            <h4>Oto Mesaj</h4>
-            <div class="auto-msg-box">
-                <input type="text" id="otxt" placeholder="Mesajınız">
-                <input type="number" id="osec" placeholder="Sn" style="width: 70px;">
-            </div>
-
-            <button onclick="saveSettings()" class="btn-green full-width">KAYDET</button>
+            <h3>AYARLAR</h3>
+            <div class="row"><label>Matematik:</label><input type="checkbox" id="m-on"></div>
+            <div class="row"><label>Gecikme (sn):</label><input type="number" id="m-del" value="0"></div>
+            <div class="row"><label>Maden Modu:</label><input type="checkbox" id="mine-on"></div>
+            <button class="btn connect" onclick="save()">KAYDET VE KAPAT</button>
         </div>
     </div>
 
