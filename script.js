@@ -1,89 +1,49 @@
-const socket = io(); // Render'da otomatik olarak doğru adrese bağlanır
+const socket = io();
+let selBot = "";
 
-// IP ve Nick Kontrolü
 function connect() {
-    const host = document.getElementById('ip').value;
-    const username = document.getElementById('nick').value;
-    if(!host || !username) {
-        addLog('SİSTEM', '§cLütfen Sunucu IP ve Bot İsmi girin!');
-        return;
-    }
-    socket.emit('start-bot', { host, username });
+    socket.emit('start-bot', { 
+        host: el('ip').value, 
+        username: el('nick').value, 
+        pass: el('pass').value 
+    });
 }
 
-function disconnect() {
-    const user = document.getElementById('bot-list').value;
-    if(user) socket.emit('quit-bot', user);
+function disconnect() { if(selBot) socket.emit('quit', selBot); }
+function move(dir) { if(selBot) socket.emit('move', { user: selBot, dir }); }
+function openSet() { el('modal').style.display = 'flex'; }
+
+function save() {
+    const config = { math: el('m-on').checked, delay: el('m-del').value, mine: el('mine-on').checked };
+    socket.emit('update-config', { user: selBot, config });
+    el('modal').style.display = 'none';
 }
 
-// UI İşlemleri
-function openMenu() { document.getElementById('settings-modal').style.display = 'flex'; }
-function closeMenu() { document.getElementById('settings-modal').style.display = 'none'; }
-
-function saveSettings() {
-    const user = document.getElementById('bot-list').value;
-    if(!user) {
-        alert("Önce bir bot seçmelisin!");
-        return;
-    }
-    const config = {
-        math: document.getElementById('m-on').checked,
-        delay: parseFloat(document.getElementById('m-del').value) || 0,
-        recon: document.getElementById('r-on').checked,
-        mine: document.getElementById('mine-on').checked,
-        msgs: [{ txt: document.getElementById('otxt').value, sec: parseInt(document.getElementById('osec').value) }]
-    };
-    socket.emit('update-config', { user, config });
-    closeMenu();
-    addLog('AYARLAR', '§7Yapılandırma başarıyla kaydedildi.');
-}
-
-function mv(dir) {
-    const user = document.getElementById('bot-list').value;
-    if(user) socket.emit('move', { user, dir });
-}
-
-// Log Ekleme
-function addLog(user, msg) {
-    const l = document.getElementById('logs');
-    l.innerHTML += `<div class="log-line"><b>[${user}]</b> ${msg}</div>`;
-    l.scrollTop = l.scrollHeight;
-}
-
-// Socket Dinleyicileri
-socket.on('status', (d) => {
-    const badge = document.getElementById('status-badge');
-    badge.innerText = d.online ? "ONLINE" : "OFFLINE";
-    badge.className = `badge ${d.online ? 'online' : 'offline'}`;
-
+socket.on('status', d => {
+    const s = el('bot-sel');
     if (d.online) {
-        const select = document.getElementById('bot-list');
-        // Eğer listede yoksa ekle
-        if (!document.getElementById(`opt-${d.user}`)) {
-            let opt = document.createElement('option');
-            opt.value = d.user;
-            opt.id = `opt-${d.user}`;
-            opt.innerText = d.user;
-            select.appendChild(opt);
-            select.value = d.user; // Otomatik seç
+        if (!el("opt-"+d.user)) {
+            let o = document.createElement('option'); o.value = d.user; o.id = "opt-"+d.user; o.innerText = d.user;
+            s.appendChild(o);
         }
+        selBot = d.user; s.value = d.user;
     } else {
-        const el = document.getElementById(`opt-${d.user}`);
-        if(el) el.remove();
+        const elO = el("opt-"+d.user); if(elO) elO.remove();
+        selBot = s.value;
     }
 });
 
-socket.on('log', (d) => addLog(d.user, d.msg));
+socket.on('log', d => {
+    const l = el('logs');
+    l.innerHTML += `<div><span style="color:var(--accent)">[${d.user}]</span> ${d.msg}</div>`;
+    l.scrollTop = l.scrollHeight;
+});
 
-// Enter ile Mesaj Gönderme
-document.getElementById('chat-msg').onkeydown = (e) => {
-    if (e.key === 'Enter' && e.target.value) {
-        const user = document.getElementById('bot-list').value;
-        if (user) {
-            socket.emit('chat', { user, msg: e.target.value });
-            e.target.value = '';
-        } else {
-            addLog('SİSTEM', '§cÖnce bir bot seçin!');
-        }
+el('cin').onkeydown = e => {
+    if(e.key === 'Enter' && selBot && e.target.value) {
+        socket.emit('chat', { user: selBot, msg: e.target.value });
+        e.target.value = "";
     }
 };
+
+function el(id) { return document.getElementById(id); }
