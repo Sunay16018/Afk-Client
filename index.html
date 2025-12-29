@@ -2,50 +2,50 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Neon Cyber AFK</title>
+    <title>CyberBot v7 - 1.21+</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-window">
-        <aside class="left-bar">
-            <h1 class="glow-title">AFK<span>MAX</span></h1>
-            <div class="input-area">
-                <input type="text" id="host" placeholder="Server IP">
+    <div class="app">
+        <aside class="sidebar">
+            <h2 class="title">CYBER<span>CORE</span></h2>
+            <div class="inputs">
+                <input type="text" id="host" placeholder="IP:Port (Örn: oyna.server.com)">
                 <input type="text" id="user" placeholder="Bot İsmi">
-                <input type="password" id="pass" placeholder="Şifre">
-                <button onclick="connect()" class="primary-btn">SİSTEMİ AÇ</button>
+                <input type="password" id="pass" placeholder="Şifre (Opsiyonel)">
+                <button id="start-btn" onclick="startSystem()">SİSTEMİ AÇ</button>
             </div>
-            
-            <div class="math-module">
-                <span>MATEMATİK ÇÖZÜCÜ</span>
-                <div class="row">
-                    <button id="m-btn" class="off" onclick="toggleMath()">KAPALI</button>
-                    <input type="number" id="m-time" value="1" step="0.5">
+
+            <div class="math-box">
+                <p>MATEMATİK MODÜLÜ</p>
+                <div class="flex">
+                    <button id="math-toggle" class="off" onclick="toggleMath()">KAPALI</button>
+                    <input type="number" id="math-delay" value="1" step="0.5">
                 </div>
             </div>
 
-            <div class="move-controls">
-                <button class="m-btn" onclick="move('forward')">W</button>
-                <div class="row">
-                    <button class="m-btn" onclick="move('left')">A</button>
-                    <button class="m-btn" onclick="move('back')">S</button>
-                    <button class="m-btn" onclick="move('right')">D</button>
+            <div class="movement">
+                <button class="m-btn" onclick="sendMove('forward')">W</button>
+                <div class="flex">
+                    <button class="m-btn" onclick="sendMove('left')">A</button>
+                    <button class="m-btn" onclick="sendMove('back')">S</button>
+                    <button class="m-btn" onclick="sendMove('right')">D</button>
                 </div>
-                <div class="row">
-                    <button class="g-btn" onclick="move('left-turn')">SOL</button>
-                    <button class="g-btn" onclick="move('right-turn')">SAĞ</button>
+                <div class="flex">
+                    <button class="g-btn" onclick="sendMove('left-turn')">SOL</button>
+                    <button class="g-btn" onclick="sendMove('right-turn')">SAĞ</button>
                 </div>
-                <button class="jump-btn" onclick="move('jump')">ZIPLA</button>
-                <button class="stop-btn" onclick="move('stop')">DURDUR</button>
+                <button class="blue-btn" onclick="sendMove('jump')">ZIPLA</button>
+                <button class="red-btn" onclick="sendMove('stop')">HAREKETİ DURDUR</button>
             </div>
-            <div id="active-bots"></div>
+            <div id="bot-list"></div>
         </aside>
 
-        <main class="console-box">
-            <div id="logs" class="minecraft-font"></div>
-            <div class="footer">
-                <select id="bot-sel"></select>
-                <input type="text" id="chat-in" placeholder="Sohbete yaz..." autocomplete="off">
+        <main class="console">
+            <div id="logs"></div>
+            <div class="chat-bar">
+                <select id="active-bot-select"></select>
+                <input type="text" id="chat-msg" placeholder="Mesaj gönder..." autocomplete="off">
             </div>
         </main>
     </div>
