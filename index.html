@@ -1,57 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>AFK CLIENT</title>
+    <title>AFK Dashboard | Cyber-Mine</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="layout">
-        <aside class="sidebar">
-            <h2 class="mc">AFK <span>CLIENT</span></h2>
-            <div class="card">
-                <input type="text" id="ip" placeholder="IP:Port">
-                <input type="text" id="nick" placeholder="İsim">
-                <input type="password" id="pass" placeholder="Şifre">
-                <div class="row">
-                    <button class="btn green" onclick="connect()">GİRİŞ</button>
-                    <button class="btn red" onclick="disconnect()">KES</button>
-                </div>
-            </div>
-            <select id="bot-sel" class="card" onchange="selBot=this.value"></select>
+    <div class="container">
+        <div class="header">
+            <h1>MINEFLAYER <span class="neon-green">AFK CLIENT</span></h1>
+        </div>
 
-            <div class="dpad-box">
-                <button class="dp" onclick="move('forward')">▲</button>
-                <div class="dp-mid">
-                    <button class="dp" onclick="move('left')">◀</button>
-                    <button class="dp stop" onclick="allStop()">■</button>
-                    <button class="dp" onclick="move('right')">▶</button>
+        <div class="main-layout">
+            <div class="controls-grid">
+                <div class="card">
+                    <h3>HAREKET KONTROL</h3>
+                    <div class="move-btns">
+                        <button onclick="sendMove('forward')">İLERİ</button>
+                        <div class="mid-btns">
+                            <button onclick="sendMove('left')">SOL</button>
+                            <button class="stop-btn" onclick="sendMove('stop')">STOP</button>
+                            <button onclick="sendMove('right')">SAĞ</button>
+                        </div>
+                        <button onclick="sendMove('back')">GERİ</button>
+                    </div>
                 </div>
-                <button class="dp" onclick="move('back')">▼</button>
-                <button class="btn blue" onclick="move('jump')">ZIPLA</button>
-            </div>
-            <button class="btn gray" onclick="setModal(true)">⚙ AYARLAR</button>
-        </aside>
 
-        <main class="console">
-            <div class="terminal">
-                <div class="term-head mc">SUNUCU MESAJLARI</div>
-                <div id="logs" class="logs"></div>
-                <div class="chat-bar">
-                    <input type="text" id="cin" placeholder="Mesaj gönder...">
-                    <button onclick="sendChat()">></button>
+                <div class="card">
+                    <h3>EYLEMLER</h3>
+                    <button class="action-btn" onclick="toggleMining()">OTOMATİK MİNİNG</button>
+                    <button class="action-btn" onclick="openModal()">AYARLAR</button>
                 </div>
             </div>
-        </main>
+
+            <div class="terminal-container">
+                <div id="terminal" class="terminal"></div>
+                <div class="input-area">
+                    <input type="text" id="chatInput" placeholder="Mesaj gönder...">
+                    <button onclick="sendMessage()">GÖNDER</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div id="modal" class="modal">
-        <div class="modal-content mc">
-            <h3>MODÜL AYARLARI</h3>
-            <div class="row">Matematik: <input type="checkbox" id="m-on"></div>
-            <div class="row">Maden: <input type="checkbox" id="mine-on"></div>
-            <button class="btn green" onclick="saveSettings()">KAYDET</button>
-            <button class="btn red" onclick="setModal(false)">KAPAT</button>
+    <!-- Ayarlar Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h2>BOT AYARLARI</h2>
+            <p>Sunucu IP: <span>Play.Server.com</span></p>
+            <p>Bot Durumu: <span class="neon-green">AKTİF</span></p>
+            <button onclick="closeModal()">KAPAT</button>
         </div>
     </div>
 
