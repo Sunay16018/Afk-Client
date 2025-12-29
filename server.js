@@ -13,7 +13,7 @@ io.on('connection', (socket) => {
         const botId = data.username;
         if (bots[botId]) return;
 
-        // Bot bağlanmaya çalıştığı an listeye ekle
+        // Anında listede gözükmesi için sinyal gönder
         socket.emit('status', { username: botId, connected: true });
 
         const bot = mineflayer.createBot({
@@ -26,14 +26,12 @@ io.on('connection', (socket) => {
         bots[botId] = bot;
 
         bot.on('spawn', () => {
-            socket.emit('log', { username: botId, msg: '§a[SİSTEM] Sunucuya giriş yapıldı!' });
-            
-            // Otomatik Login (Sunucunun hazır olması için 2 saniye bekler)
+            socket.emit('log', { username: botId, msg: '§a[SİSTEM] Sunucuya girildi.' });
             setTimeout(() => {
                 if (data.password) {
                     bot.chat(`/register ${data.password} ${data.password}`);
                     bot.chat(`/login ${data.password}`);
-                    socket.emit('log', { username: botId, msg: '§e[SİSTEM] Login komutları gönderildi.' });
+                    socket.emit('log', { username: botId, msg: '§e[SİSTEM] Login gönderildi.' });
                 }
             }, 2000);
         });
@@ -44,10 +42,8 @@ io.on('connection', (socket) => {
 
         bot.on('error', (err) => {
             socket.emit('log', { username: botId, msg: `§cHata: ${err.message}` });
-        });
-
-        bot.on('kicked', (reason) => {
-            socket.emit('log', { username: botId, msg: `§cAtıldı: ${reason}` });
+            socket.emit('status', { username: botId, connected: false });
+            delete bots[botId];
         });
 
         bot.on('end', () => {
@@ -65,5 +61,5 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => console.log(`Sunucu ${PORT} portunda aktif.`));
+http.listen(process.env.PORT || 3000, () => console.log("Server Aktif"));
+            
