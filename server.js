@@ -9,12 +9,12 @@ let bots = {};
 
 io.on('connection', (socket) => {
     socket.on('start-bot', (data) => {
-        setupBot(data, socket);
+        createBotInstance(data, socket);
     });
 
-    function setupBot(data, socket) {
+    function createBotInstance(data, socket) {
         const botId = data.username;
-        if (bots[botId] && bots[botId].instance) return;
+        if (bots[botId]) return;
 
         const bot = mineflayer.createBot({
             host: data.host.split(':')[0],
@@ -23,97 +23,84 @@ io.on('connection', (socket) => {
             hideErrors: true
         });
 
-        // Bot Veri Yapısı
         bots[botId] = { 
             instance: bot, 
-            config: {
-                mathOn: false, mathSec: 0, 
-                autoRecon: false, mineMode: false,
-                autoMsgs: [], lastMathAnswer: ""
-            },
-            intervals: [] 
+            settings: { math: false, delay: 0, recon: false, mining: false, msgs: [] },
+            intervals: [], lastAns: "" 
         };
 
         bot.on('spawn', () => {
             socket.emit('status', { username: botId, connected: true });
-            socket.emit('log', { username: botId, msg: '§a✔ Bağlantı Aktif!' });
+            socket.emit('log', { username: botId, msg: '§a✔ Bağlantı kuruldu!' });
         });
 
-        // Matematik & Mesaj Yakalama
-        bot.on('message', (jsonMsg) => {
-            const bD = bots[botId];
-            const text = jsonMsg.toString();
-            socket.emit('log', { username: botId, msg: jsonMsg.toHTML() });
+        bot.on('message', (json) => {
+            const b = bots[botId];
+            const txt = json.toString();
+            socket.emit('log', { username: botId, msg: json.toHTML() });
 
-            if (bD.config.mathOn) {
-                if (bD.config.lastMathAnswer && text.includes(bD.config.lastMathAnswer)) return;
-                const match = text.replace(/x/g, '*').replace(/:/g, '/').match(/(\d+[\s\+\-\*\/\^]*\d+)/);
+            if (b.settings.math) {
+                if (b.lastAns && txt.includes(b.lastAns)) return;
+                const match = txt.replace(/x/g, '*').replace(/:/g, '/').match(/(\d+[\s\+\-\*\/\^]*\d+)/);
                 if (match) {
                     try {
                         const res = eval(match[0]);
                         if (!isNaN(res)) {
-                            bD.config.lastMathAnswer = res.toString();
-                            setTimeout(() => bot.chat(res.toString()), bD.config.mathSec * 1000);
+                            b.lastAns = res.toString();
+                            setTimeout(() => bot.chat(res.toString()), b.settings.delay * 1000);
                         }
                     } catch (e) {}
                 }
             }
         });
 
-        // Otomatik Yeniden Bağlanma
         bot.on('end', () => {
-            const bD = bots[botId];
+            const current = bots[botId];
             socket.emit('status', { username: botId, connected: false });
-            if (bD && bD.config.autoRecon) {
-                socket.emit('log', { username: botId, msg: '§6Bağlantı koptu, 5sn sonra tekrar deneniyor...' });
-                setTimeout(() => setupBot(data, socket), 5000);
+            if (current && current.settings.recon) {
+                setTimeout(() => createBotInstance(data, socket), 5000);
             }
             delete bots[botId];
         });
 
-        bot.on('error', (err) => socket.emit('log', { username: botId, msg: `§cHata: ${err.message}` }));
+        bot.on('error', (err) => socket.emit('log', { username: botId, msg: '§cHata: ' + err.message }));
     }
 
-    // Ayarları Güncelle (Oto Mesaj, Kazma vb.)
     socket.on('update-config', (d) => {
-        const bD = bots[d.user];
-        if (!bD) return;
-        bD.config = { ...bD.config, ...d.settings };
+        const b = bots[d.user];
+        if (!b) return;
+        b.settings = d.config;
 
-        // Kazma (Mine) Modu Kontrolü
-        if (bD.config.mineMode) {
-            bD.instance.activateItem(); // Sol tık basılı tutma simülasyonu
-            bD.instance.swingArm('right');
-        } else {
-            bD.instance.deactivateItem();
-        }
+        // Maden Modu (Sol tık basılı tutma simülasyonu)
+        if (b.settings.mining) {
+            b.instance.activateItem(); 
+            b.instance.swingArm('right');
+        } else { b.instance.deactivateItem(); }
 
-        // Otomatik Mesaj Temizliği ve Yeniden Başlatma
-        bD.intervals.forEach(clearInterval);
-        bD.intervals = [];
-        bD.config.autoMsgs.forEach(m => {
+        // Oto Mesajlar
+        b.intervals.forEach(clearInterval);
+        b.intervals = [];
+        b.settings.msgs.forEach(m => {
             if (m.text && m.time > 0) {
-                let int = setInterval(() => bD.instance.chat(m.text), m.time * 1000);
-                bD.intervals.push(int);
+                b.intervals.push(setInterval(() => b.instance.chat(m.text), m.time * 1000));
             }
         });
     });
 
-    // Hareket Sistemi (Tek Tık)
     socket.on('move-bot', (d) => {
-        const b = bots[d.username]?.instance;
+        const b = bots[d.user]?.instance;
         if (!b) return;
         if (d.dir === 'jump') {
             b.setControlState('jump', true);
             setTimeout(() => b.setControlState('jump', false), 300);
         } else {
             b.setControlState(d.dir, true);
-            setTimeout(() => b.setControlState(d.dir, false), 250); // Bir adım atar
+            setTimeout(() => b.setControlState(d.dir, false), 250);
         }
     });
 
-    socket.on('send-chat', (d) => { if(bots[d.username]) bots[d.username].instance.chat(d.msg); });
-    socket.on('stop-bot', (u) => { if(bots[u]) bots[u].instance.quit(); });
+    socket.on('send-chat', (d) => { if(bots[d.user]) bots[d.user].instance.chat(d.msg); });
 });
 
-http.listen(3000);
+http.listen(3000, () => console.log('Panel Hazır: http://localhost:3000'));
+            
