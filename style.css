@@ -1,147 +1,205 @@
+/* CYBER-DASHBOARD ULTIMATE STYLE 
+   - Seçim Engelli (No-Select)
+   - Dinamik Animasyonlar
+   - Glassmorphism Etkisi
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;700&display=swap');
+
 :root {
-    --bg-dark: #080a0f;
-    --panel-bg: #11141d;
-    --accent: #00f2ff; /* Neon Mavi */
-    --success: #2ecc71;
-    --danger: #e74c3c;
-    --border: #232936;
-    --text: #e1e4e8;
+    --bg: #05070a;
+    --sidebar-bg: #0d1117;
+    --accent: #00f2ff;
+    --accent-glow: rgba(0, 242, 255, 0.3);
+    --danger: #ff4757;
+    --success: #2ed573;
+    --border: #1f2937;
+    --glass: rgba(22, 27, 34, 0.8);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* 1. TÜM METİN SEÇİMİNİ VE ÇEVİRİYİ ENGELE */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -ms-user-select: none !important;
+    -moz-user-select: none !important;
+    cursor: default;
+}
 
 body {
-    background-color: var(--bg-dark);
-    color: var(--text);
-    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    background-image: radial-gradient(circle at 50% 50%, #111827 0%, #05070a 100%);
+    color: #e6edf3;
+    font-family: 'Inter', sans-serif;
     height: 100vh;
     display: flex;
     overflow: hidden;
 }
 
-/* YAN PANEL */
+/* 2. YAN PANEL (SIDEBAR) */
 .sidebar {
     width: 320px;
-    background: var(--panel-bg);
+    background: var(--sidebar-bg);
     border-right: 1px solid var(--border);
+    padding: 30px 20px;
     display: flex;
     flex-direction: column;
-    padding: 20px;
     box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-    z-index: 10;
+    z-index: 100;
 }
 
-.sidebar h3 {
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+.logo {
+    font-size: 24px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 40px;
+    letter-spacing: -1px;
+    color: white;
+}
+
+.logo span {
     color: var(--accent);
-    margin-bottom: 20px;
-    margin-top: 10px;
+    text-shadow: 0 0 15px var(--accent-glow);
 }
 
+/* GİRDİ ALANLARI */
 input, select {
     width: 100%;
-    background: #1a1f2b;
+    background: #161b22;
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px;
     color: white;
-    margin-bottom: 12px;
-    transition: all 0.3s;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 input:focus {
     border-color: var(--accent);
-    outline: none;
-    box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+    box-shadow: 0 0 10px var(--accent-glow);
+    background: #1c2128;
 }
 
-.btn-primary {
+#add-bot {
     background: linear-gradient(135deg, #00f2ff, #0072ff);
     color: white;
     border: none;
     padding: 14px;
     border-radius: 8px;
-    font-weight: bold;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: all 0.3s;
 }
 
-.btn-primary:hover { transform: translateY(-2px); filter: brightness(1.1); }
-
-/* AKTİF BOT LİSTESİ */
-#bot-list {
-    flex: 1;
-    overflow-y: auto;
-    margin-top: 10px;
+#add-bot:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 242, 255, 0.4);
 }
 
-.bot-item {
-    background: #1a1f2b;
+/* 3. AKTİF BOT KARTLARI (ANIMASYONLU) */
+.bot-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
     padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 10px;
+    border-radius: 12px;
+    margin-bottom: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-left: 4px solid var(--success);
+    backdrop-filter: blur(10px);
+    animation: slideIn 0.4s ease forwards;
+    border-left: 4px solid var(--accent);
 }
 
-.bot-item button {
-    background: rgba(231, 76, 60, 0.1);
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.bot-card button {
+    background: rgba(255, 71, 87, 0.1);
     color: var(--danger);
     border: 1px solid var(--danger);
-    padding: 5px 10px;
-    border-radius: 5px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
     cursor: pointer;
+    transition: 0.2s;
 }
 
-/* ANA TERMİNAL ALANI */
-.main-terminal {
+.bot-card button:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* 4. TERMİNAL ALANI */
+.main-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: radial-gradient(circle at top right, #11141d, #080a0f);
+    position: relative;
 }
 
 #logs {
     flex: 1;
-    padding: 25px;
+    padding: 30px;
     overflow-y: auto;
-    font-family: 'Fira Code', 'Consolas', monospace;
+    font-family: 'Fira Code', monospace;
     font-size: 14px;
-    line-height: 1.8;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.3);
+    scroll-behavior: smooth;
 }
 
-/* Renkli Minecraft Mesaj Düzenlemesi */
-.mc-text { margin-bottom: 6px; display: block; }
+/* MESAJ SATIRI ANIMASYONU */
+.log-line {
+    margin-bottom: 8px;
+    animation: fadeIn 0.3s ease;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+    padding-bottom: 4px;
+}
 
-/* ALT GİRİŞ ALANI */
-.input-area {
-    background: var(--panel-bg);
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 5. ALT MESAJ BARI */
+.chat-bar {
+    background: var(--sidebar-bg);
     padding: 20px 30px;
-    border-top: 1px solid var(--border);
     display: flex;
     gap: 15px;
-    align-items: center;
+    border-top: 1px solid var(--border);
 }
 
 #chat-input {
     flex: 1;
     margin-bottom: 0;
-    background: #080a0f;
-    border-radius: 30px;
+    border-radius: 50px;
     padding: 15px 25px;
+    background: #05070a;
 }
 
 #target-bot {
-    width: 150px;
+    width: 140px;
     margin-bottom: 0;
-    border-radius: 30px;
+    border-radius: 50px;
 }
 
-/* SCROLLBAR */
-::-webkit-scrollbar { width: 6px; }
+/* ÖZEL SCROLLBAR */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* TRANSLATE KUTUSUNU GİZLEME (Google Translate Engelleme) */
+.goog-te-banner-frame.skiptranslate, .goog-te-gadget { display: none !important; }
+body { top: 0px !important; }
+    
