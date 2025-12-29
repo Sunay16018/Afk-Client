@@ -1,44 +1,49 @@
 @import url('https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #080808; color: #fff; height: 100vh; overflow: hidden; font-family: 'Silkscreen', cursive; }
+body { background: #050505; color: #fff; height: 100vh; overflow: hidden; font-family: 'Silkscreen', cursive; }
 
-.mc-font { font-family: 'Silkscreen', cursive; font-size: 14px; }
+.mc-font { font-family: 'Silkscreen', cursive; font-size: 13px; letter-spacing: 1px; }
 .mc-mono { font-family: 'VT323', monospace; }
 
-.layout { display: grid; grid-template-columns: 1.5fr 1fr; height: 100vh; gap: 0; }
+.wrapper { display: grid; grid-template-columns: 1fr 380px; height: 100vh; padding: 10px; gap: 10px; }
 
-/* Sol Panel (Büyük) */
-.controls { background: #121212; padding: 30px; display: flex; flex-direction: column; gap: 20px; border-right: 4px solid #000; overflow-y: auto; }
-h1 { font-size: 32px; text-align: center; }
+/* Sol Taraf */
+.main-panel { background: #111; border: 4px solid #333; padding: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; border-radius: 10px; }
+h1 { text-align: center; font-size: 28px; }
 h1 span { color: #00ffcc; }
 
-.input-grid { display: flex; flex-direction: column; gap: 10px; background: #1a1a1a; padding: 15px; border-radius: 8px; }
-input, select { background: #000; border: 2px solid #333; color: #00ffcc; padding: 12px; font-family: 'VT323'; font-size: 20px; border-radius: 5px; outline: none; }
+.card { background: #1a1a1a; padding: 15px; border: 2px solid #222; border-radius: 8px; }
+.input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
 
-.btn { width: 100%; padding: 15px; border: 4px solid #000; cursor: pointer; color: #fff; font-family: 'Silkscreen'; font-size: 14px; text-shadow: 2px 2px #000; }
-.btn-g { background: #3e8e41; border-color: #5f5 #1e4d20 #1e4d20 #5f5; }
-.btn-r { background: #8e3e3e; border-color: #f55 #4d1e1e #4d1e1e #f55; }
-.btn-b { background: #3e5e8e; border-color: #5af #1e2d4d #1e2d4d #5af; }
-.btn-gray { background: #444; border-color: #777 #222 #222 #777; }
-.btn:active { transform: translateY(2px); }
+input, select { background: #000; border: 2px solid #444; color: #00ffcc; padding: 12px; font-family: 'VT323'; font-size: 20px; outline: none; border-radius: 4px; }
+input:focus { border-color: #00ffcc; }
 
-/* D-PAD Area */
-.dpad-area { display: flex; justify-content: center; background: #1a1a1a; padding: 20px; border-radius: 10px; }
-.dpad { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.dp-mid { display: flex; gap: 8px; }
-.dp { width: 70px; height: 60px; background: #333; border: 4px solid #000; color: #fff; cursor: pointer; border-color: #666 #111 #111 #666; font-size: 20px; }
-.jump { margin-top: 10px; width: 226px; }
+.button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-/* Sağ Panel (Küçük Terminal) */
-.terminal { background: #000; display: flex; flex-direction: column; border-left: 2px solid #222; }
-.term-header { background: #1a1a1a; padding: 10px; text-align: center; color: #00ffcc; border-bottom: 2px solid #333; }
-.logs { flex: 1; padding: 15px; overflow-y: auto; font-size: 18px; line-height: 1.4; color: #aaa; }
-.chat-row { padding: 10px; background: #0a0a0a; border-top: 2px solid #333; }
-.chat-row input { margin: 0; font-size: 18px; border-color: #00ffcc; }
+.btn { border: 4px solid #000; cursor: pointer; color: #fff; font-family: 'Silkscreen'; font-size: 12px; text-shadow: 2px 2px #000; padding: 12px; }
+.btn-g { background: #2d7d32; border-color: #4CAF50 #1b4d1e #1b4d1e #4CAF50; }
+.btn-r { background: #a32b2b; border-color: #f44336 #5e1919 #5e1919 #f44336; }
+.btn-b { background: #2b56a3; border-color: #448aff #192d5e #192d5e #448aff; }
+.btn-gray { background: #333; border-color: #555 #111 #111 #555; }
+.btn:active { transform: translateY(2px); border-style: inset; }
+
+/* D-PAD */
+.dpad-wrapper { background: #000; padding: 20px; border-radius: 12px; border: 2px solid #222; display: flex; justify-content: center; }
+.dpad { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.dp-row { display: flex; gap: 5px; }
+.dp-btn { width: 65px; height: 60px; background: #222; border: 4px solid #000; border-color: #444 #111 #111 #444; color: #fff; font-size: 18px; cursor: pointer; }
+.jump-btn { width: 205px; margin-top: 10px; }
+
+/* Sağ Taraf Terminal */
+.side-terminal { display: flex; flex-direction: column; gap: 10px; }
+.term-box { flex: 1; background: #000; border: 4px solid #333; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; }
+.term-header { background: #222; padding: 8px; text-align: center; color: #00ffcc; font-size: 11px; }
+.logs { flex: 1; padding: 15px; overflow-y: auto; font-size: 19px; color: #bbb; line-height: 1.3; }
+.chat-box { background: #111; border: 4px solid #333; border-radius: 10px; padding: 10px; }
+.chat-box input { margin: 0; width: 100%; border-color: #222; }
 
 /* Modal */
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 99; }
-.modal-box { background: #1a1a1a; padding: 30px; border: 4px solid #00ffcc; width: 320px; }
-.row { display: flex; justify-content: space-between; margin-bottom: 10px; }
-              
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 100; }
+.modal-content { background: #111; padding: 30px; border: 4px solid #00ffcc; width: 320px; border-radius: 15px; }
+.row { display: flex; justify-content: space-between; margin-bottom: 15px; }
