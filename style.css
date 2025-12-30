@@ -1,21 +1,15 @@
-body { background: #0d1117; color: white; font-family: sans-serif; display: flex; justify-content: center; margin: 0; }
-.app-container { width: 100%; max-width: 450px; background: #161b22; height: 100vh; display: flex; flex-direction: column; }
-.nav { display: flex; background: #010409; padding: 10px; gap: 5px; }
-.nav button { flex: 1; padding: 10px; background: #21262d; border: 1px solid #30363d; color: white; border-radius: 5px; cursor: pointer; font-size: 12px; }
-.tab-content { display: none; padding: 20px; flex-direction: column; flex: 1; overflow-y: auto; }
-.active { display: flex; }
+body { background: #010409; color: #e6edf3; font-family: monospace; margin: 0; height: 100vh; display: flex; justify-content: center; }
+.app-container { width: 100%; max-width: 500px; height: 100%; background: #0d1117; display: flex; flex-direction: column; border: 1px solid #30363d; padding: 10px; }
 
-.login-box, .setting-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-input, select { background: #0d1117; border: 1px solid #30363d; padding: 12px; color: white; border-radius: 6px; }
-.log-window { background: #010409; flex: 1; min-height: 200px; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; color: #7ee787; overflow-y: auto; margin-bottom: 10px; }
+.status-bar { display: flex; justify-content: space-around; background: #161b22; padding: 8px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; border: 1px solid #30363d; }
+
+.login-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; }
+.login-row input, .login-row select { background: #010409; border: 1px solid #30363d; color: white; padding: 10px; border-radius: 4px; }
+.login-row button { grid-column: span 2; background: #238636; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+.log-container { flex: 1; background: #010409; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+.log-window { height: 100%; overflow-y: auto; padding: 10px; font-size: 12px; line-height: 1.4; white-space: pre-wrap; }
+
 .chat-row { display: flex; gap: 5px; }
-.chat-row input { flex: 1; }
-
-.radar-container { display: flex; justify-content: center; margin: 20px 0; }
-.radar { width: 200px; height: 200px; background: #000; border: 2px solid #30363d; border-radius: 50%; position: relative; overflow: hidden; }
-.center-dot { width: 6px; height: 6px; background: #58a6ff; border-radius: 50%; position: absolute; left: 97px; top: 97px; }
-.player-dot { width: 4px; height: 4px; background: #f85149; border-radius: 50%; position: absolute; }
-
-.btn-green { background: #238636; border: none; color: white; padding: 12px; border-radius: 6px; cursor: pointer; }
-.btn-blue { background: #1f6feb; border: none; color: white; padding: 10px; border-radius: 6px; cursor: pointer; }
-           
+.chat-row input { flex: 1; background: #010409; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 4px; }
+.chat-row button { background: #1f6feb; border: none; color: white; padding: 0 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
