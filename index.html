@@ -3,64 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate MC Client</title>
+    <title>MC Pro Terminal</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-container">
-        <div class="nav">
-            <button onclick="showTab('main')">Ana Menü</button>
-            <button onclick="showTab('settings')">Ayarlar</button>
-            <button onclick="showTab('map')">Harita/Radar</button>
+        <div class="status-bar">
+            <span>❤️ <span id="h">20</span></span>
+            <span>🍗 <span id="f">20</span></span>
+            <span>📍 <span id="p">0,0,0</span></span>
         </div>
 
-        <div id="tab-main" class="tab-content active">
-            <div class="login-box">
-                <input type="text" id="host" placeholder="Sunucu IP">
-                <input type="text" id="user" placeholder="Bot İsmi">
-                <select id="ver">
-                    <option value="1.8.8">1.8.8</option>
-                    <option value="1.12.2">1.12.2</option>
-                    <option value="1.16.5">1.16.5</option>
-                    <option value="1.20.1" selected>1.20.1</option>
-                    <option value="1.21">1.21</option>
-                </select>
-                <button onclick="connectBot()" class="btn-green">BAĞLAN</button>
-            </div>
+        <div class="login-row">
+            <input type="text" id="host" placeholder="Sunucu IP">
+            <input type="text" id="user" placeholder="İsim">
+            <select id="ver">
+                <option value="1.8.8">1.8.8</option>
+                <option value="1.16.5">1.16.5</option>
+                <option value="1.20.1" selected>1.20.1</option>
+                <option value="1.21">1.21</option>
+            </select>
+            <button onclick="connectBot()">GİRİŞ</button>
+        </div>
+        
+        <div class="log-container">
             <div id="logbox" class="log-window"></div>
-            <div class="chat-row">
-                <input type="text" id="msg" placeholder="Mesaj yaz...">
-                <button onclick="sendMsg()">></button>
-            </div>
         </div>
 
-        <div id="tab-settings" class="tab-content">
-            <h3>Otomatik Mesaj (Reklam)</h3>
-            <div class="setting-group">
-                <label>Aktif:</label>
-                <input type="checkbox" id="autoEnabled">
-                <input type="text" id="autoText" placeholder="Mesajınız">
-                <input type="number" id="autoDelay" placeholder="Saniye (Örn: 60)">
-                <button onclick="updateAutoMsg()" class="btn-blue">Kaydet</button>
-            </div>
-        </div>
-
-        <div id="tab-map" class="tab-content">
-            <h3>Radar (Yakındaki Oyuncular)</h3>
-            <div class="radar-container">
-                <div id="radar" class="radar">
-                    <div class="center-dot"></div>
-                </div>
-            </div>
-            <p id="pos-info">Koordinat: 0, 0, 0</p>
+        <div class="chat-row">
+            <input type="text" id="msg" placeholder="Mesaj veya komut...">
+            <button onclick="sendMsg()">></button>
         </div>
     </div>
 
     <script>
-        function showTab(name) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.getElementById('tab-' + name).classList.add('active');
-        }
+        let autoScroll = true;
 
         async function connectBot() {
             const h = document.getElementById('host').value;
@@ -69,42 +46,35 @@
             await fetch(`/start?host=${h}&user=${u}&ver=${v}`);
         }
 
-        async function updateAutoMsg() {
-            const e = document.getElementById('autoEnabled').checked;
-            const m = document.getElementById('autoText').value;
-            const d = document.getElementById('autoDelay').value;
-            await fetch(`/automsg?enabled=${e}&msg=${encodeURIComponent(m)}&delay=${d}`);
-            alert("Ayarlar Güncellendi");
-        }
-
         async function sendMsg() {
-            const m = document.getElementById('msg');
-            await fetch(`/send?msg=${encodeURIComponent(m.value)}`);
-            m.value = '';
+            const input = document.getElementById('msg');
+            await fetch(`/send?msg=${encodeURIComponent(input.value)}`);
+            input.value = '';
         }
 
+        // Verileri Okuma ve Arayüzü Güncelleme
         setInterval(async () => {
-            const res = await fetch('/getdata');
-            const data = await res.json();
-            
-            // Logları Güncelle
-            const lb = document.getElementById('logbox');
-            lb.innerHTML = data.logs.map(l => `<div>${l}</div>`).join('');
-            lb.scrollTop = lb.scrollHeight;
+            try {
+                const res = await fetch('/getdata');
+                const data = await res.json();
+                
+                // Durum çubuğu
+                document.getElementById('h').innerText = data.status.health;
+                document.getElementById('f').innerText = data.status.food;
+                document.getElementById('p').innerText = `${data.status.pos.x},${data.status.pos.y},${data.status.pos.z}`;
 
-            // Radar/Harita Güncelle
-            const radar = document.getElementById('radar');
-            document.querySelectorAll('.player-dot').forEach(d => d.remove());
-            data.status.players.forEach(p => {
-                const dot = document.createElement('div');
-                dot.className = 'player-dot';
-                dot.style.left = (100 + p.x) + 'px';
-                dot.style.top = (100 + p.z) + 'px';
-                dot.title = p.n;
-                radar.appendChild(dot);
-            });
-            document.getElementById('pos-info').innerText = `Koordinat: ${data.status.pos.x}, ${data.status.pos.y}, ${data.status.pos.z}`;
-        }, 2000);
+                // Renkli Loglar
+                const lb = document.getElementById('logbox');
+                lb.innerHTML = data.logs.join('<br>');
+                
+                if (autoScroll) lb.scrollTop = lb.scrollHeight;
+            } catch(e) {}
+        }, 1000);
+
+        document.getElementById('logbox').addEventListener('scroll', (e) => {
+            const el = e.target;
+            autoScroll = (el.scrollHeight - el.scrollTop - el.clientHeight < 30);
+        });
     </script>
 </body>
 </html>
