@@ -8,50 +8,62 @@
 </head>
 <body>
   <div id="app">
-    <header>
-      <h1>AFK Client Ultimate v6</h1>
-    </header>
-
-    <section id="settings">
+    <!-- Settings Panel -->
+    <div id="settings" class="panel hidden">
       <h2>Ayarlar</h2>
-      <div class="grid">
-        <input type="text" id="host" placeholder="IP / Host">
-        <input type="number" id="port" placeholder="Port" value="25565">
-        <input type="text" id="username" placeholder="Kullanıcı Adı">
-        <input type="password" id="password" placeholder="Şifre (opsiyonel)">
-        <input type="text" id="version" placeholder="Versiyon (opsiyonel)">
-      </div>
-      <button id="startBtn">Başlat</button>
-      <button id="stopBtn" disabled>Durdur</button>
-    </section>
+      <label>IP:
+        <input type="text" id="ip" placeholder="play.example.com">
+      </label>
+      <label>Port:
+        <input type="number" id="port" placeholder="25565">
+      </label>
+      <label>Kullanıcı Adı:
+        <input type="text" id="username">
+      </label>
+      <label>Şifre (opsiyonel):
+        <input type="password" id="password">
+      </label>
+      <label>Versiyon:
+        <input type="text" id="version" placeholder="1.20.1">
+      </label>
+      <button id="connectBtn">Bağlan</button>
+      <button id="disconnectBtn">Bağlantıyı Kes</button>
+    </div>
 
-    <section id="terminal">
-      <div id="output"></div>
-    </section>
+    <!-- Terminal -->
+    <div id="terminal"></div>
 
-    <section id="chat">
-      <input type="text" id="chatInput" placeholder="Mesaj gönder...">
-      <button id="sendChat">Gönder</button>
-    </section>
+    <!-- Chat Input -->
+    <div id="chatBox">
+      <input type="text" id="chatInput" placeholder="Mesaj yaz...">
+      <button id="sendChatBtn">Gönder</button>
+    </div>
 
-    <section id="autoMsg">
+    <!-- Auto‑Message Panel -->
+    <div id="autoMsgPanel" class="panel hidden">
       <h2>Otomatik Mesaj</h2>
-      <input type="text" id="autoText" placeholder="Mesaj">
-      <input type="number" id="autoInterval" placeholder="Saniye" min="1" value="30">
-      <button id="startAuto">Başlat</button>
-      <button id="stopAuto" disabled>Durdur</button>
-    </section>
+      <textarea id="autoMessages" placeholder="Her satır bir mesaj"></textarea>
+      <label>Gecikme (ms):
+        <input type="number" id="autoDelay" value="5000">
+      </label>
+      <button id="autoStartBtn">Başlat</button>
+      <button id="autoStopBtn">Durdur</button>
+    </div>
 
-    <section id="controls">
-      <h2>Hareket Kontrolleri</h2>
-      <div class="control-grid">
-        <button class="ctrl" data-action="forward">▲</button>
-        <button class="ctrl" data-action="left">◀</button>
-        <button class="ctrl" data-action="jump">⭘</button>
-        <button class="ctrl" data-action="right">▶</button>
-        <button class="ctrl" data-action="back">▼</button>
+    <!-- Movement Controls -->
+    <div id="controls">
+      <button class="moveBtn" data-dir="forward">▲</button>
+      <div>
+        <button class="moveBtn" data-dir="left">◀</button>
+        <button class="moveBtn" data-dir="right">▶</button>
       </div>
-    </section>
+      <button class="moveBtn" data-dir="back">▼</button>
+      <button class="moveBtn" data-dir="jump">⤴</button>
+    </div>
+
+    <!-- Toggle Buttons -->
+    <button id="toggleSettings">⚙️ Ayarlar</button>
+    <button id="toggleAutoMsg">💬 Otomatik Mesaj</button>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
