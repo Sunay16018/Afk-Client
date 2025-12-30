@@ -1,46 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>AFK PRO PANEL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFK Master Console</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <h1 class="neon-title">AFK PRO</h1>
-            <div class="input-group">
-                <input type="text" id="ip" placeholder="IP:Port">
-                <input type="text" id="nick" placeholder="Bot Nick">
-                <input type="password" id="pass" placeholder="Şifre">
-                <div class="d-flex">
-                    <button class="btn btn-green" onclick="connect()">BAĞLAN</button>
-                    <button class="btn btn-red" onclick="disconnect()">ZORLA KES</button>
-                </div>
+    <div class="main-container">
+        <div class="top-bar">
+            <div class="brand">CONSOLE_v4</div>
+            <div class="actions">
+                <button class="btn btn-add" onclick="toggleModal('bot-modal', true)">+ BOT EKLE</button>
+                <select id="bot-sel" onchange="selBot=this.value"></select>
+                <button class="btn btn-set" onclick="toggleModal('set-modal', true)">⚙ AYARLAR</button>
+                <button class="btn btn-quit" onclick="disconnect()">KOPAR</button>
             </div>
-            <select id="bot-sel" onchange="selBot=this.value"></select>
-            <div class="dpad">
-                <button class="m-btn" onclick="move('forward')">▲</button>
-                <div class="d-flex"><button class="m-btn" onclick="move('left')">◀</button><button class="m-btn" style="background:#dc3545" onclick="allStop()">■</button><button class="m-btn" onclick="move('right')">▶</button></div>
-                <button class="m-btn" onclick="move('back')">▼</button>
-                <button class="btn btn-blue" style="width:100%" onclick="move('jump')">ZIPLA</button>
-            </div>
-            <button class="btn btn-gray" onclick="showModal(true)">⚙ AYARLAR</button>
         </div>
-        <div class="terminal-area">
-            <div class="term-header">SUNUCU MESAJLARI</div>
-            <div id="logs" class="logs"></div>
-            <div class="chat-input"><input type="text" id="cin" placeholder="Mesaj..."><button class="btn btn-blue" onclick="sendChat()">></button></div>
+
+        <div id="logs" class="terminal-view"></div>
+
+        <div class="bottom-bar">
+            <input type="text" id="cin" placeholder="Mesaj gönder..." autocomplete="off">
+            <button class="btn btn-send" onclick="sendChat()">GÖNDER</button>
         </div>
     </div>
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <h3>AYARLAR</h3>
-            <div class="modal-row">Oto-Bağlanma (7/24) <input type="checkbox" id="rev-on"></div>
-            <div class="modal-row">Matematik Çözücü <input type="checkbox" id="m-on"></div>
-            <button class="btn btn-green" onclick="save()">KAYDET</button>
+
+    <div id="bot-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>YENİ BAĞLANTI</h2>
+            <input type="text" id="ip" placeholder="Server IP (ip:port)">
+            <input type="text" id="nick" placeholder="Bot İsmi">
+            <input type="password" id="pass" placeholder="Giriş Şifresi">
+            <div class="modal-actions">
+                <button class="btn btn-add" onclick="connect()">BAĞLAN</button>
+                <button class="btn btn-cancel" onclick="toggleModal('bot-modal', false)">İPTAL</button>
+            </div>
         </div>
     </div>
+
+    <div id="set-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>BOT AYARLARI</h2>
+            <label><input type="checkbox" id="rev-on"> 7/24 Oto-Bağlanma</label>
+            <label><input type="checkbox" id="math-on"> Matematik Çözücü</label>
+            <hr>
+            <label><input type="checkbox" id="msg-on"> Oto-Mesaj</label>
+            <input type="text" id="msg-text" placeholder="Mesaj içeriği">
+            <input type="number" id="msg-sec" placeholder="Bekleme (Saniye)">
+            <div class="modal-actions">
+                <button class="btn btn-add" onclick="saveSettings()">KAYDET</button>
+                <button class="btn btn-cancel" onclick="toggleModal('set-modal', false)">KAPAT</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
