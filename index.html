@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Master Panel V4</title>
+    <title>Master Panel V5</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; font-size: 12px; }
         body { background: #0d1117; color: #c9d1d9; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -13,15 +13,14 @@
         .tab { display: none; flex: 1; flex-direction: column; padding: 10px; overflow-y: auto; }
         .active-tab { display: flex; }
         .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
-        .card h4 { color: #58a6ff; font-size: 10px; text-transform: uppercase; margin-bottom: 8px; }
         input, select { background: #010409; border: 1px solid #30363d; color: #fff; padding: 8px; border-radius: 6px; width: 100%; margin: 3px 0; }
-        #logbox { height: 160px; background: #000; border: 2px solid #2ecc71; border-radius: 8px; padding: 8px; overflow-y: auto; font-family: 'Consolas', monospace; color: #2ecc71; margin-bottom: 8px; }
+        #logbox { height: 160px; background: #000; border: 2px solid #2ecc71; border-radius: 8px; padding: 8px; overflow-y: auto; font-family: monospace; color: #2ecc71; margin-bottom: 8px; }
         .row { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; }
         .btn { border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; }
         .btn-green { background: #238636; } .btn-blue { background: #1f6feb; } .btn-red { background: #da3633; } .btn-orange { background: #d29922; }
-        .input-panel { background: #161b22; padding: 8px; border-radius: 8px; border: 1px solid #30363d; display: flex; gap: 5px; }
-        .bot-item { padding: 12px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; margin-top: 5px; text-align: center; }
-        .selected-bot { border-color: #2ecc71; color: #2ecc71; background: #23863611; }
+        .bot-item { padding: 12px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; margin-top: 5px; text-align: center; cursor: pointer; position: relative; }
+        .selected-bot { border-color: #2ecc71; color: #2ecc71; }
+        .quit-btn { background: #da3633; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; margin-top: 5px; width: 100%; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -33,20 +32,13 @@
 
     <div id="tab-bots" class="tab active-tab">
         <div class="card">
-            <h4>Yeni Bot Bağla</h4>
-            <input id="h" placeholder="Sunucu IP (play.server.com)">
-            <input id="u" placeholder="Bot Nick">
+            <input id="h" placeholder="IP">
+            <input id="u" placeholder="Nick">
             <select id="v">
-                <option value="1.8">1.8 (Tüm Versiyonlar)</option>
-                <option value="1.12">1.12 (Tüm Versiyonlar)</option>
-                <option value="1.13">1.13</option>
-                <option value="1.14">1.14</option>
-                <option value="1.15">1.15</option>
-                <option value="1.16">1.16</option>
-                <option value="1.17">1.17</option>
-                <option value="1.18">1.18</option>
-                <option value="1.19">1.19</option>
-                <option value="1.20" selected>1.20</option>
+                <option value="1.8">1.8</option>
+                <option value="1.12.2">1.12.2</option>
+                <option value="1.16.5">1.16.5</option>
+                <option value="1.20">1.20</option>
                 <option value="1.21">1.21</option>
             </select>
             <button class="btn btn-green" style="width:100%; margin-top:8px;" onclick="add()">BAĞLAN</button>
@@ -55,21 +47,17 @@
     </div>
 
     <div id="tab-term" class="tab">
-        <div style="margin-bottom:10px;">Aktif Bot: <b id="cur" style="color:#58a6ff">-</b></div>
-        
         <div class="card">
-            <h4>AYARLAR</h4>
+            <h4>AYARLAR (<span id="cur">-</span>)</h4>
             <div class="row">
-                <span style="width:65px">Oto Mesaj:</span>
                 <input id="cfg_msg_text" placeholder="Mesaj..." style="flex:2">
                 <input id="cfg_msg_sec" type="number" value="30" style="width:45px">
                 <button class="btn btn-blue" onclick="upd('msg','on')">AÇ</button>
                 <button class="btn btn-red" onclick="upd('msg','off')">X</button>
             </div>
             <div class="row">
-                <span style="width:65px">Sağ Tık:</span>
                 <input id="cfg_click_sec" type="number" value="5" style="flex:1">
-                <button class="btn btn-orange" onclick="upd('click','on')" style="flex:1">AÇ</button>
+                <button class="btn btn-orange" onclick="upd('click','on')" style="flex:1">SAĞ TIK AÇ</button>
                 <button class="btn btn-red" onclick="upd('click','off')">X</button>
             </div>
             <div class="row">
@@ -77,13 +65,8 @@
                 <button onclick="upd('mining','off')" class="btn btn-red" style="flex:1">DURDUR</button>
             </div>
         </div>
-
         <div id="logbox"></div>
-
-        <div class="input-panel">
-            <input id="m" placeholder="Mesaj yaz..." style="flex:1; background:#000; border:1px solid #444; color:#fff; padding:8px; border-radius:5px;">
-            <button onclick="send()" class="btn btn-blue">GÖNDER</button>
-        </div>
+        <div class="row"><input id="m" placeholder="Mesaj yaz..." style="flex:1; background:#000; border:1px solid #444; color:#fff; padding:8px; border-radius:5px;"><button onclick="send()" class="btn btn-blue">GÖNDER</button></div>
     </div>
 
     <script>
@@ -100,13 +83,18 @@
 
         async function add() {
             const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
-            if(!u || !h) return alert("Eksik bilgi!");
             await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
-            sel = u; document.getElementById('cur').innerText = u; tab('term');
+            sel = u; tab('term');
+        }
+
+        async function quitBot(name) {
+            if(!confirm(name + " bağlantısını kesmek istiyor musun?")) return;
+            await fetch(`/stop?sid=${mySID}&user=${name}`);
+            if(sel === name) sel = "";
         }
 
         async function upd(type, status) {
-            if(!sel) return;
+            if(!sel) return alert("Bot seç!");
             let val = encodeURIComponent(document.getElementById('cfg_msg_text').value);
             let sec = (type==='click') ? document.getElementById('cfg_click_sec').value : document.getElementById('cfg_msg_sec').value;
             await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&val=${val}&sec=${sec}`);
@@ -123,9 +111,12 @@
             try {
                 const r = await fetch(`/data?sid=${mySID}`);
                 const d = await r.json();
-                document.getElementById('list').innerHTML = d.active.map(n => 
-                    `<div class="bot-item ${sel==n?'selected-bot':''}" onclick="sel='${n}'; document.getElementById('cur').innerText='${n}'">${n}</div>`
-                ).join('');
+                document.getElementById('list').innerHTML = d.active.map(n => `
+                    <div class="bot-item ${sel==n?'selected-bot':''}" onclick="sel='${n}'; document.getElementById('cur').innerText='${n}'">
+                        ${n}
+                        <button class="quit-btn" onclick="event.stopPropagation(); quitBot('${n}')">BAĞLANTIYI KES</button>
+                    </div>
+                `).join('');
                 if(sel && d.logs[sel]) {
                     const lb = document.getElementById('logbox');
                     lb.innerHTML = d.logs[sel].join('<br>');
@@ -133,7 +124,6 @@
                 }
             } catch(e) {}
         }, 1000);
-        document.getElementById('m').onkeydown = (e) => { if(e.key==='Enter') send(); };
     </script>
 </body>
 </html>
