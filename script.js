@@ -11,7 +11,11 @@ function allStop() {
     ['forward','back','left','right','jump'].forEach(d => socket.emit('move-toggle', { user: selBot, dir: d, state: false }));
 }
 function save() {
-    socket.emit('update-config', { user: selBot, config: { mine: el('mine-on').checked, math: el('m-on').checked } });
+    socket.emit('update-config', { user: selBot, config: { 
+        mine: el('mine-on').checked, 
+        math: el('m-on').checked, 
+        autoRevive: el('revive-on').checked 
+    }});
     showModal(false);
 }
 function sendChat() {
