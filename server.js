@@ -12,19 +12,27 @@ let bots = {};
 
 app.use(express.static(path.join(__dirname)));
 
-function startBot(d){
+// Renk kodlarını çevirir (&a -> §a)
+function fixColors(text) {
+  return text.replace(/&([0-9a-fk-or])/g, '§$1');
+}
+
+function startBot(d, socket){
   if(bots[d.username]) return;
 
   const bot = mineflayer.createBot({
     host: d.ip,
     port: Number(d.port) || 25565,
     username: d.username,
-    version: d.version || false
+    version: d.version || false,
+    hideErrors: true
   });
 
   bots[d.username] = bot;
 
-  bot.once("login", () => {
+  // Sadece sunucuya girince logları aç
+  bot.once("spawn", () => {
+    socket.emit("log", "§a[SİSTEM] Başarıyla giriş yapıldı.");
     if(d.password){
       setTimeout(()=>{
         bot.chat(`/register ${d.password} ${d.password}`);
@@ -33,25 +41,34 @@ function startBot(d){
     }
   });
 
-  bot.on("message", m => io.emit("log", m.toAnsi()));
-  bot.on("kicked", r => io.emit("log", `Sunucudan atıldı: ${r}`));
-  bot.on("end", () => delete bots[d.username]);
+  bot.on("message", m => {
+    if(bot.entity) socket.emit("log", m.toAnsi());
+  });
+
+  bot.on("kicked", r => socket.emit("log", `§c[KICK] ${r}`));
+  bot.on("error", err => socket.emit("log", `§c[HATA] ${err.message}`));
+  bot.on("end", () => {
+    socket.emit("log", "§e[BİLGİ] Bağlantı kesildi.");
+    delete bots[d.username];
+  });
 }
 
-// Socket.io connection
 io.on("connection", s => {
-  s.emit("log", "Terminal hazır");
-
-  s.on("startBot", startBot);
+  s.on("startBot", d => startBot(d, s));
   s.on("stopBot", u => { if(bots[u]) { bots[u].quit(); delete bots[u]; } });
-  s.on("sendChat", d => { if(bots[d.username]) bots[d.username].chat(d.message); });
+  
+  s.on("sendChat", d => { 
+    if(bots[d.username]) bots[d.username].chat(fixColors(d.message));
+  });
+
   s.on("autoMsg", cfg => {
     const b = bots[cfg.username];
     if(!b) return;
     if(b.autoMsgInt) clearInterval(b.autoMsgInt);
-    if(cfg.enabled) b.autoMsgInt = setInterval(()=>b.chat(cfg.message), cfg.delay*1000);
+    if(cfg.enabled) b.autoMsgInt = setInterval(()=>b.chat(fixColors(cfg.message)), cfg.delay*1000);
   });
+
   s.on("move", c => { const b = bots[c.username]; if(b) b.setControlState(c.key, c.state); });
 });
 
-server.listen(process.env.PORT || 3000, () => console.log("Server çalışıyor..."));
+server.listen(process.env.PORT || 3000);
