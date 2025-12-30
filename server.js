@@ -10,13 +10,27 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname)));
 
+// Renk kodlarını düzeltme
 function fixColors(text) {
   return text.replace(/&([0-9a-fk-or])/g, '§$1');
 }
 
 io.on("connection", (socket) => {
-  // Her socket bağlantısı (tarayıcı sekmesi) kendi botunu bu objede tutacak
   let myBot = null;
+
+  // Envanteri tarayıcıya gönderen özel fonksiyon
+  const sendInventory = () => {
+    if (!myBot || !myBot.inventory) return;
+    
+    // Envanterdeki dolu slotları alıp basitleştiriyoruz
+    const items = myBot.inventory.items().map(item => ({
+      name: item.name,      // örn: diamond_sword
+      count: item.count,    // örn: 1
+      displayName: item.displayName // örn: Elmas Kılıç
+    }));
+    
+    socket.emit("inventory", items);
+  };
 
   socket.on("startBot", (d) => {
     if (myBot) return;
@@ -30,13 +44,20 @@ io.on("connection", (socket) => {
     });
 
     myBot.once("spawn", () => {
-      socket.emit("log", "§a[SİSTEM] Senin botun başarıyla giriş yaptı.");
+      socket.emit("log", "§a[SİSTEM] Giriş Başarılı! Envanter yükleniyor...");
+      sendInventory(); // Girişte envanteri yolla
+      
       if (d.password) {
         setTimeout(() => {
           myBot.chat(`/register ${d.password} ${d.password}`);
           myBot.chat(`/login ${d.password}`);
         }, 1500);
       }
+    });
+
+    // Envanter değişikliklerini dinle
+    myBot.inventory.on("updateSlot", (slot, oldItem, newItem) => {
+      sendInventory();
     });
 
     myBot.on("message", (m) => {
@@ -47,7 +68,8 @@ io.on("connection", (socket) => {
     myBot.on("error", (err) => socket.emit("log", `§c[HATA] ${err.message}`));
     
     myBot.on("end", () => {
-      socket.emit("log", "§e[BİLGİ] Bağlantı kesildi.");
+      socket.emit("log", "§e[BİLGİ] Bağlantı koptu.");
+      socket.emit("inventory", []); // Envanteri temizle
       myBot = null;
     });
   });
@@ -75,7 +97,6 @@ io.on("connection", (socket) => {
     if (myBot) myBot.setControlState(c.key, c.state);
   });
 
-  // Sekme kapatılırsa botu temizle (Opsiyonel: Botun kalmasını istiyorsan burayı sil)
   socket.on("disconnect", () => {
     if (myBot) {
       myBot.quit();
@@ -85,4 +106,3 @@ io.on("connection", (socket) => {
 });
 
 server.listen(process.env.PORT || 3000);
-        
