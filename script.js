@@ -1,15 +1,40 @@
 const socket = io();
 let selBot = "";
-const el = (i) => document.getElementById(i);
+const el = (id) => document.getElementById(id);
 
-function showModal(s) { el('modal').style.display = s ? 'flex' : 'none'; }
-function connect() { socket.emit('start-bot', { host: el('ip').value, username: el('nick').value, pass: el('pass').value }); }
-function disconnect() { if(selBot) socket.emit('quit', selBot); }
-function move(dir) { if(selBot) socket.emit('move-toggle', { user: selBot, dir: dir, state: true }); }
-function allStop() { if(!selBot) return; ['forward','back','left','right','jump'].forEach(d => socket.emit('move-toggle', { user: selBot, dir: d, state: false })); }
-function save() { socket.emit('update-config', { user: selBot, config: { math: el('m-on').checked, autoRevive: el('revive-on').checked } }); showModal(false); }
-function sendChat() { const v = el('cin').value; if(selBot && v.trim() !== "") { socket.emit('chat', { user: selBot, msg: v }); el('cin').value = ""; } }
-el('cin').onkeydown = (e) => { if(e.key === 'Enter') sendChat(); };
+function toggleModal(id, show) { el(id).style.display = show ? 'flex' : 'none'; }
+
+function connect() {
+    const data = { host: el('ip').value, username: el('nick').value, pass: el('pass').value };
+    if(!data.host || !data.username) return alert("Bilgileri doldur!");
+    socket.emit('start-bot', data);
+    toggleModal('bot-modal', false);
+}
+
+function disconnect() { 
+    if(selBot) {
+        socket.emit('quit', selBot);
+        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:red">Bağlantı kesme emri verildi: ${selBot}</span>` });
+    } 
+}
+
+function saveSettings() {
+    if(!selBot) return alert("Önce botu seçmelisin!");
+    const config = {
+        autoRevive: el('rev-on').checked,
+        math: el('math-on').checked,
+        autoMsg: el('msg-on').checked,
+        msgText: el('msg-text').value,
+        msgDelay: parseInt(el('msg-sec').value) || 30
+    };
+    socket.emit('update-config', { user: selBot, config });
+    toggleModal('set-modal', false);
+}
+
+function sendChat() {
+    const msg = el('cin').value;
+    if(selBot && msg) { socket.emit('chat', { user: selBot, msg }); el('cin').value = ""; }
+}
 
 socket.on('status', d => {
     const s = el('bot-sel');
@@ -27,6 +52,13 @@ socket.on('status', d => {
 
 socket.on('log', d => {
     const l = el('logs');
-    l.innerHTML += `<div>${d.msg}</div>`;
+    const msgDiv = document.createElement('div');
+    msgDiv.style.marginBottom = "4px";
+    msgDiv.innerHTML = `<span style="color:#888">[${new Date().toLocaleTimeString()}]</span> <b style="color:#00ff41">${d.user}:</b> ${d.msg}`;
+    l.appendChild(msgDiv);
+    
+    // Terminali otomatik en aşağı kaydır
     l.scrollTop = l.scrollHeight;
 });
+
+el('cin').onkeydown = (e) => { if(e.key === 'Enter') sendChat(); };
