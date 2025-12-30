@@ -39,35 +39,14 @@ function startBot(d){
     }
   });
 
-  bot.on("message", m => {
-    emit(m.toAnsi()); // ANSI string direkt gönderiliyor
-  });
+  bot.on("message", m => emit(m.toAnsi()));
 
-  bot.on("kicked", r => {
-    emit(`Sunucudan atıldı: ${r}`);
-  });
+  bot.on("kicked", r => emit(`Sunucudan atıldı: ${r}`));
 
-  bot.on("end", () => {
-    delete bots[d.username];
-  });
-
-  // Hareket
-  io.on("move", c => {
-    if(!bots[d.username]) return;
-    bot.setControlState(c.key, c.state);
-  });
-
-  // Otomatik mesaj
-  let autoMsgInt = null;
-  io.on("autoMsg", cfg => {
-    if(!bots[d.username]) return;
-    clearInterval(autoMsgInt);
-    if(cfg.enabled){
-      autoMsgInt = setInterval(()=>{ bot.chat(cfg.message); }, cfg.delay*1000);
-    }
-  });
+  bot.on("end", () => delete bots[d.username]);
 }
 
+// Socket.io eventleri sadece bir kez tanımlanıyor
 io.on("connection", s => {
   s.emit("log", "Terminal hazır");
 
