@@ -1,10 +1,21 @@
-body { background: #050505; color: #00ff00; font-family: 'Courier New', monospace; display: flex; justify-content: center; padding: 20px; margin: 0; }
-.container { width: 100%; max-width: 500px; background: #111; padding: 20px; border-radius: 8px; border: 1px solid #333; }
-.setup-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-input, select { background: #000; border: 1px solid #00ff00; padding: 12px; color: #00ff00; border-radius: 4px; outline: none; }
-.start-btn { background: #00ff00; color: #000; font-weight: bold; border: none; padding: 12px; cursor: pointer; transition: 0.3s; }
-.start-btn:hover { background: #00cc00; }
-.log-screen { background: #000; height: 300px; overflow-y: auto; padding: 10px; border: 1px solid #333; margin-bottom: 15px; font-size: 13px; border-radius: 4px; }
-.log-screen div { margin-bottom: 4px; border-bottom: 1px solid #111; padding-bottom: 2px; }
-.chat-box { display: flex; gap: 5px; }
-.chat-box button { background: #3b82f6; border: none; color: white; padding: 0 20px; cursor: pointer; border-radius: 4px; }
+body { background: #0d1117; color: white; font-family: sans-serif; display: flex; justify-content: center; margin: 0; }
+.app-container { width: 100%; max-width: 450px; background: #161b22; height: 100vh; display: flex; flex-direction: column; }
+.nav { display: flex; background: #010409; padding: 10px; gap: 5px; }
+.nav button { flex: 1; padding: 10px; background: #21262d; border: 1px solid #30363d; color: white; border-radius: 5px; cursor: pointer; font-size: 12px; }
+.tab-content { display: none; padding: 20px; flex-direction: column; flex: 1; overflow-y: auto; }
+.active { display: flex; }
+
+.login-box, .setting-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+input, select { background: #0d1117; border: 1px solid #30363d; padding: 12px; color: white; border-radius: 6px; }
+.log-window { background: #010409; flex: 1; min-height: 200px; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; color: #7ee787; overflow-y: auto; margin-bottom: 10px; }
+.chat-row { display: flex; gap: 5px; }
+.chat-row input { flex: 1; }
+
+.radar-container { display: flex; justify-content: center; margin: 20px 0; }
+.radar { width: 200px; height: 200px; background: #000; border: 2px solid #30363d; border-radius: 50%; position: relative; overflow: hidden; }
+.center-dot { width: 6px; height: 6px; background: #58a6ff; border-radius: 50%; position: absolute; left: 97px; top: 97px; }
+.player-dot { width: 4px; height: 4px; background: #f85149; border-radius: 50%; position: absolute; }
+
+.btn-green { background: #238636; border: none; color: white; padding: 12px; border-radius: 6px; cursor: pointer; }
+.btn-blue { background: #1f6feb; border: none; color: white; padding: 10px; border-radius: 6px; cursor: pointer; }
+           
