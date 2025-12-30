@@ -2,50 +2,44 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AFK Client Ultimate v5</title>
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="style.css">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/ansi-to-html@0.6.17/index.min.js"></script>
-<script defer src="/script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ansi-to-html@0.6.17/dist/ansi_to_html.min.js"></script>
 </head>
 <body>
+<div id="terminal">
+  <div id="log"></div>
+</div>
 
-<div class="panel">
-<h2>AFK Client v5</h2>
+<div id="controls">
+  <input id="ip" placeholder="Sunucu IP">
+  <input id="port" placeholder="Port">
+  <input id="username" placeholder="Kullanıcı Adı">
+  <input id="password" placeholder="Şifre">
+  <input id="version" placeholder="Minecraft Versiyon">
+  <button id="start">Başlat</button>
+  <button id="stop">Durdur</button>
+  <input id="chatMsg" placeholder="Mesaj">
+  <button id="send">Gönder</button>
+  <button id="settingsBtn">Ayarlar</button>
+</div>
 
-<input id="ip" placeholder="Sunucu IP">
-<input id="port" placeholder="Port (boş=25565)">
-<input id="username" placeholder="Bot adı">
-<input id="password" placeholder="Şifre">
-<input id="version" placeholder="Versiyon">
-
-<button id="start">BAŞLAT</button>
-<button id="stop" class="danger">DURDUR</button>
-<button id="settingsBtn">⚙ Ayarlar</button>
-
-<div class="terminal" id="log"></div>
-
-<input id="chatMsg" placeholder="Oyun mesajı">
-<button id="send">MESAJ GÖNDER</button>
-
-<div id="settings" class="settings hidden">
-<h3>Ayarlar</h3>
-<input id="autoMsgText" placeholder="Otomatik mesaj">
-<input id="autoMsgDelay" type="number" placeholder="Süre (sn)">
-<label><input type="checkbox" id="autoMsgEnable"> Otomatik mesaj açık</label>
+<div id="settings" class="hidden">
+  <input id="autoMsgText" placeholder="Otomatik mesaj">
+  <input id="autoMsgDelay" placeholder="Süre (sn)">
+  <input type="checkbox" id="autoMsgEnable"> Aç/Kapa
 </div>
 
 <div class="controls">
-<button data-k="forward">↑</button>
-<div>
-<button data-k="left">←</button>
-<button data-k="back">↓</button>
-<button data-k="right">→</button>
-</div>
-<button data-k="jump">⤴</button>
+  <button data-k="forward">↑</button>
+  <button data-k="back">↓</button>
+  <button data-k="left">←</button>
+  <button data-k="right">→</button>
+  <button data-k="jump">Zıpla</button>
 </div>
 
-</div>
+<script src="script.js"></script>
 </body>
 </html>
