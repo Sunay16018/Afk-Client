@@ -1,6 +1,6 @@
 {
-  "name": "afk-bot-724",
-  "version": "1.0.0",
+  "name": "afk-bot-final-v3",
+  "version": "3.0.0",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "dependencies": {
