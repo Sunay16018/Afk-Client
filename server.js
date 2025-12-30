@@ -6,45 +6,60 @@ const path = require('path');
 
 let bots = {};
 let logs = {};
-// Bot ayarlarını burada tutuyoruz
 let botConfigs = {};
 
+// BOT BAŞLATMA FONKSİYONU (7/24 için dışarı çıkarıldı)
+function createBot(host, user, ver) {
+    if (bots[user]) return;
+
+    const bot = mineflayer.createBot({ host, username: user, version: ver, auth: 'offline' });
+    bots[user] = bot;
+    logs[user] = ["Bağlanıyor..."];
+    
+    // Varsayılan boş konfigürasyon
+    botConfigs[user] = botConfigs[user] || { 
+        msgTimer: null, msgSec: 30, msgText: "", 
+        clickTimer: null, clickSec: 5, 
+        breakTimer: null,
+        // Yeniden bağlanma için bilgileri sakla
+        credentials: { host, user, ver }
+    };
+
+    bot.on('message', (m) => {
+        if(!logs[user]) logs[user] = [];
+        logs[user].push(m.toHTML());
+        if(logs[user].length > 50) logs[user].shift();
+    });
+
+    // KRİTİK: 7/24 RECONNECT (Koparsa 15 sn sonra tekrar gir)
+    bot.on('end', () => {
+        const creds = botConfigs[user].credentials;
+        delete bots[user];
+        logs[user].push("<b style='color:orange'>Bağlantı koptu, 15sn sonra tekrar denenecek...</b>");
+        setTimeout(() => createBot(creds.host, creds.user, creds.ver), 15000);
+    });
+
+    bot.on('error', (err) => logs[user].push("<b style='color:red'>HATA: " + err.message + "</b>"));
+}
+
 http.createServer((req, res) => {
-    const parsed = url.parse(req.url, true);
-    const q = parsed.query;
-    const p = parsed.pathname;
+    const q = url.parse(req.url, true).query;
+    const p = url.parse(req.url, true).pathname;
 
-    // 1. Botu Başlat
+    // Cron-job buraya "ping" atacak, hem loglara bakıp hem botu diri tutacağız
+    if (p === '/ping') return res.end("Sistem Aktif");
+
     if (p === '/start') {
-        if (bots[q.user]) return res.end("Aktif");
-        const bot = mineflayer.createBot({ host: q.host, username: q.user, version: q.ver, auth: 'offline' });
-        
-        bots[q.user] = bot;
-        logs[q.user] = ["Bağlanıyor..."];
-        botConfigs[q.user] = { 
-            msgTimer: null, msgSec: 30, msgText: "", 
-            clickTimer: null, clickSec: 5, 
-            breakTimer: null 
-        };
-
-        bot.on('message', (m) => {
-            if(!logs[q.user]) logs[q.user] = [];
-            logs[q.user].push(m.toHTML());
-            if(logs[q.user].length > 50) logs[q.user].shift();
-        });
-
-        bot.on('end', () => { delete bots[q.user]; delete botConfigs[q.user]; });
+        createBot(q.host, q.user, q.ver);
         return res.end("ok");
     }
 
-    // 2. Özellikleri Güncelle (Oto Mesaj, Sağ Tık, Kırma)
     if (p === '/update') {
         const { user, type, status, val, sec } = q;
         const bot = bots[user];
         const config = botConfigs[user];
         if (!bot || !config) return res.end("Bot yok");
 
-        // Zamanlayıcıyı Temizle
         if (type === 'msg') clearInterval(config.msgTimer);
         if (type === 'click') clearInterval(config.clickTimer);
         if (type === 'break') clearInterval(config.breakTimer);
@@ -52,17 +67,17 @@ http.createServer((req, res) => {
         if (status === 'on') {
             if (type === 'msg') {
                 config.msgText = val;
-                config.msgTimer = setInterval(() => bot.chat(config.msgText), sec * 1000);
+                config.msgTimer = setInterval(() => { if(bots[user]) bots[user].chat(config.msgText) }, sec * 1000);
             } else if (type === 'click') {
-                config.clickTimer = setInterval(() => bot.activateItem(), sec * 1000);
+                config.clickTimer = setInterval(() => { if(bots[user]) bots[user].activateItem() }, sec * 1000);
             } else if (type === 'break') {
                 config.breakTimer = setInterval(() => {
-                    const block = bot.blockAtCursor(4);
-                    if (block) bot.dig(block, true).catch(()=>{});
+                    const b = bots[user].blockAtCursor(4);
+                    if (b) bots[user].dig(b, true).catch(()=>{});
                 }, 500);
             }
         }
-        return res.end("Guncellendi");
+        return res.end("ok");
     }
 
     if (p === '/data') {
@@ -76,5 +91,5 @@ http.createServer((req, res) => {
     }
 
     let f = path.join(__dirname, p === '/' ? 'index.html' : p);
-    fs.readFile(f, (err, data) => { res.end(data); });
+    fs.readFile(f, (err, data) => res.end(data));
 }).listen(process.env.PORT || 10000);
