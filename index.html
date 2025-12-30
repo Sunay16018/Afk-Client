@@ -3,19 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bot Kontrol Paneli</title>
+    <title>MC AFK Client</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="card">
-        <div class="status-dot"></div>
-        <h1>MC AFK Bot</h1>
-        <p class="desc">Bot şu an Render üzerinden 7/24 aktif.</p>
-        <div class="info">
-            <p><strong>Durum:</strong> Çevrimiçi</p>
-            <p><strong>Platform:</strong> Render Cloud</p>
+    <div class="container">
+        <div class="setup-box">
+            <input type="text" id="host" placeholder="Sunucu IP (play.sunucu.com)">
+            <input type="text" id="user" placeholder="Bot İsmi">
+            <select id="ver">
+                <option value="1.8.8">1.8.8</option>
+                <option value="1.12.2">1.12.2</option>
+                <option value="1.16.5">1.16.5</option>
+                <option value="1.18.2">1.18.2</option>
+                <option value="1.19.4">1.19.4</option>
+                <option value="1.20.1" selected>1.20.1</option>
+                <option value="1.20.4">1.20.4</option>
+            </select>
+            <button onclick="startBot()" class="start-btn">SİSTEMİ BAŞLAT</button>
         </div>
-        <button onclick="location.reload()">Sayfayı Yenile</button>
+
+        <div id="console" class="log-screen"></div>
+
+        <div class="chat-box">
+            <input type="text" id="msg" placeholder="Mesaj veya komut...">
+            <button onclick="sendMsg()">GÖNDER</button>
+        </div>
     </div>
+
+    <script>
+        async function startBot() {
+            const h = document.getElementById('host').value;
+            const u = document.getElementById('user').value;
+            const v = document.getElementById('ver').value;
+            if(!h || !u) return alert("IP ve İsim boş bırakılamaz!");
+            await fetch(`/start?host=${h}&user=${u}&ver=${v}`);
+        }
+
+        async function sendMsg() {
+            const m = document.getElementById('msg');
+            if(!m.value) return;
+            await fetch(`/send?msg=${encodeURIComponent(m.value)}`);
+            m.value = '';
+        }
+
+        setInterval(async () => {
+            try {
+                const r = await fetch('/getlogs');
+                const d = await r.json();
+                const c = document.getElementById('console');
+                c.innerHTML = d.logs.map(l => `<div>${l}</div>`).join('');
+                c.scrollTop = c.scrollHeight;
+            } catch(e) {}
+        }, 1500);
+    </script>
 </body>
 </html>
