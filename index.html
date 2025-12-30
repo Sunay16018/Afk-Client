@@ -2,42 +2,75 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MC Pro Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Multi MC Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-container">
-        <div class="status-bar">
-            <span>❤️ <span id="h">20</span></span>
-            <span>🍗 <span id="f">20</span></span>
-            <span>📍 <span id="p">0,0,0</span></span>
+        <div class="top-nav">
+            <button onclick="showTab('bots')"><i class="fas fa-users"></i> Botlar</button>
+            <button onclick="showTab('terminal')"><i class="fas fa-terminal"></i> Konsol</button>
+            <button onclick="showTab('map')"><i class="fas fa-map"></i> Radar</button>
+            <button onclick="toggleInv()" class="btn-bag"><i class="fas fa-briefcase"></i></button>
         </div>
 
-        <div class="login-row">
-            <input type="text" id="host" placeholder="Sunucu IP">
-            <input type="text" id="user" placeholder="İsim">
-            <select id="ver">
-                <option value="1.8.8">1.8.8</option>
-                <option value="1.16.5">1.16.5</option>
-                <option value="1.20.1" selected>1.20.1</option>
-                <option value="1.21">1.21</option>
-            </select>
-            <button onclick="connectBot()">GİRİŞ</button>
-        </div>
-        
-        <div class="log-container">
-            <div id="logbox" class="log-window"></div>
+        <div id="inv-panel" class="overlay">
+            <div class="inv-box">
+                <div class="inv-head">Çanta <i class="fas fa-times" onclick="toggleInv()"></i></div>
+                <div class="inv-grid" id="inv-grid"></div>
+            </div>
         </div>
 
-        <div class="chat-row">
-            <input type="text" id="msg" placeholder="Mesaj veya komut...">
-            <button onclick="sendMsg()">></button>
+        <div id="tab-bots" class="tab active">
+            <div class="form-box">
+                <input type="text" id="host" placeholder="Sunucu IP">
+                <input type="text" id="user" placeholder="Bot Nick">
+                <select id="ver"><option value="1.8.8">1.8.8</option><option value="1.20.1" selected>1.20.1</option></select>
+                <button onclick="connectBot()">BOT EKLE</button>
+            </div>
+            <div id="bot-cards" class="bot-grid"></div>
+        </div>
+
+        <div id="tab-terminal" class="tab">
+            <div class="bot-header">
+                <span id="sel-name">Seçilmedi</span>
+                <button onclick="quitBot()" class="btn-red">Kov</button>
+            </div>
+            <div class="mini-status">
+                <span>❤️ <span id="h">-</span></span> <span>🍗 <span id="f">-</span></span> <span>📍 <span id="p">-</span></span>
+            </div>
+            <div id="logbox" class="log-area"></div>
+            <div class="chat-row">
+                <input type="text" id="msg" placeholder="Mesaj/Komut..." autocomplete="off">
+                <button onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+
+        <div id="tab-map" class="tab">
+            <div id="radar" class="radar-circle"><div class="center"></div></div>
         </div>
     </div>
 
     <script>
+        let selected = null;
         let autoScroll = true;
+
+        // Slotları hazırla
+        const g = document.getElementById('inv-grid');
+        for(let i=9; i<=44; i++) {
+            let s = document.createElement('div');
+            s.className = 'slot'; s.id = 's-'+i;
+            g.appendChild(s);
+        }
+
+        function showTab(t) {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.add('active');
+        }
+
+        function toggleInv() { document.getElementById('inv-panel').classList.toggle('open'); }
 
         async function connectBot() {
             const h = document.getElementById('host').value;
@@ -46,35 +79,62 @@
             await fetch(`/start?host=${h}&user=${u}&ver=${v}`);
         }
 
-        async function sendMsg() {
-            const input = document.getElementById('msg');
-            await fetch(`/send?msg=${encodeURIComponent(input.value)}`);
-            input.value = '';
+        async function quitBot() {
+            if(selected) await fetch(`/quit?user=${selected}`);
+            selected = null;
         }
 
-        // Verileri Okuma ve Arayüzü Güncelleme
+        async function sendMsg() {
+            const i = document.getElementById('msg');
+            if(!selected || !i.value) return;
+            await fetch(`/send?user=${selected}&msg=${encodeURIComponent(i.value)}`);
+            i.value = '';
+        }
+
+        document.getElementById('msg').addEventListener('keypress', e => e.key === 'Enter' && sendMsg());
+
         setInterval(async () => {
             try {
-                const res = await fetch('/getdata');
-                const data = await res.json();
-                
-                // Durum çubuğu
-                document.getElementById('h').innerText = data.status.health;
-                document.getElementById('f').innerText = data.status.food;
-                document.getElementById('p').innerText = `${data.status.pos.x},${data.status.pos.y},${data.status.pos.z}`;
+                const r = await fetch('/getall');
+                const d = await r.json();
 
-                // Renkli Loglar
-                const lb = document.getElementById('logbox');
-                lb.innerHTML = data.logs.join('<br>');
-                
-                if (autoScroll) lb.scrollTop = lb.scrollHeight;
+                const cards = document.getElementById('bot-cards');
+                cards.innerHTML = d.activeBots.map(n => `<div class="card ${selected===n?'sel':''}" onclick="selected='${n}'; document.getElementById('sel-name').innerText='${n}'">${n}</div>`).join('');
+
+                if(selected && d.status[selected]) {
+                    const s = d.status[selected];
+                    document.getElementById('h').innerText = s.health;
+                    document.getElementById('f').innerText = s.food;
+                    document.getElementById('p').innerText = `${s.pos.x}, ${s.pos.z}`;
+                    
+                    const lb = document.getElementById('logbox');
+                    lb.innerHTML = d.logs[selected].join('<br>');
+                    if(autoScroll) lb.scrollTop = lb.scrollHeight;
+
+                    // Radar
+                    const rad = document.getElementById('radar');
+                    document.querySelectorAll('.p-dot').forEach(x => x.remove());
+                    s.players.forEach(p => {
+                        let dot = document.createElement('div');
+                        dot.className = 'p-dot';
+                        dot.style.left = (90 + p.x) + 'px'; dot.style.top = (90 + p.z) + 'px';
+                        rad.appendChild(dot);
+                    });
+
+                    // Inv
+                    if(document.getElementById('inv-panel').classList.contains('open')) {
+                        document.querySelectorAll('.slot').forEach(x => x.innerHTML = '');
+                        d.invs[selected].forEach(i => {
+                            const sd = document.getElementById('s-'+i.slot);
+                            if(sd) sd.innerHTML = `<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/pc/1.20.1/items/${i.name}.png"><span>${i.count>1?i.count:''}</span>`;
+                        });
+                    }
+                }
             } catch(e) {}
-        }, 1000);
+        }, 1500);
 
-        document.getElementById('logbox').addEventListener('scroll', (e) => {
-            const el = e.target;
-            autoScroll = (el.scrollHeight - el.scrollTop - el.clientHeight < 30);
-        });
+        const lb = document.getElementById('logbox');
+        lb.onscroll = () => autoScroll = (lb.scrollHeight - lb.scrollTop - lb.clientHeight < 40);
     </script>
 </body>
 </html>
