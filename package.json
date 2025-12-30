@@ -1,12 +1,11 @@
 {
-  "name": "afk-console-v4",
-  "version": "4.0.0",
+  "name": "minecraft-bot-sade",
+  "version": "1.0.0",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "dependencies": {
     "express": "4.18.2",
     "socket.io": "4.7.2",
-    "mineflayer": "4.14.0"
-  },
-  "engines": { "node": "18.x" }
+    "mineflayer": "4.21.0"
+  }
 }
