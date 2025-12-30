@@ -15,11 +15,12 @@ let bots = {};
 function createBot(data, socket) {
     if (bots[data.username]) return;
 
+    // Sürüm hatasını çözmek için 'auto' modu ve hata yakalayıcı
     const bot = mineflayer.createBot({
         host: data.host.split(':')[0],
         port: parseInt(data.host.split(':')[1]) || 25565,
         username: data.username,
-        version: false,
+        version: false, // Mineflayer sunucudan sürümü kendi çekmeye çalışacak
         hideErrors: true
     });
 
@@ -30,62 +31,32 @@ function createBot(data, socket) {
 
     bot.on('spawn', () => {
         socket.emit('status', { user: data.username, online: true });
-        // 7/24 Aktiflik: Rastgele kafayı oynat (Daha insansı)
-        setInterval(() => { 
-            if(bot.entity) bot.look(bot.entity.yaw + (Math.random() * 0.2 - 0.1), bot.entity.pitch); 
-        }, 20000);
-        
-        if (bots[data.username].settings.pass) {
-            setTimeout(() => bot.chat(`/login ${bots[data.username].settings.pass}`), 2500);
-        }
+        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:#00ff41">Sürüm Algılandı: ${bot.version}</span>` });
     });
 
-    // SUNUCUDAN GELEN HER ŞEYİ OKUYAN ANA EVENT
-    bot.on('message', (json, position) => {
-        // json.toHTML() sayesinde sunucudaki tüm renkli yazıları terminale basar
-        const htmlMsg = json.toHTML();
-        const plainText = json.toString();
-
-        // Terminale anında gönder
-        socket.emit('log', { user: data.username, msg: htmlMsg });
-
-        // Matematik Çözücü Analizi (Zincirleme: 1+2*5-4/2)
+    bot.on('message', (json) => {
         const b = bots[data.username];
+        socket.emit('log', { user: data.username, msg: json.toHTML() });
+
         if (b?.settings.math) {
+            const plainText = json.toString();
             const mathMatch = plainText.match(/(\d+[\+\-\*\/]\d+([\+\-\*\/]\d+)*)/);
             if (mathMatch) {
                 try {
-                    // Güvenli hesaplama (eval yerine Function constructor)
                     const result = new Function(`return ${mathMatch[0]}`)();
-                    if(result !== undefined && !isNaN(result)) {
-                        setTimeout(() => bot.chat(result.toString()), 1500);
-                    }
+                    if(!isNaN(result)) setTimeout(() => bot.chat(result.toString()), 1000);
                 } catch (e) {}
             }
         }
     });
 
-    // Ekstra Duyurular (Actionbar gibi yerleri de yakalamaya çalışır)
-    bot.on('actionBar', (json) => {
-        socket.emit('log', { user: data.username, msg: `<small>[Actionbar] ${json.toHTML()}</small>` });
+    bot.on('kicked', (reason) => {
+        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:red">Kovuldun: ${reason}</span>` });
     });
 
-    // Oto Mesaj Döngüsü
-    setInterval(() => {
-        const b = bots[data.username];
-        if (b && b.settings.autoMsg && b.settings.msgText) {
-            const now = Date.now();
-            if (now - b.settings.lastMsg > b.settings.msgDelay * 1000) {
-                bot.chat(b.settings.msgText);
-                b.settings.lastMsg = now;
-            }
-        }
-    }, 1000);
-
-    bot.on('kicked', (reason) => {
-        let kickText = "Bilinmeyen sebep";
-        try { kickText = JSON.parse(reason).text || reason; } catch(e) { kickText = reason; }
-        socket.emit('log', { user: 'SİSTEM', msg: `<b style="color:red">[ATILDIN] ${kickText}</b>` });
+    bot.on('error', (err) => {
+        // 1.21.1 gibi hataları burada yakalayıp terminale yazar
+        socket.emit('log', { user: 'HATA', msg: `<span style="color:red">Hata: ${err.message}</span>` });
     });
 
     bot.on('end', () => {
@@ -93,14 +64,7 @@ function createBot(data, socket) {
         const reconnect = b?.settings.autoRevive;
         socket.emit('status', { user: data.username, online: false });
         delete bots[data.username];
-        if (reconnect) {
-            socket.emit('log', { user: 'SİSTEM', msg: '<i style="color:orange">5 saniye içinde otomatik tekrar bağlanılıyor...</i>' });
-            setTimeout(() => createBot(data, socket), 5000);
-        }
-    });
-
-    bot.on('error', (err) => {
-        socket.emit('log', { user: 'HATA', msg: err.message });
+        if (reconnect) setTimeout(() => createBot(data, socket), 5000);
     });
 }
 
@@ -111,4 +75,4 @@ io.on('connection', (socket) => {
     socket.on('update-config', (d) => { if(bots[d.user]) bots[d.user].settings = {...bots[d.user].settings, ...d.config}; });
 });
 
-server.listen(process.env.PORT || 3000, () => console.log("7/24 Bot Sistemi Hazır!"));
+server.listen(process.env.PORT || 3000);
