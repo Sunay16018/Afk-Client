@@ -3,59 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MC AFK Client</title>
+    <title>Ultimate MC Client</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="setup-box">
-            <input type="text" id="host" placeholder="Sunucu IP (play.sunucu.com)">
-            <input type="text" id="user" placeholder="Bot İsmi">
-            <select id="ver">
-                <option value="1.8.8">1.8.8</option>
-                <option value="1.12.2">1.12.2</option>
-                <option value="1.16.5">1.16.5</option>
-                <option value="1.18.2">1.18.2</option>
-                <option value="1.19.4">1.19.4</option>
-                <option value="1.20.1" selected>1.20.1</option>
-                <option value="1.20.4">1.20.4</option>
-            </select>
-            <button onclick="startBot()" class="start-btn">SİSTEMİ BAŞLAT</button>
+    <div class="app-container">
+        <div class="nav">
+            <button onclick="showTab('main')">Ana Menü</button>
+            <button onclick="showTab('settings')">Ayarlar</button>
+            <button onclick="showTab('map')">Harita/Radar</button>
         </div>
 
-        <div id="console" class="log-screen"></div>
+        <div id="tab-main" class="tab-content active">
+            <div class="login-box">
+                <input type="text" id="host" placeholder="Sunucu IP">
+                <input type="text" id="user" placeholder="Bot İsmi">
+                <select id="ver">
+                    <option value="1.8.8">1.8.8</option>
+                    <option value="1.12.2">1.12.2</option>
+                    <option value="1.16.5">1.16.5</option>
+                    <option value="1.20.1" selected>1.20.1</option>
+                    <option value="1.21">1.21</option>
+                </select>
+                <button onclick="connectBot()" class="btn-green">BAĞLAN</button>
+            </div>
+            <div id="logbox" class="log-window"></div>
+            <div class="chat-row">
+                <input type="text" id="msg" placeholder="Mesaj yaz...">
+                <button onclick="sendMsg()">></button>
+            </div>
+        </div>
 
-        <div class="chat-box">
-            <input type="text" id="msg" placeholder="Mesaj veya komut...">
-            <button onclick="sendMsg()">GÖNDER</button>
+        <div id="tab-settings" class="tab-content">
+            <h3>Otomatik Mesaj (Reklam)</h3>
+            <div class="setting-group">
+                <label>Aktif:</label>
+                <input type="checkbox" id="autoEnabled">
+                <input type="text" id="autoText" placeholder="Mesajınız">
+                <input type="number" id="autoDelay" placeholder="Saniye (Örn: 60)">
+                <button onclick="updateAutoMsg()" class="btn-blue">Kaydet</button>
+            </div>
+        </div>
+
+        <div id="tab-map" class="tab-content">
+            <h3>Radar (Yakındaki Oyuncular)</h3>
+            <div class="radar-container">
+                <div id="radar" class="radar">
+                    <div class="center-dot"></div>
+                </div>
+            </div>
+            <p id="pos-info">Koordinat: 0, 0, 0</p>
         </div>
     </div>
 
     <script>
-        async function startBot() {
+        function showTab(name) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+        }
+
+        async function connectBot() {
             const h = document.getElementById('host').value;
             const u = document.getElementById('user').value;
             const v = document.getElementById('ver').value;
-            if(!h || !u) return alert("IP ve İsim boş bırakılamaz!");
             await fetch(`/start?host=${h}&user=${u}&ver=${v}`);
+        }
+
+        async function updateAutoMsg() {
+            const e = document.getElementById('autoEnabled').checked;
+            const m = document.getElementById('autoText').value;
+            const d = document.getElementById('autoDelay').value;
+            await fetch(`/automsg?enabled=${e}&msg=${encodeURIComponent(m)}&delay=${d}`);
+            alert("Ayarlar Güncellendi");
         }
 
         async function sendMsg() {
             const m = document.getElementById('msg');
-            if(!m.value) return;
             await fetch(`/send?msg=${encodeURIComponent(m.value)}`);
             m.value = '';
         }
 
         setInterval(async () => {
-            try {
-                const r = await fetch('/getlogs');
-                const d = await r.json();
-                const c = document.getElementById('console');
-                c.innerHTML = d.logs.map(l => `<div>${l}</div>`).join('');
-                c.scrollTop = c.scrollHeight;
-            } catch(e) {}
-        }, 1500);
+            const res = await fetch('/getdata');
+            const data = await res.json();
+            
+            // Logları Güncelle
+            const lb = document.getElementById('logbox');
+            lb.innerHTML = data.logs.map(l => `<div>${l}</div>`).join('');
+            lb.scrollTop = lb.scrollHeight;
+
+            // Radar/Harita Güncelle
+            const radar = document.getElementById('radar');
+            document.querySelectorAll('.player-dot').forEach(d => d.remove());
+            data.status.players.forEach(p => {
+                const dot = document.createElement('div');
+                dot.className = 'player-dot';
+                dot.style.left = (100 + p.x) + 'px';
+                dot.style.top = (100 + p.z) + 'px';
+                dot.title = p.n;
+                radar.appendChild(dot);
+            });
+            document.getElementById('pos-info').innerText = `Koordinat: ${data.status.pos.x}, ${data.status.pos.y}, ${data.status.pos.z}`;
+        }, 2000);
     </script>
 </body>
 </html>
