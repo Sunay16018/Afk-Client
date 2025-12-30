@@ -1,73 +1,55 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AFK Client Ultimate v6</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFK Client Ultimate v5 - Stable</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ansi-to-html@0.6.17/dist/ansi_to_html.min.js"></script>
 </head>
 <body>
-  <div id="app">
-    <!-- Settings Panel -->
-    <div id="settings" class="panel hidden">
-      <h2>Ayarlar</h2>
-      <label>IP:
-        <input type="text" id="ip" placeholder="play.example.com">
-      </label>
-      <label>Port:
-        <input type="number" id="port" placeholder="25565">
-      </label>
-      <label>Kullanıcı Adı:
-        <input type="text" id="username">
-      </label>
-      <label>Şifre (opsiyonel):
-        <input type="password" id="password">
-      </label>
-      <label>Versiyon:
-        <input type="text" id="version" placeholder="1.20.1">
-      </label>
-      <button id="connectBtn">Bağlan</button>
-      <button id="disconnectBtn">Bağlantıyı Kes</button>
+
+    <div id="terminal">
+        <div id="log"></div>
     </div>
 
-    <!-- Terminal -->
-    <div id="terminal"></div>
-
-    <!-- Chat Input -->
-    <div id="chatBox">
-      <input type="text" id="chatInput" placeholder="Mesaj yaz...">
-      <button id="sendChatBtn">Gönder</button>
-    </div>
-
-    <!-- Auto‑Message Panel -->
-    <div id="autoMsgPanel" class="panel hidden">
-      <h2>Otomatik Mesaj</h2>
-      <textarea id="autoMessages" placeholder="Her satır bir mesaj"></textarea>
-      <label>Gecikme (ms):
-        <input type="number" id="autoDelay" value="5000">
-      </label>
-      <button id="autoStartBtn">Başlat</button>
-      <button id="autoStopBtn">Durdur</button>
-    </div>
-
-    <!-- Movement Controls -->
     <div id="controls">
-      <button class="moveBtn" data-dir="forward">▲</button>
-      <div>
-        <button class="moveBtn" data-dir="left">◀</button>
-        <button class="moveBtn" data-dir="right">▶</button>
-      </div>
-      <button class="moveBtn" data-dir="back">▼</button>
-      <button class="moveBtn" data-dir="jump">⤴</button>
+        <input id="ip" placeholder="Sunucu IP (örn: oyna.minetruth.com)">
+        <input id="port" placeholder="Port (25565)" value="25565">
+        <input id="username" placeholder="Kullanıcı Adı">
+        <input id="password" type="password" placeholder="Şifre (Oto Login)">
+        <input id="version" placeholder="Sürüm (örn: 1.20.1)">
+        
+        <div class="button-group">
+            <button id="start" style="background: #2e7d32; color: white;">BAŞLAT</button>
+            <button id="stop" style="background: #c62828; color: white;">DURDUR</button>
+            <button id="settingsBtn">⚙ AYARLAR</button>
+        </div>
+
+        <div class="chat-group">
+            <input id="chatMsg" placeholder="Mesaj gönder...">
+            <button id="send" style="background: #1565c0; color: white;">GÖNDER</button>
+        </div>
     </div>
 
-    <!-- Toggle Buttons -->
-    <button id="toggleSettings">⚙️ Ayarlar</button>
-    <button id="toggleAutoMsg">💬 Otomatik Mesaj</button>
-  </div>
+    <div id="settings" class="hidden">
+        <div class="setting-item">
+            <input id="autoMsgText" placeholder="Otomatik mesaj metni">
+            <input id="autoMsgDelay" type="number" placeholder="Süre (sn)" value="30">
+            <label><input type="checkbox" id="autoMsgEnable"> Oto-Mesaj Aktif</label>
+        </div>
+    </div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js"></script>
+    <div class="controls">
+        <button data-k="forward">↑</button>
+        <button data-k="left">←</button>
+        <button data-k="back">↓</button>
+        <button data-k="right">→</button>
+        <button data-k="jump">Zıpla</button>
+    </div>
+
+    <script src="script.js"></script>
 </body>
-  </html>
-  
+</html>
