@@ -4,22 +4,21 @@ const url = require('url');
 const fs = require('fs');
 const path = require('path');
 
-// Hafıza Yönetimi
-let sessions = {}; // Her tarayıcı kimliği (sid) için bot listesi
-let logs = {}; // sid + botNick şeklinde log saklama
-let configs = {}; // sid + botNick şeklinde özellik ayarları
+let sessions = {}; 
+let logs = {}; 
+let configs = {}; 
 
-// Bot Oluşturma Fonksiyonu
 function startBot(sid, host, user, ver) {
     if (!sessions[sid]) sessions[sid] = {};
     if (sessions[sid][user]) return;
 
+    // Mineflayer otomatik olarak sürüme uygun protokolü seçecektir
     const bot = mineflayer.createBot({ host, username: user, version: ver, auth: 'offline' });
     sessions[sid][user] = bot;
     
     const key = sid + "_" + user;
     logs[key] = ["Bağlanıyor..."];
-    configs[key] = { msgT: null, clickT: null, breakT: null, creds: { host, user, ver } };
+    configs[key] = { msgT: null, clickT: null, mining: false, creds: { host, user, ver } };
 
     bot.on('message', (m) => {
         if(!logs[key]) logs[key] = [];
@@ -27,19 +26,26 @@ function startBot(sid, host, user, ver) {
         if(logs[key].length > 40) logs[key].shift();
     });
 
+    bot.on('spawn', () => {
+        logs[key].push("<b style='color:#2ecc71'>Bot doğdu! Aktif sürüm: " + bot.version + "</b>");
+    });
+
     bot.on('end', () => {
         const c = configs[key].creds;
         delete sessions[sid][user];
-        logs[key].push("<b style='color:orange'>Koptu, 15sn sonra tekrar girecek...</b>");
-        // Auto-Reconnect: 7/24 için kritik
+        logs[key].push("<b style='color:orange'>Bağlantı koptu, 15sn sonra tekrar...</b>");
         setTimeout(() => startBot(sid, c.host, c.user, c.ver), 15000);
+    });
+
+    bot.on('error', (err) => {
+        logs[key].push("<b style='color:red'>Hata: " + err.message + "</b>");
     });
 }
 
 http.createServer((req, res) => {
     const q = url.parse(req.url, true).query;
     const p = url.parse(req.url, true).pathname;
-    const sid = q.sid; // Tarayıcı Kimliği
+    const sid = q.sid;
 
     if (p === '/ping') return res.end("pong");
 
@@ -54,16 +60,27 @@ http.createServer((req, res) => {
         const c = configs[key];
         if (!b || !c) return res.end("error");
 
-        if (q.type === 'msg') clearInterval(c.msgT);
-        if (q.type === 'click') clearInterval(c.clickT);
-        if (q.type === 'break') clearInterval(c.breakT);
-
-        if (q.status === 'on') {
-            if (q.type === 'msg') c.msgT = setInterval(() => b.chat(q.val), q.sec * 1000);
-            if (q.type === 'click') c.clickT = setInterval(() => b.activateItem(), q.sec * 1000);
-            if (q.type === 'break') c.breakT = setInterval(() => { 
-                const bl = b.blockAtCursor(4); if(bl) b.dig(bl, true).catch(()=>{}); 
-            }, 500);
+        if (q.type === 'msg') {
+            clearInterval(c.msgT);
+            if (q.status === 'on') c.msgT = setInterval(() => b.chat(q.val), q.sec * 1000);
+        } 
+        else if (q.type === 'click') {
+            clearInterval(c.clickT);
+            if (q.status === 'on') c.clickT = setInterval(() => b.activateItem(), q.sec * 1000);
+        }
+        else if (q.type === 'mining') {
+            c.mining = (q.status === 'on');
+            if (c.mining) {
+                const dig = async () => {
+                    if (!configs[key] || !configs[key].mining || !sessions[sid][q.user]) return;
+                    const target = sessions[sid][q.user].blockAtCursor(4);
+                    if (target && target.type !== 0) { // Hava (0) değilse kaz
+                        try { await sessions[sid][q.user].dig(target, true); } catch(e) {}
+                    }
+                    setTimeout(dig, 250);
+                };
+                dig();
+            }
         }
         return res.end("ok");
     }
@@ -82,5 +99,5 @@ http.createServer((req, res) => {
     }
 
     let f = path.join(__dirname, p === '/' ? 'index.html' : p);
-    fs.readFile(f, (err, data) => { res.end(data); });
+    fs.readFile(f, (err, data) => res.end(data));
 }).listen(process.env.PORT || 10000);
