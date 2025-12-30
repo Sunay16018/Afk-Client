@@ -1,20 +1,18 @@
-// package.json
 {
   "name": "afk-client-ultimate-v6",
   "version": "1.0.0",
-  "description": "Minecraft AFK Client with Mineflayer, Socket.io, ANSI to HTML rendering",
+  "description": "Node.js + browser based Minecraft AFK client using Mineflayer, Socket.io and ansi-to-html",
   "main": "server.js",
-  "engines": {
-    "node": "20.x"
-  },
   "scripts": {
-    "start": "node server.js",
-    "build": "npm install"
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
-    "ansi-to-html": "^0.7.7",
-    "express": "^4.18.2",
-    "mineflayer": "^4.8.0",
-    "socket.io": "^4.7.2"
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "mineflayer": "^4.15.0",
+    "ansi-to-html": "^0.7.8"
   }
 }
