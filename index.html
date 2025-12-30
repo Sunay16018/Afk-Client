@@ -2,157 +2,50 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kompakt Master Panel</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private AFK Client</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ansi-to-html@0.6.17/dist/ansi_to_html.min.js"></script>
 </head>
-<body oncontextmenu="return false;">
-    <div class="app-container">
-        <nav class="top-nav">
-            <button onclick="showTab('bots')"><i class="fas fa-plug"></i> Botlar</button>
-            <button onclick="showTab('terminal')"><i class="fas fa-terminal"></i> Konsol</button>
-            <button onclick="showTab('radar')"><i class="fas fa-crosshairs"></i> Radar</button>
-            <button onclick="toggleInv()" class="bag-btn"><i class="fas fa-shopping-bag"></i></button>
-        </nav>
+<body>
+    <div id="terminal"><div id="log"></div></div>
 
-        <div id="tab-bots" class="tab active">
-            <div class="login-form">
-                <input type="text" id="host" placeholder="Sunucu IP">
-                <input type="text" id="user" placeholder="Bot Nick">
-                <select id="ver">
-                    <option value="1.8.8">1.8.8</option>
-                    <option value="1.12.2">1.12.2</option>
-                    <option value="1.16.5">1.16.5</option>
-                    <option value="1.19.4">1.19.4</option>
-                    <option value="1.20.1" selected>1.20.1</option>
-                    <option value="1.20.4">1.20.4</option>
-                    <option value="1.21.4">1.21.4</option>
-                </select>
-                <button onclick="connectBot()">BOTU SOK VE İZLE</button>
-            </div>
-            <div id="bot-list" class="cards-container"></div>
+    <div id="controls">
+        <div class="row">
+            <input id="ip" placeholder="IP">
+            <input id="port" placeholder="25565" style="width: 70px;">
+            <input id="username" placeholder="Bot İsmi">
+            <input id="password" type="password" placeholder="Şifre">
+            <input id="version" placeholder="Sürüm">
+        </div>
+        
+        <div class="row chat-row">
+            <input id="chatMsg" placeholder="Sunucuya mesaj gönder...">
+            <button id="send" style="background:#1565c0;">GÖNDER</button>
         </div>
 
-        <div id="tab-terminal" class="tab">
-            <div class="current-header">
-                <span id="cur-name">Seçilmedi</span>
-                <button onclick="quitBot()" class="quit-btn">KOV</button>
-            </div>
-            <div class="stats-row">
-                <span>❤️ <span id="h">0</span></span>
-                <span>🍗 <span id="f">0</span></span>
-                <span>📍 <span id="p">0,0</span></span>
-            </div>
-            <div class="term-box">
-                <div id="logbox" class="terminal"></div>
-            </div>
-            <div class="input-row">
-                <input type="text" id="msg" placeholder="Mesaj..." autocomplete="off">
-                <button onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
-
-        <div id="tab-radar" class="tab">
-            <div class="radar-map"><div id="radar-ui" class="radar-circle"><div class="center"></div></div></div>
-        </div>
-
-        <div id="inv-panel" class="overlay">
-            <div class="inv-modal">
-                <div class="inv-header" style="color:#333; font-weight:bold; margin-bottom:5px; display:flex; justify-content:space-between;">
-                    Envanter <i class="fas fa-times" onclick="toggleInv()" style="cursor:pointer"></i>
-                </div>
-                <div class="grid" id="inv-grid"></div>
-            </div>
+        <div class="row">
+            <button id="start" style="background:#2e7d32;">BAŞLAT</button>
+            <button id="stop" style="background:#c62828;">DURDUR</button>
+            <button id="settingsBtn">⚙ AYARLAR</button>
         </div>
     </div>
 
-    <script>
-        let selectedBot = null;
-        let autoScroll = true;
+    <div id="settings" class="hidden">
+        <input id="autoMsgText" placeholder="Oto Mesaj">
+        <input id="autoMsgDelay" type="number" placeholder="Sn" style="width: 50px;">
+        <label><input type="checkbox" id="autoMsgEnable"> Oto-Mesaj</label>
+    </div>
 
-        const grid = document.getElementById('inv-grid');
-        for(let i=9; i<=44; i++){
-            let s = document.createElement('div');
-            s.className = 'slot'; s.id = 'slot-'+i;
-            grid.appendChild(s);
-        }
+    <div class="controls">
+        <button data-k="forward">↑</button>
+        <button data-k="left">←</button>
+        <button data-k="back">↓</button>
+        <button data-k="right">→</button>
+        <button data-k="jump">Z</button>
+    </div>
 
-        function showTab(t) {
-            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-            document.getElementById('tab-'+t).classList.add('active');
-        }
-
-        function toggleInv() { document.getElementById('inv-panel').classList.toggle('open'); }
-
-        async function connectBot() {
-            const h = document.getElementById('host').value;
-            const u = document.getElementById('user').value;
-            const v = document.getElementById('ver').value;
-            if(!u) return;
-            await fetch(`/start?host=${h}&user=${u}&ver=${v}`);
-            selectedBot = u;
-            document.getElementById('cur-name').innerText = u;
-            showTab('terminal');
-        }
-
-        async function quitBot() {
-            if(!selectedBot) return;
-            await fetch(`/quit?user=${selectedBot}`);
-            selectedBot = null;
-            document.getElementById('cur-name').innerText = 'Seçilmedi';
-            showTab('bots');
-        }
-
-        async function sendMsg() {
-            const i = document.getElementById('msg');
-            if(!selectedBot || !i.value) return;
-            await fetch(`/send?user=${selectedBot}&msg=${encodeURIComponent(i.value)}`);
-            i.value = '';
-        }
-
-        document.getElementById('msg').onkeypress = (e) => e.key === 'Enter' && sendMsg();
-
-        setInterval(async () => {
-            try {
-                const res = await fetch('/getall');
-                const data = await res.json();
-                
-                const list = document.getElementById('bot-list');
-                list.innerHTML = data.activeBots.map(n => `<div class="bot-card ${selectedBot===n?'selected':''}" onclick="selectedBot='${n}'; document.getElementById('cur-name').innerText='${n}'"><i class="fas fa-robot"></i> ${n}</div>`).join('');
-
-                if(selectedBot) {
-                    const lb = document.getElementById('logbox');
-                    lb.innerHTML = (data.logs[selectedBot] || []).join('<br>');
-                    if(autoScroll) lb.scrollTop = lb.scrollHeight;
-
-                    const s = data.status[selectedBot];
-                    if(s) {
-                        document.getElementById('h').innerText = s.health;
-                        document.getElementById('f').innerText = s.food;
-                        document.getElementById('p').innerText = `${s.pos.x}, ${s.pos.z}`;
-                    }
-
-                    // Radar senkronizasyonu
-                    const rUI = document.getElementById('radar-ui');
-                    document.querySelectorAll('.player-dot').forEach(d => d.remove());
-                    if(s && s.players) {
-                        s.players.forEach(p => {
-                            let d = document.createElement('div');
-                            d.className = 'player-dot';
-                            d.style.position = 'absolute';
-                            d.style.width = '4px'; d.style.height = '4px';
-                            d.style.background = 'red'; d.style.borderRadius = '50%';
-                            d.style.left = (90 + p.x) + 'px'; d.style.top = (90 + p.z) + 'px';
-                            rUI.appendChild(d);
-                        });
-                    }
-                }
-            } catch(e) {}
-        }, 1000);
-
-        const lb = document.getElementById('logbox');
-        lb.onscroll = () => autoScroll = (lb.scrollHeight - lb.scrollTop - lb.clientHeight < 50);
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
