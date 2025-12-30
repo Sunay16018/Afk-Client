@@ -3,81 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Özel Master Panel</title>
+    <title>Master Panel V4</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; font-size: 12px; }
         body { background: #0d1117; color: #c9d1d9; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
         nav { display: flex; background: #161b22; height: 40px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
         nav button { flex: 1; border: none; background: none; color: #8b949e; font-weight: bold; cursor: pointer; }
         nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; background: #1f242b; }
-
         .tab { display: none; flex: 1; flex-direction: column; padding: 10px; overflow-y: auto; }
         .active-tab { display: flex; }
-
-        .card { background: #161b22; padding: 10px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 8px; }
+        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
+        .card h4 { color: #58a6ff; font-size: 10px; text-transform: uppercase; margin-bottom: 8px; }
         input, select { background: #010409; border: 1px solid #30363d; color: #fff; padding: 8px; border-radius: 6px; width: 100%; margin: 3px 0; }
-        
-        #logbox { height: 160px; background: #000; border: 2px solid #2ecc71; border-radius: 8px; padding: 8px; overflow-y: auto; font-family: monospace; color: #2ecc71; margin-bottom: 8px; box-shadow: inset 0 0 10px #000; }
-        
-        .row { display: flex; gap: 5px; margin-top: 5px; }
-        .btn-green { background: #238636; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-blue { background: #1f6feb; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; }
-        .btn-red { background: #da3633; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; }
-
+        #logbox { height: 160px; background: #000; border: 2px solid #2ecc71; border-radius: 8px; padding: 8px; overflow-y: auto; font-family: 'Consolas', monospace; color: #2ecc71; margin-bottom: 8px; }
+        .row { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; }
+        .btn { border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-green { background: #238636; } .btn-blue { background: #1f6feb; } .btn-red { background: #da3633; } .btn-orange { background: #d29922; }
         .input-panel { background: #161b22; padding: 8px; border-radius: 8px; border: 1px solid #30363d; display: flex; gap: 5px; }
-        .input-panel input { margin: 0; flex: 1; border-color: #58a6ff; }
-
-        .bot-item { padding: 10px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; margin-top: 5px; text-align: center; cursor: pointer; }
-        .selected-bot { border-color: #2ecc71; color: #2ecc71; background: #23863622; }
+        .bot-item { padding: 12px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; margin-top: 5px; text-align: center; }
+        .selected-bot { border-color: #2ecc71; color: #2ecc71; background: #23863611; }
     </style>
 </head>
 <body>
 
     <nav>
         <button onclick="tab('bots')" id="btn-bots" class="active">BOTLARIM</button>
-        <button onclick="tab('term')" id="btn-term">KONTROL</button>
+        <button onclick="tab('term')" id="btn-term">KONSOL</button>
     </nav>
 
     <div id="tab-bots" class="tab active-tab">
         <div class="card">
-            <input id="h" placeholder="Sunucu IP">
+            <h4>Yeni Bot Bağla</h4>
+            <input id="h" placeholder="Sunucu IP (play.server.com)">
             <input id="u" placeholder="Bot Nick">
-            <select id="v"><option value="1.8.8">1.8.8</option><option value="1.20.1" selected>1.20.1</option></select>
-            <button class="btn-green" style="width:100%; margin-top:5px;" onclick="add()">BAĞLAN</button>
+            <select id="v">
+                <option value="1.8">1.8 (Tüm Versiyonlar)</option>
+                <option value="1.12">1.12 (Tüm Versiyonlar)</option>
+                <option value="1.13">1.13</option>
+                <option value="1.14">1.14</option>
+                <option value="1.15">1.15</option>
+                <option value="1.16">1.16</option>
+                <option value="1.17">1.17</option>
+                <option value="1.18">1.18</option>
+                <option value="1.19">1.19</option>
+                <option value="1.20" selected>1.20</option>
+                <option value="1.21">1.21</option>
+            </select>
+            <button class="btn btn-green" style="width:100%; margin-top:8px;" onclick="add()">BAĞLAN</button>
         </div>
         <div id="list"></div>
     </div>
 
     <div id="tab-term" class="tab">
-        <div style="margin-bottom:8px;">Seçili: <b id="cur" style="color:#58a6ff">-</b></div>
+        <div style="margin-bottom:10px;">Aktif Bot: <b id="cur" style="color:#58a6ff">-</b></div>
         
         <div class="card">
+            <h4>AYARLAR</h4>
             <div class="row">
-                <input id="cfg_msg_text" placeholder="Oto Mesaj..." style="flex:2">
-                <input id="cfg_msg_sec" type="number" placeholder="Sn" style="flex:0.5">
-                <button class="btn-blue" onclick="upd('msg','on')">AÇ</button>
-                <button class="btn-red" onclick="upd('msg','off')">X</button>
+                <span style="width:65px">Oto Mesaj:</span>
+                <input id="cfg_msg_text" placeholder="Mesaj..." style="flex:2">
+                <input id="cfg_msg_sec" type="number" value="30" style="width:45px">
+                <button class="btn btn-blue" onclick="upd('msg','on')">AÇ</button>
+                <button class="btn btn-red" onclick="upd('msg','off')">X</button>
             </div>
             <div class="row">
-                <button onclick="upd('break','on')" class="btn-blue" style="flex:1">OTO KIRMA</button>
-                <button onclick="upd('click','on')" class="btn-blue" style="flex:1; background:#d29922">SAĞ TIK (5sn)</button>
+                <span style="width:65px">Sağ Tık:</span>
+                <input id="cfg_click_sec" type="number" value="5" style="flex:1">
+                <button class="btn btn-orange" onclick="upd('click','on')" style="flex:1">AÇ</button>
+                <button class="btn btn-red" onclick="upd('click','off')">X</button>
+            </div>
+            <div class="row">
+                <button onclick="upd('mining','on')" class="btn btn-blue" style="flex:1">MINING BAŞLAT</button>
+                <button onclick="upd('mining','off')" class="btn btn-red" style="flex:1">DURDUR</button>
             </div>
         </div>
 
         <div id="logbox"></div>
 
         <div class="input-panel">
-            <input id="m" placeholder="Mesajını yaz...">
-            <button onclick="send()" class="btn-blue">GÖNDER</button>
+            <input id="m" placeholder="Mesaj yaz..." style="flex:1; background:#000; border:1px solid #444; color:#fff; padding:8px; border-radius:5px;">
+            <button onclick="send()" class="btn btn-blue">GÖNDER</button>
         </div>
     </div>
 
     <script>
-        // Tarayıcıya Özel ID (SID) Oluşturma
         if (!localStorage.getItem('mySID')) localStorage.setItem('mySID', 'id_' + Math.random().toString(36).substr(2, 9));
         const mySID = localStorage.getItem('mySID');
-
         let sel = "";
 
         function tab(t) {
@@ -89,15 +100,15 @@
 
         async function add() {
             const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
-            if(!u) return;
+            if(!u || !h) return alert("Eksik bilgi!");
             await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
             sel = u; document.getElementById('cur').innerText = u; tab('term');
         }
 
         async function upd(type, status) {
             if(!sel) return;
-            const val = encodeURIComponent(document.getElementById('cfg_msg_text').value);
-            const sec = document.getElementById('cfg_msg_sec').value || 30;
+            let val = encodeURIComponent(document.getElementById('cfg_msg_text').value);
+            let sec = (type==='click') ? document.getElementById('cfg_click_sec').value : document.getElementById('cfg_msg_sec').value;
             await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&val=${val}&sec=${sec}`);
         }
 
@@ -122,8 +133,6 @@
                 }
             } catch(e) {}
         }, 1000);
-
-        // Enter tuşu desteği
         document.getElementById('m').onkeydown = (e) => { if(e.key==='Enter') send(); };
     </script>
 </body>
