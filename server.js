@@ -14,12 +14,11 @@ let bots = {};
 function createBot(data, socket) {
     if (bots[data.username]) return;
 
-    // OTOMATIK SURUM MODU
     const bot = mineflayer.createBot({
         host: data.host.split(':')[0],
         port: parseInt(data.host.split(':')[1]) || 25565,
         username: data.username,
-        version: false, // Her sunucuya gore otomatik ayarlanir
+        version: false, // OTOMATİK SÜRÜM ALGILAMA
         hideErrors: true,
         checkTimeoutInterval: 60000
     });
@@ -31,13 +30,13 @@ function createBot(data, socket) {
 
     bot.on('spawn', () => {
         socket.emit('status', { user: data.username, online: true });
-        socket.emit('log', { user: 'SİSTEM', msg: `<b style="color:#00ff00">✓ Giriş Başarılı! (Sürüm: ${bot.version})</b>` });
+        socket.emit('log', { user: 'SİSTEM', msg: `<b style="color:#00ff00">✓ Giriş Yapıldı! Sürüm: ${bot.version}</b>` });
         
-        // Anti-AFK (Karakterin düşmemesi için hafif hareket)
+        // Anti-AFK: Hareket etme
         setInterval(() => { if(bot.entity) bot.look(bot.entity.yaw + 0.1, bot.entity.pitch); }, 20000);
 
         if (bots[data.username].settings.pass) {
-            setTimeout(() => bot.chat(`/login ${bots[data.username].settings.pass}`), 2000);
+            setTimeout(() => bot.chat(`/login ${bots[data.username].settings.pass}`), 2500);
         }
     });
 
@@ -62,9 +61,12 @@ function createBot(data, socket) {
     bot.on('end', () => {
         const b = bots[data.username];
         const reconnect = b?.settings.autoRevive;
-        socket.emit('status', { user: d.user, online: false });
+        socket.emit('status', { user: data.username, online: false }); // HATA BURADAYDI, DÜZELTİLDİ
         delete bots[data.username];
-        if (reconnect) setTimeout(() => createBot(data, socket), 5000);
+        if (reconnect) {
+            socket.emit('log', { user: 'SİSTEM', msg: 'Bağlantı bitti, 5sn sonra tekrar deneniyor...' });
+            setTimeout(() => createBot(data, socket), 5000);
+        }
     });
 }
 
@@ -76,4 +78,3 @@ io.on('connection', (socket) => {
 });
 
 server.listen(process.env.PORT || 3000);
-        
