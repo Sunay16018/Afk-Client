@@ -1,10 +1,10 @@
 {
   "name": "mc-afk-bot",
   "version": "1.0.0",
-  "description": "Minecraft AFK Bot",
-  "main": "bot.js",
+  "description": "Render 7/24 AFK Bot",
+  "main": "server.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "mineflayer": "^4.20.0"
