@@ -8,37 +8,77 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static(__dirname)); // Dosyaları birbirine bağlayan kritik satır
+app.use(express.static(__dirname));
 
 io.on("connection", (socket) => {
     let bot = null;
 
+    // Envanter bilgisini paketleyip gönderen fonksiyon
+    const sendInv = () => {
+        if (!bot || !bot.inventory) return;
+        const items = bot.inventory.items().map(i => ({
+            name: i.name,
+            count: i.count,
+            label: i.displayName
+        }));
+        socket.emit("inv", items);
+    };
+
     socket.on("startBot", (data) => {
         if (bot) return;
+        
         bot = mineflayer.createBot({
             host: data.ip,
+            port: parseInt(data.port) || 25565,
             username: data.user,
-            version: false,
+            version: data.version || false,
             hideErrors: true
         });
 
-        bot.on("message", (m) => socket.emit("log", m.toAnsi()));
         bot.on("spawn", () => {
-            socket.emit("log", "§a[OK] Bot oyuna girdi!");
-            if(bot.inventory) {
-                const items = bot.inventory.items().map(i => ({name: i.name, count: i.count}));
-                socket.emit("inv", items);
-            }
+            socket.emit("log", "§a[SİSTEM] Bot başarıyla bağlandı!");
+            sendInv();
         });
-        bot.inventory?.on("updateSlot", () => {
-            const items = bot.inventory.items().map(i => ({name: i.name, count: i.count}));
-            socket.emit("inv", items);
+
+        bot.on("message", (m) => socket.emit("log", m.toAnsi()));
+        
+        // Envanterde bir slot güncellendiğinde tetiklenir
+        bot.inventory.on("updateSlot", () => sendInv());
+
+        bot.on("kicked", (reason) => socket.emit("log", `§c[KICK] ${reason}`));
+        bot.on("error", (err) => socket.emit("log", `§c[HATA] ${err.message}`));
+        
+        bot.on("end", () => {
+            socket.emit("log", "§e[BİLGİ] Bağlantı kesildi.");
+            socket.emit("inv", []);
+            bot = null;
         });
-        bot.on("end", () => { socket.emit("log", "§cBağlantı koptu."); bot = null; });
     });
 
-    socket.on("sendChat", (m) => { if(bot) bot.chat(m); });
-    socket.on("stopBot", () => { if(bot) bot.quit(); });
+    socket.on("sendChat", (msg) => {
+        if (bot) bot.chat(msg);
+    });
+
+    socket.on("stopBot", () => {
+        if (bot) {
+            bot.quit();
+            bot = null;
+        }
+    });
+
+    socket.on("move", (d) => {
+        if (bot) bot.setControlState(d.key, d.state);
+    });
+
+    socket.on("disconnect", () => {
+        if (bot) {
+            bot.quit();
+            bot = null;
+        }
+    });
 });
 
-server.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Sunucu ${PORT} portunda calisiyor.`);
+});
