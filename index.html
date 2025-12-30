@@ -2,12 +2,12 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MC Bot Manager Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MC Master Panel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body oncontextmenu="return false;">
     <div class="app-container">
         <nav class="top-nav">
             <button onclick="showTab('bots')"><i class="fas fa-plug"></i> Botlar</button>
@@ -23,34 +23,40 @@
             </div>
         </div>
 
-        <div id="tab-bots" class="tab active">
+        <div id="tab-bots" class="tab active scrollable">
             <div class="login-form">
                 <input type="text" id="host" placeholder="Sunucu IP">
                 <input type="text" id="user" placeholder="Bot Nick">
-                <select id="ver"><option value="1.8.8">1.8.8</option><option value="1.20.1" selected>1.20.1</option></select>
-                <button onclick="connectBot()">SİSTEME BAĞLA</button>
+                <select id="ver">
+                    <option value="1.8.8">1.8.8</option><option value="1.12.2">1.12.2</option>
+                    <option value="1.16.5">1.16.5</option><option value="1.20.1" selected>1.20.1</option>
+                    <option value="1.20.4">1.20.4</option><option value="1.21.4">1.21.4</option>
+                </select>
+                <button onclick="connectBot()">BOTU SOK</button>
             </div>
             <div id="bot-list" class="cards-container"></div>
         </div>
 
         <div id="tab-terminal" class="tab">
             <div class="current-header">
-                <span id="cur-name">Seçili Değil</span>
-                <button onclick="quitBot()" class="quit-btn">Bağlantıyı Kes</button>
+                <span id="cur-name">Seçilmedi</span>
+                <button onclick="quitBot()" class="quit-btn">KOV</button>
             </div>
             <div class="stats-row">
-                <span><i class="fas fa-heart"></i> <span id="h">0</span></span>
-                <span><i class="fas fa-hamburger"></i> <span id="f">0</span></span>
-                <span><i class="fas fa-map-marker-alt"></i> <span id="p">0,0</span></span>
+                <span>❤️ <span id="h">0</span></span>
+                <span>🍗 <span id="f">0</span></span>
+                <span>📍 <span id="p">0,0</span></span>
             </div>
-            <div id="logbox" class="terminal"></div>
+            <div class="term-box">
+                <div id="logbox" class="terminal scrollable"></div>
+            </div>
             <div class="input-row">
-                <input type="text" id="msg" placeholder="Mesaj veya komut..." autocomplete="off">
+                <input type="text" id="msg" placeholder="Mesaj..." autocomplete="off">
                 <button onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
 
-        <div id="tab-radar" class="tab">
+        <div id="tab-radar" class="tab scrollable">
             <div class="radar-map"><div id="radar-ui" class="radar-circle"><div class="center"></div></div></div>
         </div>
     </div>
@@ -59,7 +65,6 @@
         let selectedBot = null;
         let autoScroll = true;
 
-        // Slotları oluştur
         const grid = document.getElementById('inv-grid');
         for(let i=9; i<=44; i++){
             let s = document.createElement('div');
@@ -67,14 +72,12 @@
             grid.appendChild(s);
         }
 
-        function showTab(tabId) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('tab-'+tabId).classList.add('active');
+        function showTab(t) {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.add('active');
         }
 
-        function toggleInv() {
-            document.getElementById('inv-panel').classList.toggle('open');
-        }
+        function toggleInv() { document.getElementById('inv-panel').classList.toggle('open'); }
 
         async function connectBot() {
             const h = document.getElementById('host').value;
@@ -86,14 +89,21 @@
         async function quitBot() {
             if(!selectedBot) return;
             await fetch(`/quit?user=${selectedBot}`);
+            // Arayüzü temizle
             selectedBot = null;
+            document.getElementById('cur-name').innerText = 'Seçilmedi';
+            document.getElementById('logbox').innerHTML = '';
+            document.getElementById('h').innerText = '0';
+            document.getElementById('f').innerText = '0';
+            document.getElementById('p').innerText = '0,0';
+            showTab('bots'); // Botlar sayfasına geri dön
         }
 
         async function sendMsg() {
-            const input = document.getElementById('msg');
-            if(!selectedBot || !input.value) return;
-            await fetch(`/send?user=${selectedBot}&msg=${encodeURIComponent(input.value)}`);
-            input.value = '';
+            const i = document.getElementById('msg');
+            if(!selectedBot || !i.value) return;
+            await fetch(`/send?user=${selectedBot}&msg=${encodeURIComponent(i.value)}`);
+            i.value = '';
         }
 
         document.getElementById('msg').onkeypress = (e) => e.key === 'Enter' && sendMsg();
@@ -102,25 +112,26 @@
             try {
                 const res = await fetch('/getall');
                 const data = await res.json();
+                
+                // Eğer seçili bot artık aktif değilse temizle
+                if(selectedBot && !data.activeBots.includes(selectedBot)) {
+                    selectedBot = null;
+                    document.getElementById('cur-name').innerText = 'Seçilmedi';
+                    document.getElementById('logbox').innerHTML = '';
+                }
 
                 const list = document.getElementById('bot-list');
-                list.innerHTML = data.activeBots.map(n => `
-                    <div class="bot-card ${selectedBot===n?'selected':''}" onclick="selectedBot='${n}'; document.getElementById('cur-name').innerText='${n}'">
-                        <i class="fas fa-user-circle"></i> ${n}
-                    </div>
-                `).join('');
+                list.innerHTML = data.activeBots.map(n => `<div class="bot-card ${selectedBot===n?'selected':''}" onclick="selectedBot='${n}'; document.getElementById('cur-name').innerText='${n}'"><i class="fas fa-robot"></i> ${n}</div>`).join('');
 
                 if(selectedBot && data.status[selectedBot]) {
                     const s = data.status[selectedBot];
                     document.getElementById('h').innerText = s.health;
                     document.getElementById('f').innerText = s.food;
                     document.getElementById('p').innerText = `${s.pos.x}, ${s.pos.z}`;
-                    
                     const lb = document.getElementById('logbox');
                     lb.innerHTML = (data.logs[selectedBot] || []).join('<br>');
                     if(autoScroll) lb.scrollTop = lb.scrollHeight;
 
-                    // Radar
                     const rUI = document.getElementById('radar-ui');
                     document.querySelectorAll('.player-dot').forEach(d => d.remove());
                     s.players.forEach(p => {
@@ -130,7 +141,6 @@
                         rUI.appendChild(dot);
                     });
 
-                    // Envanter
                     if(document.getElementById('inv-panel').classList.contains('open')) {
                         document.querySelectorAll('.slot').forEach(x => x.innerHTML = '');
                         (data.invs[selectedBot] || []).forEach(item => {
