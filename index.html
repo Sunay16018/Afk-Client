@@ -2,48 +2,67 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Sade Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel v16</title>
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; margin:0; padding:0; }
+        * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; }
-        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
+        nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
+        nav button { flex: 1; border: none; background: none; color: #8b949e; font-weight: bold; cursor: pointer; }
         nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; }
-        .tab { display: none; flex: 1; flex-direction: column; padding: 15px; }
+        .tab { display: none; flex: 1; flex-direction: column; padding: 12px; overflow-y: auto; }
         .active-tab { display: flex; }
-        #logbox { height: 300px; background: #000; border: 1px solid #30363d; border-radius: 5px; padding: 10px; overflow-y: auto; color: #2ecc71; font-family: monospace; font-size: 13px; margin-bottom: 10px; }
-        input, select { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 10px; }
+        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
+        input, select { background: #010409; border: 1px solid #30363d; color: #fff; padding: 8px; border-radius: 5px; width: 100%; margin: 4px 0; }
+        #logbox { height: 250px; background: #000; border: 2px solid #2ecc71; border-radius: 8px; padding: 10px; overflow-y: auto; font-family: monospace; color: #2ecc71; margin-bottom: 8px; flex-shrink: 0; }
         .btn { border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
+        .btn-green { background: #238636; width: 100%; }
+        .bot-item { padding: 10px; background: #21262d; border: 1px solid #30363d; border-radius: 5px; margin-top: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <nav>
         <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
+        <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
         <button onclick="tab('term')" id="btn-term">KONSOL</button>
     </nav>
 
     <div id="tab-bots" class="tab active-tab">
-        <input id="h" placeholder="Sunucu IP:Port (Örn: oyna.server.com:25565)">
-        <input id="u" placeholder="Bot İsmi">
-        <select id="v">
-            <option value="1.8.8">1.8.8</option>
-            <option value="1.12.2">1.12.2</option>
-            <option value="1.16.5">1.16.5</option>
-            <option value="1.20.1">1.20.1</option>
-            <option value="1.20.4">1.20.4</option>
-            <option value="1.21">1.21</option>
-            <option value="1.21.6">1.21.6</option>
-        </select>
-        <button class="btn" onclick="add()" style="background:#238636">BAĞLAN</button>
-        <div id="list" style="margin-top:15px;"></div>
+        <div class="card">
+            <input id="h" placeholder="IP:Port">
+            <input id="u" placeholder="Nick">
+            <select id="v">
+                <option value="1.8.8">1.8.8</option>
+                <option value="1.12.2">1.12.2</option>
+                <option value="1.16.5">1.16.5</option>
+                <option value="1.20.1">1.20.1</option>
+            </select>
+            <button class="btn btn-green" onclick="add()">BAĞLAN</button>
+        </div>
+        <div id="list"></div>
+    </div>
+
+    <div id="tab-settings" class="tab">
+        <div class="card">
+            <h4>Oto Mesaj</h4>
+            <input id="cfg_msg_text" placeholder="Mesaj...">
+            <input id="cfg_msg_sec" type="number" value="30">
+            <button class="btn" onclick="upd('msg','on')">AÇ</button>
+            <button class="btn" onclick="upd('msg','off')" style="background:red">KAPAT</button>
+        </div>
+        <div class="card">
+            <h4>Modlar</h4>
+            <button class="btn" onclick="upd('mining','on')">KAZMA AÇ</button>
+            <button class="btn" onclick="upd('mining','off')" style="background:red">KAPAT</button>
+        </div>
     </div>
 
     <div id="tab-term" class="tab">
         <div id="logbox"></div>
-        <div style="display:flex; gap:5px; background:#161b22; padding:10px; border-radius:5px;">
-            <input id="m" placeholder="Mesaj yazın..." style="margin:0; flex:1;">
-            <button onclick="send()" class="btn">GÖNDER</button>
+        <div class="card" style="display:flex; gap:5px;">
+            <input id="m" placeholder="Mesaj yaz..." style="margin:0; flex:1;">
+            <button onclick="doSend()" class="btn">GÖNDER</button>
         </div>
     </div>
 
@@ -65,21 +84,28 @@
             sel = u; tab('term');
         }
 
-        async function send() {
+        async function doSend() {
             const i = document.getElementById('m');
             if(!sel || !i.value) return;
             await fetch(`/send?sid=${mySID}&user=${encodeURIComponent(sel)}&msg=${encodeURIComponent(i.value)}`);
             i.value = ""; i.focus();
         }
 
-        document.getElementById('m').onkeydown = (e) => { if(e.key==='Enter') send(); };
+        document.getElementById('m').onkeydown = (e) => { if(e.key === 'Enter') doSend(); };
+
+        async function upd(type, status) {
+            if(!sel) return;
+            let val = encodeURIComponent(document.getElementById('cfg_msg_text').value);
+            let sec = document.getElementById('cfg_msg_sec').value;
+            await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&val=${val}&sec=${sec}`);
+        }
 
         setInterval(async () => {
             try {
                 const r = await fetch(`/data?sid=${mySID}`);
                 const d = await r.json();
                 document.getElementById('list').innerHTML = d.active.map(n => `
-                    <div style="padding:10px; background:#21262d; border:1px solid ${sel==n?'#2ecc71':'#30363d'}; margin-top:5px; border-radius:5px; cursor:pointer;" onclick="sel='${n}'">
+                    <div class="bot-item" style="border-color:${sel==n?'#2ecc71':'#30363d'}" onclick="sel='${n}'">
                         ${n} ${sel==n?'<b>(SEÇİLİ)</b>':''}
                     </div>
                 `).join('');
