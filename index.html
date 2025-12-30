@@ -1,103 +1,56 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Panel v15</title>
+    <title>Sade Panel</title>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; font-size: 13px; }
+        * { box-sizing: border-box; font-family: sans-serif; margin:0; padding:0; }
         body { background: #0d1117; color: #c9d1d9; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
-        nav button { flex: 1; border: none; background: none; color: #8b949e; font-weight: bold; cursor: pointer; }
-        nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; background: #1c2128; }
-        .tab { display: none; flex: 1; flex-direction: column; padding: 12px; overflow-y: auto; }
+        nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; }
+        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
+        nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; }
+        .tab { display: none; flex: 1; flex-direction: column; padding: 15px; }
         .active-tab { display: flex; }
-        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
-        input, select { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 5px; width: 100%; margin: 5px 0; }
-        #logbox { height: 250px; background: #000; border: 2px solid #2ecc71; border-radius: 8px; padding: 10px; overflow-y: auto; font-family: monospace; color: #2ecc71; margin-bottom: 10px; flex-shrink: 0; }
-        .btn { border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; }
-        .btn-green { background: #238636; width: 100%; }
-        .btn-red { background: #da3633; }
-        .btn-blue { background: #1f6feb; }
-        .status-msg { font-size: 11px; padding: 8px; text-align: center; border-radius: 4px; margin: 5px 12px; display: none; }
-        .bot-item { padding: 12px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .selected-bot { border-color: #2ecc71; background: #23863611; }
+        #logbox { height: 300px; background: #000; border: 1px solid #30363d; border-radius: 5px; padding: 10px; overflow-y: auto; color: #2ecc71; font-family: monospace; font-size: 13px; margin-bottom: 10px; }
+        input, select { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 10px; }
+        .btn { border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
     </style>
 </head>
 <body>
 
     <nav>
-        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLARIM</button>
-        <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
+        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
         <button onclick="tab('term')" id="btn-term">KONSOL</button>
     </nav>
 
-    <div id="info" class="status-msg"></div>
-
     <div id="tab-bots" class="tab active-tab">
-        <div class="card">
-            <input id="h" placeholder="Sunucu IP:Port">
-            <input id="u" placeholder="Bot Nick">
-            <select id="v">
-                <option value="1.8.8">1.8.8</option>
-                <option value="1.12.2">1.12.2</option>
-                <option value="1.16.5">1.16.5</option>
-                <option value="1.20.1">1.20.1</option>
-                <option value="1.21">1.21</option>
-            </select>
-            <button class="btn btn-green" onclick="add()">BAĞLAN</button>
-        </div>
-        <div id="list"></div>
-    </div>
-
-    <div id="tab-settings" class="tab">
-        <div style="margin-bottom:10px;">Seçili: <b id="cur_settings" style="color:#2ecc71">-</b></div>
-        <div class="card">
-            <h4>Oto Mesaj</h4>
-            <input id="cfg_msg_text" placeholder="Mesaj içeriği...">
-            <div style="display:flex; gap:5px;">
-                <input id="cfg_msg_sec" type="number" value="30" style="flex:1">
-                <button class="btn btn-blue" onclick="upd('msg','on')">AÇ</button>
-                <button class="btn btn-red" onclick="upd('msg','off')">KAPAT</button>
-            </div>
-        </div>
-        <div class="card">
-            <h4>Modlar</h4>
-            <div style="display:flex; gap:5px; margin-bottom:8px;">
-                <button class="btn btn-blue" onclick="upd('mining','on')" style="flex:1">KAZMA AÇ</button>
-                <button class="btn btn-red" onclick="upd('mining','off')" style="flex:1">KAPAT</button>
-            </div>
-            <div style="display:flex; gap:5px;">
-                <input id="cfg_click_sec" type="number" value="5" style="width:60px">
-                <button class="btn btn-blue" onclick="upd('click','on')" style="flex:1; background:#d29922">SAĞ TIK AÇ</button>
-                <button class="btn btn-red" onclick="upd('click','off')">KAPAT</button>
-            </div>
-        </div>
+        <input id="h" placeholder="Sunucu IP:Port (Örn: oyna.server.com:25565)">
+        <input id="u" placeholder="Bot İsmi">
+        <select id="v">
+            <option value="1.8.8">1.8.8</option>
+            <option value="1.12.2">1.12.2</option>
+            <option value="1.16.5">1.16.5</option>
+            <option value="1.20.1">1.20.1</option>
+            <option value="1.20.4">1.20.4</option>
+            <option value="1.21">1.21</option>
+            <option value="1.21.6">1.21.6</option>
+        </select>
+        <button class="btn" onclick="add()" style="background:#238636">BAĞLAN</button>
+        <div id="list" style="margin-top:15px;"></div>
     </div>
 
     <div id="tab-term" class="tab">
-        <div style="margin-bottom:5px;">Konsol: <b id="cur_term" style="color:#2ecc71">-</b></div>
         <div id="logbox"></div>
-        <div class="card" style="padding:10px;">
-            <div style="display:flex; gap:5px;">
-                <input id="m" placeholder="Sohbete bir şey yaz..." style="margin:0; flex:1;">
-                <button onclick="doSend()" class="btn btn-blue">GÖNDER</button>
-            </div>
+        <div style="display:flex; gap:5px; background:#161b22; padding:10px; border-radius:5px;">
+            <input id="m" placeholder="Mesaj yazın..." style="margin:0; flex:1;">
+            <button onclick="send()" class="btn">GÖNDER</button>
         </div>
     </div>
 
     <script>
-        const mySID = localStorage.getItem('mySID') || 'u' + Math.random().toString(36).substr(2,4);
-        localStorage.setItem('mySID', mySID);
+        const mySID = localStorage.getItem('sid') || Math.random().toString(36).substr(2,5);
+        localStorage.setItem('sid', mySID);
         let sel = "";
-
-        function showInfo(msg, color) {
-            const el = document.getElementById('info');
-            el.innerText = msg; el.style.display = 'block';
-            el.style.background = color === 'red' ? '#da363333' : '#23863633';
-            el.style.color = color === 'red' ? '#f85149' : '#3fb950';
-            setTimeout(() => { el.style.display = 'none'; }, 3000);
-        }
 
         function tab(t) {
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
@@ -108,46 +61,28 @@
 
         async function add() {
             const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
-            if(!h || !u) return showInfo("Eksik bilgi!", "red");
             await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
-            sel = u; tab('term'); showInfo("Bağlanıyor...", "green");
+            sel = u; tab('term');
         }
 
-        async function doSend() {
-            const input = document.getElementById('m');
-            const val = input.value.trim();
-            if(!sel || !val) return;
-            const r = await fetch(`/send?sid=${mySID}&user=${encodeURIComponent(sel)}&msg=${encodeURIComponent(val)}`);
-            if((await r.text()) === "ok") { input.value = ""; input.focus(); }
-            else showInfo("Bot oyunda değil!", "red");
+        async function send() {
+            const i = document.getElementById('m');
+            if(!sel || !i.value) return;
+            await fetch(`/send?sid=${mySID}&user=${encodeURIComponent(sel)}&msg=${encodeURIComponent(i.value)}`);
+            i.value = ""; i.focus();
         }
 
-        document.getElementById('m').onkeydown = (e) => { if(e.key === 'Enter') doSend(); };
-
-        async function upd(type, status) {
-            if(!sel) return showInfo("Bot seç!", "red");
-            let val = encodeURIComponent(document.getElementById('cfg_msg_text').value);
-            let sec = (type==='click') ? document.getElementById('cfg_click_sec').value : document.getElementById('cfg_msg_sec').value;
-            const r = await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&val=${val}&sec=${sec}`);
-            if((await r.text()) === "offline") showInfo("Bot çevrimdışı!", "red");
-            else showInfo("Ayarlar uygulandı.", "green");
-        }
+        document.getElementById('m').onkeydown = (e) => { if(e.key==='Enter') send(); };
 
         setInterval(async () => {
             try {
                 const r = await fetch(`/data?sid=${mySID}`);
                 const d = await r.json();
-                if(sel && !d.active.includes(sel)) sel = "";
-                document.getElementById('cur_settings').innerText = sel || "-";
-                document.getElementById('cur_term').innerText = sel || "-";
-                
                 document.getElementById('list').innerHTML = d.active.map(n => `
-                    <div class="bot-item ${sel==n?'selected-bot':''}" onclick="sel='${n}';">
-                        <b>${n}</b>
-                        <button class="btn btn-red" style="padding:4px 8px; font-size:10px;" onclick="fetch('/stop?sid=${mySID}&user=${n}')">KAPAT</button>
+                    <div style="padding:10px; background:#21262d; border:1px solid ${sel==n?'#2ecc71':'#30363d'}; margin-top:5px; border-radius:5px; cursor:pointer;" onclick="sel='${n}'">
+                        ${n} ${sel==n?'<b>(SEÇİLİ)</b>':''}
                     </div>
                 `).join('');
-
                 if(sel && d.logs[sel]) {
                     const lb = document.getElementById('logbox');
                     lb.innerHTML = d.logs[sel].join('<br>');
