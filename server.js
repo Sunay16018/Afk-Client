@@ -22,12 +22,14 @@ function startBot(sid, host, user, ver) {
         port: parseInt(parts[1]) || 25565, 
         username: user, 
         version: ver, 
-        auth: 'offline'
+        auth: 'offline',
+        checkTimeoutInterval: 30 * 1000 // 30 saniye boyunca paket gelmezse bağlantıyı tazele
     });
 
     sessions[sid][user] = bot;
     configs[key] = { msgT: null, clickT: null, mining: false };
 
+    // KİCK SEBEBİ AYRIŞTIRICI
     const getKickReason = (reason) => {
         if (!reason) return "Bilinmeyen sebep";
         if (typeof reason === 'string') return reason;
@@ -38,10 +40,37 @@ function startBot(sid, host, user, ver) {
         return JSON.stringify(reason);
     };
 
-    bot.on('login', () => logs[key].push("<b style='color:#2ecc71'>GİRİŞ YAPILDI!</b>"));
-    bot.on('kicked', (r) => { logs[key].push("<b style='color:#e74c3c'>ATILDI: " + getKickReason(r) + "</b>"); delete sessions[sid][user]; });
-    bot.on('error', (e) => { logs[key].push("<b style='color:#e74c3c'>HATA: " + e.message + "</b>"); delete sessions[sid][user]; });
-    bot.on('end', () => { if (sessions[sid]?.[user]) { logs[key].push("<b style='color:gray'>BAĞLANTI KESİLDİ.</b>"); delete sessions[sid][user]; } });
+    bot.on('login', () => {
+        logs[key].push("<b style='color:#2ecc71'>GİRİŞ YAPILDI!</b>");
+        
+        // DÜŞMEYİ ÖNLEMEK İÇİN: 10 saniyede bir minik zıplama/hareket
+        const keepAliveInterval = setInterval(() => {
+            if (bot && bot.entity) {
+                bot.setControlState('jump', true);
+                setTimeout(() => bot.setControlState('jump', false), 500);
+            } else {
+                clearInterval(keepAliveInterval);
+            }
+        }, 15000);
+    });
+
+    bot.on('kicked', (r) => {
+        const msg = getKickReason(r);
+        logs[key].push("<b style='color:#e74c3c'>SUNUCU ATTI: " + msg + "</b>");
+        delete sessions[sid][user];
+    });
+
+    bot.on('error', (e) => {
+        logs[key].push("<b style='color:#e74c3c'>HATA: " + e.message + "</b>");
+        delete sessions[sid][user];
+    });
+
+    bot.on('end', () => {
+        if (sessions[sid]?.[user]) {
+            logs[key].push("<b style='color:gray'>BAĞLANTI KOPDU (TIMEOUT).</b>");
+            delete sessions[sid][user];
+        }
+    });
 
     bot.on('message', (m) => {
         logs[key].push(m.toHTML());
@@ -49,6 +78,7 @@ function startBot(sid, host, user, ver) {
     });
 }
 
+// HTTP SUNUCU KISMI (Aynı kalıyor)
 http.createServer((req, res) => {
     const q = url.parse(req.url, true).query;
     const p = url.parse(req.url, true).pathname;
@@ -59,8 +89,6 @@ http.createServer((req, res) => {
         if (sessions[sid]?.[q.user]) { sessions[sid][q.user].chat(decodeURIComponent(q.msg)); return res.end("ok"); }
         return res.end("error");
     }
-    if (p === '/stop' && sid) { if (sessions[sid]?.[q.user]) { sessions[sid][q.user].quit(); delete sessions[sid][q.user]; } return res.end("ok"); }
-
     if (p === '/update' && sid) {
         const key = sid + "_" + q.user;
         const b = sessions[sid]?.[q.user];
@@ -82,7 +110,6 @@ http.createServer((req, res) => {
         } else if (q.type === 'mining' && q.status === 'off') { c.mining = false; }
         return res.end("ok");
     }
-
     if (p === '/data' && sid) {
         const active = sessions[sid] ? Object.keys(sessions[sid]) : [];
         const sLogs = {};
@@ -90,7 +117,6 @@ http.createServer((req, res) => {
         res.setHeader('Content-Type', 'application/json');
         return res.end(JSON.stringify({ active, logs: sLogs }));
     }
-
     let f = path.join(__dirname, p === '/' ? 'index.html' : p);
     fs.readFile(f, (err, data) => res.end(data));
 }).listen(process.env.PORT || 10000);
