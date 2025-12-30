@@ -14,13 +14,14 @@ let bots = {};
 function createBot(data, socket) {
     if (bots[data.username]) return;
 
-    // ViaVersion olan sunucular için 1.20.4 en stabil giriştir
+    // Sürümü otomatik algıla (1.8'den 1.21.1'e kadar)
     const bot = mineflayer.createBot({
         host: data.host.split(':')[0],
         port: parseInt(data.host.split(':')[1]) || 25565,
         username: data.username,
-        version: "1.20.4", // 1.21.1 hatasını bu şekilde bypass ediyoruz
-        hideErrors: true
+        version: false, 
+        hideErrors: true,
+        checkTimeoutInterval: 60000
     });
 
     bots[data.username] = { 
@@ -30,33 +31,37 @@ function createBot(data, socket) {
 
     bot.on('spawn', () => {
         socket.emit('status', { user: data.username, online: true });
-        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:#00ff00">✓ Minetruth Bağlantısı Başarılı!</span>` });
+        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:#00ff00">✓ Giriş Yapıldı! Sürüm: ${bot.version}</span>` });
         
-        // Anti-AFK (Düşmemek için)
+        // Anti-AFK (Hareket Et)
         setInterval(() => { if(bot.entity) bot.look(bot.entity.yaw + 0.1, bot.entity.pitch); }, 20000);
 
+        // Otomatik Login
         if (bots[data.username].settings.pass) {
             setTimeout(() => bot.chat(`/login ${bots[data.username].settings.pass}`), 2500);
         }
     });
 
-    // Matematik ve Oto-Mesaj Analizi (Okuma Kapalı)
+    // SUNUCUDAN GELEN HER ŞEYİ OKU
     bot.on('message', (json) => {
         const text = json.toString();
+        // Renkli mesajı terminale gönder
+        socket.emit('log', { user: data.username, msg: json.toHTML() });
+
+        // Matematik Çözücü
         const b = bots[data.username];
-        if (b && b.settings.math) {
-            // Zincirleme işlem (1+1+5*2 gibi)
+        if (b?.settings.math) {
             const mathMatch = text.match(/(\d+[\+\-\*\/]\d+([\+\-\*\/]\d+)*)/);
             if (mathMatch) {
                 try {
-                    const result = Function('"use strict"; return (' + mathMatch[0] + ')')();
+                    const result = new Function(`return ${mathMatch[0]}`)();
                     if(!isNaN(result)) setTimeout(() => bot.chat(result.toString()), 1000);
                 } catch (e) {}
             }
         }
     });
 
-    // Oto-Mesaj Döngüsü
+    // Otomatik Mesaj (Spam) Döngüsü
     setInterval(() => {
         const b = bots[data.username];
         if (b && b.settings.autoMsg && b.settings.msgText) {
@@ -68,15 +73,23 @@ function createBot(data, socket) {
         }
     }, 1000);
 
-    bot.on('error', (err) => socket.emit('log', { user: 'HATA', msg: err.message }));
-    bot.on('kicked', () => socket.emit('log', { user: 'SİSTEM', msg: 'Sunucudan atıldın veya bağlantı koptu.' }));
+    bot.on('error', (err) => {
+        socket.emit('log', { user: 'HATA', msg: `Hata: ${err.message}` });
+    });
+
+    bot.on('kicked', (reason) => {
+        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:red">Kick: ${reason}</span>` });
+    });
 
     bot.on('end', () => {
         const b = bots[data.username];
         const reconnect = b?.settings.autoRevive;
         socket.emit('status', { user: data.username, online: false });
         delete bots[data.username];
-        if (reconnect) setTimeout(() => createBot(data, socket), 5000);
+        if (reconnect) {
+            socket.emit('log', { user: 'SİSTEM', msg: `Bağlantı koptu, 5sn sonra tekrar deneniyor...` });
+            setTimeout(() => createBot(data, socket), 5000);
+        }
     });
 }
 
