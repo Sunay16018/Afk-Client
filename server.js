@@ -14,14 +14,16 @@ let bots = {};
 function createBot(data, socket) {
     if (bots[data.username]) return;
 
-    // OTOMATİK SÜRÜM ALGILAMA MODU
+    // 1.21.1 Hata Çözümü: Sürümü zorla ama "false" yaparak başla
     const bot = mineflayer.createBot({
         host: data.host.split(':')[0],
         port: parseInt(data.host.split(':')[1]) || 25565,
         username: data.username,
-        version: false, // Sunucu neyse onu kullanır (1.8 - 1.21.x)
-        checkTimeoutInterval: 60000,
-        hideErrors: true
+        // EĞER 1.21.1 HATASI ALIRSAN: Burayı "1.20.4" yaparsan sunucu 
+        // destekliyorsa (ViaVersion varsa) girebilir. Ama önce '1.21.1' deniyoruz.
+        version: "1.21.1", 
+        hideErrors: true,
+        checkTimeoutInterval: 60000
     });
 
     bots[data.username] = { 
@@ -29,14 +31,11 @@ function createBot(data, socket) {
         settings: { math: false, autoRevive: false, autoMsg: false, msgText: "", msgDelay: 30, lastMsg: 0, pass: data.pass || "" }
     };
 
-    // Bağlantı aşamalarını terminale yazdırır
-    bot.on('inject_allowed', () => socket.emit('log', { user: 'SİSTEM', msg: 'Sunucu protokolü algılanıyor...' }));
-
     bot.on('spawn', () => {
         socket.emit('status', { user: data.username, online: true });
-        socket.emit('log', { user: 'SİSTEM', msg: `✓ Giriş Başarılı! Sürüm: ${bot.version}` });
+        socket.emit('log', { user: 'SİSTEM', msg: `✓ 1.21.1 Sunucusuna Başarıyla Girildi!` });
         
-        // Hareket ederek 7/24 aktif kal
+        // 7/24 Aktiflik
         setInterval(() => { if(bot.entity) bot.look(bot.entity.yaw + 0.1, bot.entity.pitch); }, 25000);
 
         if (bots[data.username].settings.pass) {
@@ -44,7 +43,7 @@ function createBot(data, socket) {
         }
     });
 
-    // SADECE GEREKLİ ANALİZLER (Okuma kapalı, sadece işlem yapar)
+    // Otomatik Matematik & Mesaj
     bot.on('message', (json) => {
         const text = json.toString();
         const b = bots[data.username];
@@ -60,11 +59,12 @@ function createBot(data, socket) {
     });
 
     bot.on('error', (err) => {
-        socket.emit('log', { user: 'HATA', msg: `Hata: ${err.message}` });
-    });
-
-    bot.on('kicked', (reason) => {
-        socket.emit('log', { user: 'SİSTEM', msg: `Sunucu bağlantıyı kesti.` });
+        // Eğer 1.21.1 protokol hatası gelirse terminale yaz
+        if(err.message.includes('supported')) {
+            socket.emit('log', { user: 'HATA', msg: 'Sunucu 1.21.1 sürümünü bu kütüphane ile kabul etmiyor. Sürüm düşürmeyi deneyin.' });
+        } else {
+            socket.emit('log', { user: 'HATA', msg: `Hata: ${err.message}` });
+        }
     });
 
     bot.on('end', () => {
