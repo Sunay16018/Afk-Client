@@ -4,73 +4,76 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
-let bot = null;
-let logs = [];
-let botStatus = { health: 20, food: 20, pos: { x: 0, y: 0, z: 0 } };
-
-function addLog(htmlMsg) {
-    logs.push(htmlMsg);
-    if (logs.length > 100) logs.shift();
-}
+let bots = {};
+let logs = {};
+let botStatus = {};
 
 const server = http.createServer((req, res) => {
     const parsedUrl = url.parse(req.url, true);
+    res.setHeader('Content-Type', 'application/json');
 
-    // API: Botu Başlat
+    // BOT BAŞLATMA
     if (parsedUrl.pathname === '/start') {
         const { host, user, ver } = parsedUrl.query;
-        if (bot) bot.quit();
+        if (bots[user]) return res.end(JSON.stringify({msg: "Zaten aktif"}));
 
-        bot = mineflayer.createBot({
-            host: host,
-            port: 25565,
-            username: user || 'AFK_Bot',
-            version: ver,
-            auth: 'offline'
-        });
+        const bot = mineflayer.createBot({ host, username: user, version: ver, auth: 'offline' });
+        bots[user] = bot;
+        logs[user] = [];
 
-        // Renkli Mesajları Yakala ve HTML'e Çevir
         bot.on('message', (jsonMsg) => {
-            const html = jsonMsg.toHTML();
-            addLog(html);
+            if (!logs[user]) logs[user] = [];
+            logs[user].push(jsonMsg.toHTML());
+            if (logs[user].length > 150) logs[user].shift();
         });
 
         bot.on('spawn', () => {
-            addLog('<b style="color:#58a6ff">>>> SUNUCUYA BAĞLANDI <<<</b>');
             setInterval(() => {
-                if (bot && bot.entity) {
-                    botStatus = {
+                if (bot.entity) {
+                    botStatus[user] = {
                         health: Math.round(bot.health),
                         food: Math.round(bot.food),
-                        pos: { x: Math.round(bot.entity.position.x), y: Math.round(bot.entity.position.y), z: Math.round(bot.entity.position.z) }
+                        pos: { x: Math.round(bot.entity.position.x), z: Math.round(bot.entity.position.z) },
+                        players: Object.values(bot.entities)
+                            .filter(e => e.type === 'player' && e.username !== bot.username)
+                            .map(e => ({ n: e.username, x: Math.round(e.position.x - bot.entity.position.x), z: Math.round(e.position.z - bot.entity.position.z) }))
                     };
                 }
             }, 1000);
         });
 
-        bot.on('error', (e) => addLog(`<span style="color:#f85149">Hata: ${e.message}</span>`));
-        bot.on('end', () => addLog('<span style="color:#8b949e">Bağlantı koptu.</span>'));
-        res.end("OK"); return;
+        bot.on('end', () => { delete bots[user]; delete botStatus[user]; });
+        return res.end(JSON.stringify({msg: "Bot giriyor"}));
     }
 
-    // API: Verileri Oku (Loglar ve Durum)
-    if (parsedUrl.pathname === '/getdata') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ logs, status: botStatus }));
-        return;
+    // BOTU ÇIKART
+    if (parsedUrl.pathname === '/quit') {
+        if (bots[parsedUrl.query.user]) bots[parsedUrl.query.user].quit();
+        return res.end(JSON.stringify({status: "ok"}));
     }
 
-    // API: Komut Gönder
-    if (parsedUrl.pathname === '/send' && bot) {
-        bot.chat(parsedUrl.query.msg);
-        res.end("OK"); return;
+    // TÜM VERİLERİ ÇEK
+    if (parsedUrl.pathname === '/getall') {
+        const invData = {};
+        Object.keys(bots).forEach(name => {
+            invData[name] = bots[name].inventory.slots
+                .filter(s => s !== null)
+                .map(s => ({ slot: s.slot, name: s.name, count: s.count }));
+        });
+        return res.end(JSON.stringify({ activeBots: Object.keys(bots), logs, status: botStatus, invs: invData }));
     }
 
-    // Dosyaları Sun
+    // MESAJ GÖNDER
+    if (parsedUrl.pathname === '/send') {
+        if (bots[parsedUrl.query.user]) bots[parsedUrl.query.user].chat(parsedUrl.query.msg);
+        return res.end(JSON.stringify({status: "ok"}));
+    }
+
+    // DOSYA SUNUCUSU
     let filePath = path.join(__dirname, parsedUrl.pathname === '/' ? 'index.html' : parsedUrl.pathname);
     fs.readFile(filePath, (err, data) => {
         if (err) { res.writeHead(404); res.end(); }
-        else { res.writeHead(200); res.end(data); }
+        else { res.setHeader('Content-Type', 'text/html'); res.end(data); }
     });
 });
 
