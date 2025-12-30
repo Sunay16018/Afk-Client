@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MC Master Panel</title>
+    <title>Kompakt Master Panel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -16,13 +16,17 @@
             <button onclick="toggleInv()" class="bag-btn"><i class="fas fa-shopping-bag"></i></button>
         </nav>
 
-        <div id="tab-bots" class="tab active scrollable">
+        <div id="tab-bots" class="tab active">
             <div class="login-form">
                 <input type="text" id="host" placeholder="Sunucu IP">
                 <input type="text" id="user" placeholder="Bot Nick">
                 <select id="ver">
-                    <option value="1.8.8">1.8.8</option><option value="1.12.2">1.12.2</option>
-                    <option value="1.16.5">1.16.5</option><option value="1.20.1" selected>1.20.1</option>
+                    <option value="1.8.8">1.8.8</option>
+                    <option value="1.12.2">1.12.2</option>
+                    <option value="1.16.5">1.16.5</option>
+                    <option value="1.19.4">1.19.4</option>
+                    <option value="1.20.1" selected>1.20.1</option>
+                    <option value="1.20.4">1.20.4</option>
                     <option value="1.21.4">1.21.4</option>
                 </select>
                 <button onclick="connectBot()">BOTU SOK VE İZLE</button>
@@ -41,7 +45,7 @@
                 <span>📍 <span id="p">0,0</span></span>
             </div>
             <div class="term-box">
-                <div id="logbox" class="terminal scrollable"></div>
+                <div id="logbox" class="terminal"></div>
             </div>
             <div class="input-row">
                 <input type="text" id="msg" placeholder="Mesaj..." autocomplete="off">
@@ -49,12 +53,15 @@
             </div>
         </div>
 
-        <div id="tab-radar" class="tab scrollable">
+        <div id="tab-radar" class="tab">
             <div class="radar-map"><div id="radar-ui" class="radar-circle"><div class="center"></div></div></div>
         </div>
+
         <div id="inv-panel" class="overlay">
             <div class="inv-modal">
-                <div class="inv-header">Envanter <i class="fas fa-times" onclick="toggleInv()"></i></div>
+                <div class="inv-header" style="color:#333; font-weight:bold; margin-bottom:5px; display:flex; justify-content:space-between;">
+                    Envanter <i class="fas fa-times" onclick="toggleInv()" style="cursor:pointer"></i>
+                </div>
                 <div class="grid" id="inv-grid"></div>
             </div>
         </div>
@@ -64,7 +71,6 @@
         let selectedBot = null;
         let autoScroll = true;
 
-        // Envanter gridini oluştur (Kodun geri kalanına eklenecek)
         const grid = document.getElementById('inv-grid');
         for(let i=9; i<=44; i++){
             let s = document.createElement('div');
@@ -84,11 +90,7 @@
             const u = document.getElementById('user').value;
             const v = document.getElementById('ver').value;
             if(!u) return;
-            
-            // Botu başlat
             await fetch(`/start?host=${h}&user=${u}&ver=${v}`);
-            
-            // OTOMATİK SEÇME VE KONSOLA ATMA
             selectedBot = u;
             document.getElementById('cur-name').innerText = u;
             showTab('terminal');
@@ -120,18 +122,30 @@
                 list.innerHTML = data.activeBots.map(n => `<div class="bot-card ${selectedBot===n?'selected':''}" onclick="selectedBot='${n}'; document.getElementById('cur-name').innerText='${n}'"><i class="fas fa-robot"></i> ${n}</div>`).join('');
 
                 if(selectedBot) {
-                    // Logları çek
                     const lb = document.getElementById('logbox');
-                    const currentLogs = data.logs[selectedBot] || ["<small>Mesaj bekleniyor...</small>"];
-                    lb.innerHTML = currentLogs.join('<br>');
+                    lb.innerHTML = (data.logs[selectedBot] || []).join('<br>');
                     if(autoScroll) lb.scrollTop = lb.scrollHeight;
 
-                    // Durumları çek
                     const s = data.status[selectedBot];
                     if(s) {
                         document.getElementById('h').innerText = s.health;
                         document.getElementById('f').innerText = s.food;
                         document.getElementById('p').innerText = `${s.pos.x}, ${s.pos.z}`;
+                    }
+
+                    // Radar senkronizasyonu
+                    const rUI = document.getElementById('radar-ui');
+                    document.querySelectorAll('.player-dot').forEach(d => d.remove());
+                    if(s && s.players) {
+                        s.players.forEach(p => {
+                            let d = document.createElement('div');
+                            d.className = 'player-dot';
+                            d.style.position = 'absolute';
+                            d.style.width = '4px'; d.style.height = '4px';
+                            d.style.background = 'red'; d.style.borderRadius = '50%';
+                            d.style.left = (90 + p.x) + 'px'; d.style.top = (90 + p.z) + 'px';
+                            rUI.appendChild(d);
+                        });
                     }
                 }
             } catch(e) {}
