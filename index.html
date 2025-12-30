@@ -2,41 +2,47 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>ULTIMATE AFK 7/24</title>
+    <title>AFK PRO FINAL</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="wrapper">
-        <div class="side">
+    <div class="container">
+        <div class="sidebar">
             <h1 class="neon">AFK PRO</h1>
-            <div class="box">
+            <div class="card">
                 <input type="text" id="ip" placeholder="Server IP:Port">
                 <input type="text" id="nick" placeholder="Bot Nick">
-                <input type="password" id="pass" placeholder="Şifre">
-                <div class="row">
+                <input type="password" id="pass" placeholder="Login Şifresi">
+                <div class="btn-row">
                     <button class="btn g" onclick="connect()">BAĞLAN</button>
-                    <button class="btn r" onclick="disconnect()">KES</button>
+                    <button class="btn r" onclick="disconnect()">ZORLA KES</button>
                 </div>
             </div>
-            <select id="bot-sel" class="box" onchange="selBot=this.value"></select>
-            <div class="move-ui">
+            <select id="bot-sel" class="card" onchange="selBot=this.value"></select>
+            <div class="dpad">
                 <button class="m" onclick="move('forward')">▲</button>
-                <div class="row"><button class="m" onclick="move('left')">◀</button><button class="m stop" onclick="allStop()">■</button><button class="m" onclick="move('right')">▶</button></div>
+                <div class="btn-row"><button class="m" onclick="move('left')">◀</button><button class="m stop" onclick="allStop()">■</button><button class="m" onclick="move('right')">▶</button></div>
                 <button class="m" onclick="move('back')">▼</button>
                 <button class="btn b" onclick="move('jump')">ZIPLA</button>
             </div>
             <button class="btn gray" onclick="showModal(true)">⚙ AYARLAR</button>
         </div>
-        <div class="main">
-            <div class="term">
-                <div class="head">7/24 AKTİF TERMİNAL</div>
+        <div class="terminal">
+            <div class="term-box">
+                <div class="term-head">LIVE CONSOLE</div>
                 <div id="logs" class="logs"></div>
-                <div class="chat"><input type="text" id="cin" placeholder="Mesaj yaz..."><button onclick="sendChat()">></button></div>
+                <div class="chat-bar"><input type="text" id="cin" placeholder="Mesaj..."><button onclick="sendChat()">></button></div>
             </div>
         </div>
     </div>
     <div id="modal" class="modal-bg">
-        <div class="modal-box"><h3>MODÜL AYARLARI</h3><label>Matematik: <input type="checkbox" id="m-on"></label><label>Maden: <input type="checkbox" id="mine-on"></label><button class="btn g" onclick="save()">KAYDET</button></div>
+        <div class="modal-box">
+            <h3>AYARLAR</h3>
+            <div class="opt">7/24 Oto-Bağlanma <input type="checkbox" id="revive-on"></div>
+            <div class="opt">Matematik Çözücü <input type="checkbox" id="m-on"></div>
+            <div class="opt">Maden Modu <input type="checkbox" id="mine-on"></div>
+            <button class="btn g" onclick="save()">KAYDET</button>
+        </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
