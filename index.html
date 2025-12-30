@@ -16,13 +16,6 @@
             <button onclick="toggleInv()" class="bag-btn"><i class="fas fa-shopping-bag"></i></button>
         </nav>
 
-        <div id="inv-panel" class="overlay">
-            <div class="inv-modal">
-                <div class="inv-header">Envanter <i class="fas fa-times" onclick="toggleInv()"></i></div>
-                <div class="grid" id="inv-grid"></div>
-            </div>
-        </div>
-
         <div id="tab-bots" class="tab active scrollable">
             <div class="login-form">
                 <input type="text" id="host" placeholder="Sunucu IP">
@@ -30,9 +23,9 @@
                 <select id="ver">
                     <option value="1.8.8">1.8.8</option><option value="1.12.2">1.12.2</option>
                     <option value="1.16.5">1.16.5</option><option value="1.20.1" selected>1.20.1</option>
-                    <option value="1.20.4">1.20.4</option><option value="1.21.4">1.21.4</option>
+                    <option value="1.21.4">1.21.4</option>
                 </select>
-                <button onclick="connectBot()">BOTU SOK</button>
+                <button onclick="connectBot()">BOTU SOK VE İZLE</button>
             </div>
             <div id="bot-list" class="cards-container"></div>
         </div>
@@ -59,12 +52,19 @@
         <div id="tab-radar" class="tab scrollable">
             <div class="radar-map"><div id="radar-ui" class="radar-circle"><div class="center"></div></div></div>
         </div>
+        <div id="inv-panel" class="overlay">
+            <div class="inv-modal">
+                <div class="inv-header">Envanter <i class="fas fa-times" onclick="toggleInv()"></i></div>
+                <div class="grid" id="inv-grid"></div>
+            </div>
+        </div>
     </div>
 
     <script>
         let selectedBot = null;
         let autoScroll = true;
 
+        // Envanter gridini oluştur (Kodun geri kalanına eklenecek)
         const grid = document.getElementById('inv-grid');
         for(let i=9; i<=44; i++){
             let s = document.createElement('div');
@@ -83,20 +83,23 @@
             const h = document.getElementById('host').value;
             const u = document.getElementById('user').value;
             const v = document.getElementById('ver').value;
+            if(!u) return;
+            
+            // Botu başlat
             await fetch(`/start?host=${h}&user=${u}&ver=${v}`);
+            
+            // OTOMATİK SEÇME VE KONSOLA ATMA
+            selectedBot = u;
+            document.getElementById('cur-name').innerText = u;
+            showTab('terminal');
         }
 
         async function quitBot() {
             if(!selectedBot) return;
             await fetch(`/quit?user=${selectedBot}`);
-            // Arayüzü temizle
             selectedBot = null;
             document.getElementById('cur-name').innerText = 'Seçilmedi';
-            document.getElementById('logbox').innerHTML = '';
-            document.getElementById('h').innerText = '0';
-            document.getElementById('f').innerText = '0';
-            document.getElementById('p').innerText = '0,0';
-            showTab('bots'); // Botlar sayfasına geri dön
+            showTab('bots');
         }
 
         async function sendMsg() {
@@ -113,40 +116,22 @@
                 const res = await fetch('/getall');
                 const data = await res.json();
                 
-                // Eğer seçili bot artık aktif değilse temizle
-                if(selectedBot && !data.activeBots.includes(selectedBot)) {
-                    selectedBot = null;
-                    document.getElementById('cur-name').innerText = 'Seçilmedi';
-                    document.getElementById('logbox').innerHTML = '';
-                }
-
                 const list = document.getElementById('bot-list');
                 list.innerHTML = data.activeBots.map(n => `<div class="bot-card ${selectedBot===n?'selected':''}" onclick="selectedBot='${n}'; document.getElementById('cur-name').innerText='${n}'"><i class="fas fa-robot"></i> ${n}</div>`).join('');
 
-                if(selectedBot && data.status[selectedBot]) {
-                    const s = data.status[selectedBot];
-                    document.getElementById('h').innerText = s.health;
-                    document.getElementById('f').innerText = s.food;
-                    document.getElementById('p').innerText = `${s.pos.x}, ${s.pos.z}`;
+                if(selectedBot) {
+                    // Logları çek
                     const lb = document.getElementById('logbox');
-                    lb.innerHTML = (data.logs[selectedBot] || []).join('<br>');
+                    const currentLogs = data.logs[selectedBot] || ["<small>Mesaj bekleniyor...</small>"];
+                    lb.innerHTML = currentLogs.join('<br>');
                     if(autoScroll) lb.scrollTop = lb.scrollHeight;
 
-                    const rUI = document.getElementById('radar-ui');
-                    document.querySelectorAll('.player-dot').forEach(d => d.remove());
-                    s.players.forEach(p => {
-                        let dot = document.createElement('div');
-                        dot.className = 'player-dot';
-                        dot.style.left = (90 + p.x) + 'px'; dot.style.top = (90 + p.z) + 'px';
-                        rUI.appendChild(dot);
-                    });
-
-                    if(document.getElementById('inv-panel').classList.contains('open')) {
-                        document.querySelectorAll('.slot').forEach(x => x.innerHTML = '');
-                        (data.invs[selectedBot] || []).forEach(item => {
-                            const sd = document.getElementById('slot-'+item.slot);
-                            if(sd) sd.innerHTML = `<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/pc/1.20.1/items/${item.name}.png"><span>${item.count>1?item.count:''}</span>`;
-                        });
+                    // Durumları çek
+                    const s = data.status[selectedBot];
+                    if(s) {
+                        document.getElementById('h').innerText = s.health;
+                        document.getElementById('f').innerText = s.food;
+                        document.getElementById('p').innerText = `${s.pos.x}, ${s.pos.z}`;
                     }
                 }
             } catch(e) {}
