@@ -1,62 +1,43 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>ULTIMATE AFK CLIENT</title>
+    <title>ULTIMATE AFK 7/24</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <aside class="sidebar">
-            <h1 class="mc-text">AFK <span>PRO</span></h1>
-            
-            <div class="card">
+    <div class="wrapper">
+        <div class="side">
+            <h1 class="neon">AFK PRO</h1>
+            <div class="box">
                 <input type="text" id="ip" placeholder="Server IP:Port">
                 <input type="text" id="nick" placeholder="Bot Nick">
-                <input type="password" id="pass" placeholder="Login Şifresi">
-                <div class="btn-group">
-                    <button class="btn btn-g" onclick="connect()">BAĞLAN</button>
-                    <button class="btn btn-r" onclick="disconnect()">KES</button>
+                <input type="password" id="pass" placeholder="Şifre">
+                <div class="row">
+                    <button class="btn g" onclick="connect()">BAĞLAN</button>
+                    <button class="btn r" onclick="disconnect()">KES</button>
                 </div>
             </div>
-
-            <select id="bot-sel" class="card" onchange="selBot=this.value"></select>
-
-            <div class="movement-box">
-                <button class="m-btn" onclick="move('forward')">▲</button>
-                <div class="m-row">
-                    <button class="m-btn" onclick="move('left')">◀</button>
-                    <button class="m-btn stop-red" onclick="allStop()">■</button>
-                    <button class="m-btn" onclick="move('right')">▶</button>
-                </div>
-                <button class="m-btn" onclick="move('back')">▼</button>
-                <button class="btn btn-b" onclick="move('jump')">ZIPLA</button>
+            <select id="bot-sel" class="box" onchange="selBot=this.value"></select>
+            <div class="move-ui">
+                <button class="m" onclick="move('forward')">▲</button>
+                <div class="row"><button class="m" onclick="move('left')">◀</button><button class="m stop" onclick="allStop()">■</button><button class="m" onclick="move('right')">▶</button></div>
+                <button class="m" onclick="move('back')">▼</button>
+                <button class="btn b" onclick="move('jump')">ZIPLA</button>
             </div>
-
-            <button class="btn btn-gray" onclick="toggleModal(true)">⚙ AYARLAR</button>
-        </aside>
-
-        <section class="terminal-section">
-            <div class="term-wrapper">
-                <div class="term-title">SUNUCU MESAJLARI</div>
-                <div id="logs" class="logs-container"></div>
-                <div class="chat-sender">
-                    <input type="text" id="cin" placeholder="Mesaj gönder...">
-                    <button onclick="sendChat()">GÖNDER</button>
-                </div>
+            <button class="btn gray" onclick="showModal(true)">⚙ AYARLAR</button>
+        </div>
+        <div class="main">
+            <div class="term">
+                <div class="head">7/24 AKTİF TERMİNAL</div>
+                <div id="logs" class="logs"></div>
+                <div class="chat"><input type="text" id="cin" placeholder="Mesaj yaz..."><button onclick="sendChat()">></button></div>
             </div>
-        </section>
-    </div>
-
-    <div id="modal" class="modal-bg">
-        <div class="modal-box">
-            <h2 class="mc-text">AYARLAR</h2>
-            <div class="opt-row">Matematik Çözücü: <input type="checkbox" id="m-on"></div>
-            <div class="opt-row">Otomatik Maden: <input type="checkbox" id="mine-on"></div>
-            <button class="btn btn-g" onclick="saveSettings()">KAYDET</button>
         </div>
     </div>
-
+    <div id="modal" class="modal-bg">
+        <div class="modal-box"><h3>MODÜL AYARLARI</h3><label>Matematik: <input type="checkbox" id="m-on"></label><label>Maden: <input type="checkbox" id="mine-on"></label><button class="btn g" onclick="save()">KAYDET</button></div>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
