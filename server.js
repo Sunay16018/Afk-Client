@@ -26,32 +26,29 @@ function startBot(sid, host, user, ver) {
     sessions[sid][user] = bot;
     configs[key] = { msgT: null, clickT: null, mining: false, creds: { host, user, ver } };
 
-    // Atılma Sebebini Çözen Fonksiyon
     const parseReason = (reason) => {
         if (!reason) return "Bilinmeyen sebep";
         if (typeof reason === 'string') return reason;
         if (reason.extra) return reason.extra.map(e => e.text).join('');
         if (reason.text) return reason.text;
-        if (reason.translate) return reason.translate;
         return JSON.stringify(reason);
     };
 
     bot.on('login', () => logs[key].push("<b style='color:#2ecc71'>GİRİŞ YAPILDI!</b>"));
 
     bot.on('kicked', (reason) => {
-        const text = parseReason(reason);
-        logs[key].push("<b style='color:#e74c3c'>ATILDI: " + text + "</b>");
-        delete sessions[sid][user]; // Botu listeden temizle
+        logs[key].push("<b style='color:#e74c3c'>ATILDI: " + parseReason(reason) + "</b>");
+        delete sessions[sid][user];
     });
 
     bot.on('error', (err) => {
         logs[key].push("<b style='color:#e74c3c'>HATA: " + err.message + "</b>");
-        delete sessions[sid][user]; // Botu listeden temizle
+        delete sessions[sid][user];
     });
 
     bot.on('end', () => {
-        if (sessions[sid] && sessions[sid][user]) {
-            logs[key].push("<b style='color:#95a5a6'>BAĞLANTI KOPARILDI.</b>");
+        if (sessions[sid]?.[user]) {
+            logs[key].push("<b style='color:#95a5a6'>BAĞLANTI SONLANDI.</b>");
             delete sessions[sid][user];
         }
     });
@@ -80,20 +77,14 @@ http.createServer((req, res) => {
         clearInterval(c.msgT); clearInterval(c.clickT);
         if (q.type === 'msg' && q.status === 'on') c.msgT = setInterval(() => b.chat(q.val), q.sec * 1000);
         else if (q.type === 'click' && q.status === 'on') {
-            c.clickT = setInterval(() => { 
-                b.activateItem(); 
-                const bl = b.blockAtCursor(4); 
-                if (bl) b.activateBlock(bl).catch(()=>{}); 
-            }, q.sec * 1000);
+            c.clickT = setInterval(() => { b.activateItem(); const bl = b.blockAtCursor(4); if (bl) b.activateBlock(bl).catch(()=>{}); }, q.sec * 1000);
         }
         else if (q.type === 'mining' && q.status === 'on') {
             c.mining = true;
             const dig = async () => {
                 if (!configs[key]?.mining || !sessions[sid]?.[q.user]) return;
                 const t = sessions[sid][q.user].blockAtCursor(4);
-                if (t && t.type !== 0) { 
-                    try { await sessions[sid][q.user].lookAt(t.position, true); await sessions[sid][q.user].dig(t, true); } catch(e) {} 
-                }
+                if (t && t.type !== 0) { try { await sessions[sid][q.user].lookAt(t.position, true); await sessions[sid][q.user].dig(t, true); } catch(e) {} }
                 setTimeout(dig, 400);
             }; dig();
         } else if (q.type === 'mining' && q.status === 'off') { c.mining = false; }
