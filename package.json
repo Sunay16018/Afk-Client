@@ -1,11 +1,14 @@
 {
-  "name": "minecraft-bot-sade",
-  "version": "1.0.0",
+  "name": "afk-bot-v4-fix",
+  "version": "4.1.0",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "dependencies": {
     "express": "4.18.2",
     "socket.io": "4.7.2",
-    "mineflayer": "4.21.0"
-  }
+    "mineflayer": "4.21.0",
+    "minecraft-data": "3.71.0",
+    "prismarine-viewer": "2.11.0"
+  },
+  "engines": { "node": "18.x" }
 }
