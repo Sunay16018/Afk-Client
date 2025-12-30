@@ -2,75 +2,79 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Multi MC Panel</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC Bot Manager Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-container">
-        <div class="top-nav">
-            <button onclick="showTab('bots')"><i class="fas fa-users"></i> Botlar</button>
+        <nav class="top-nav">
+            <button onclick="showTab('bots')"><i class="fas fa-plug"></i> Botlar</button>
             <button onclick="showTab('terminal')"><i class="fas fa-terminal"></i> Konsol</button>
-            <button onclick="showTab('map')"><i class="fas fa-map"></i> Radar</button>
-            <button onclick="toggleInv()" class="btn-bag"><i class="fas fa-briefcase"></i></button>
-        </div>
+            <button onclick="showTab('radar')"><i class="fas fa-crosshairs"></i> Radar</button>
+            <button onclick="toggleInv()" class="bag-btn"><i class="fas fa-shopping-bag"></i></button>
+        </nav>
 
         <div id="inv-panel" class="overlay">
-            <div class="inv-box">
-                <div class="inv-head">Çanta <i class="fas fa-times" onclick="toggleInv()"></i></div>
-                <div class="inv-grid" id="inv-grid"></div>
+            <div class="inv-modal">
+                <div class="inv-header">Envanter <i class="fas fa-times" onclick="toggleInv()"></i></div>
+                <div class="grid" id="inv-grid"></div>
             </div>
         </div>
 
         <div id="tab-bots" class="tab active">
-            <div class="form-box">
+            <div class="login-form">
                 <input type="text" id="host" placeholder="Sunucu IP">
                 <input type="text" id="user" placeholder="Bot Nick">
                 <select id="ver"><option value="1.8.8">1.8.8</option><option value="1.20.1" selected>1.20.1</option></select>
-                <button onclick="connectBot()">BOT EKLE</button>
+                <button onclick="connectBot()">SİSTEME BAĞLA</button>
             </div>
-            <div id="bot-cards" class="bot-grid"></div>
+            <div id="bot-list" class="cards-container"></div>
         </div>
 
         <div id="tab-terminal" class="tab">
-            <div class="bot-header">
-                <span id="sel-name">Seçilmedi</span>
-                <button onclick="quitBot()" class="btn-red">Kov</button>
+            <div class="current-header">
+                <span id="cur-name">Seçili Değil</span>
+                <button onclick="quitBot()" class="quit-btn">Bağlantıyı Kes</button>
             </div>
-            <div class="mini-status">
-                <span>❤️ <span id="h">-</span></span> <span>🍗 <span id="f">-</span></span> <span>📍 <span id="p">-</span></span>
+            <div class="stats-row">
+                <span><i class="fas fa-heart"></i> <span id="h">0</span></span>
+                <span><i class="fas fa-hamburger"></i> <span id="f">0</span></span>
+                <span><i class="fas fa-map-marker-alt"></i> <span id="p">0,0</span></span>
             </div>
-            <div id="logbox" class="log-area"></div>
-            <div class="chat-row">
-                <input type="text" id="msg" placeholder="Mesaj/Komut..." autocomplete="off">
+            <div id="logbox" class="terminal"></div>
+            <div class="input-row">
+                <input type="text" id="msg" placeholder="Mesaj veya komut..." autocomplete="off">
                 <button onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
 
-        <div id="tab-map" class="tab">
-            <div id="radar" class="radar-circle"><div class="center"></div></div>
+        <div id="tab-radar" class="tab">
+            <div class="radar-map"><div id="radar-ui" class="radar-circle"><div class="center"></div></div></div>
         </div>
     </div>
 
     <script>
-        let selected = null;
+        let selectedBot = null;
         let autoScroll = true;
 
-        // Slotları hazırla
-        const g = document.getElementById('inv-grid');
-        for(let i=9; i<=44; i++) {
+        // Slotları oluştur
+        const grid = document.getElementById('inv-grid');
+        for(let i=9; i<=44; i++){
             let s = document.createElement('div');
-            s.className = 'slot'; s.id = 's-'+i;
-            g.appendChild(s);
+            s.className = 'slot'; s.id = 'slot-'+i;
+            grid.appendChild(s);
         }
 
-        function showTab(t) {
-            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-            document.getElementById('tab-'+t).classList.add('active');
+        function showTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-'+tabId).classList.add('active');
         }
 
-        function toggleInv() { document.getElementById('inv-panel').classList.toggle('open'); }
+        function toggleInv() {
+            document.getElementById('inv-panel').classList.toggle('open');
+        }
 
         async function connectBot() {
             const h = document.getElementById('host').value;
@@ -80,61 +84,66 @@
         }
 
         async function quitBot() {
-            if(selected) await fetch(`/quit?user=${selected}`);
-            selected = null;
+            if(!selectedBot) return;
+            await fetch(`/quit?user=${selectedBot}`);
+            selectedBot = null;
         }
 
         async function sendMsg() {
-            const i = document.getElementById('msg');
-            if(!selected || !i.value) return;
-            await fetch(`/send?user=${selected}&msg=${encodeURIComponent(i.value)}`);
-            i.value = '';
+            const input = document.getElementById('msg');
+            if(!selectedBot || !input.value) return;
+            await fetch(`/send?user=${selectedBot}&msg=${encodeURIComponent(input.value)}`);
+            input.value = '';
         }
 
-        document.getElementById('msg').addEventListener('keypress', e => e.key === 'Enter' && sendMsg());
+        document.getElementById('msg').onkeypress = (e) => e.key === 'Enter' && sendMsg();
 
         setInterval(async () => {
             try {
-                const r = await fetch('/getall');
-                const d = await r.json();
+                const res = await fetch('/getall');
+                const data = await res.json();
 
-                const cards = document.getElementById('bot-cards');
-                cards.innerHTML = d.activeBots.map(n => `<div class="card ${selected===n?'sel':''}" onclick="selected='${n}'; document.getElementById('sel-name').innerText='${n}'">${n}</div>`).join('');
+                const list = document.getElementById('bot-list');
+                list.innerHTML = data.activeBots.map(n => `
+                    <div class="bot-card ${selectedBot===n?'selected':''}" onclick="selectedBot='${n}'; document.getElementById('cur-name').innerText='${n}'">
+                        <i class="fas fa-user-circle"></i> ${n}
+                    </div>
+                `).join('');
 
-                if(selected && d.status[selected]) {
-                    const s = d.status[selected];
+                if(selectedBot && data.status[selectedBot]) {
+                    const s = data.status[selectedBot];
                     document.getElementById('h').innerText = s.health;
                     document.getElementById('f').innerText = s.food;
                     document.getElementById('p').innerText = `${s.pos.x}, ${s.pos.z}`;
                     
                     const lb = document.getElementById('logbox');
-                    lb.innerHTML = d.logs[selected].join('<br>');
+                    lb.innerHTML = (data.logs[selectedBot] || []).join('<br>');
                     if(autoScroll) lb.scrollTop = lb.scrollHeight;
 
                     // Radar
-                    const rad = document.getElementById('radar');
-                    document.querySelectorAll('.p-dot').forEach(x => x.remove());
+                    const rUI = document.getElementById('radar-ui');
+                    document.querySelectorAll('.player-dot').forEach(d => d.remove());
                     s.players.forEach(p => {
                         let dot = document.createElement('div');
-                        dot.className = 'p-dot';
+                        dot.className = 'player-dot';
                         dot.style.left = (90 + p.x) + 'px'; dot.style.top = (90 + p.z) + 'px';
-                        rad.appendChild(dot);
+                        rUI.appendChild(dot);
                     });
 
-                    // Inv
+                    // Envanter
                     if(document.getElementById('inv-panel').classList.contains('open')) {
                         document.querySelectorAll('.slot').forEach(x => x.innerHTML = '');
-                        d.invs[selected].forEach(i => {
-                            const sd = document.getElementById('s-'+i.slot);
-                            if(sd) sd.innerHTML = `<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/pc/1.20.1/items/${i.name}.png"><span>${i.count>1?i.count:''}</span>`;
+                        (data.invs[selectedBot] || []).forEach(item => {
+                            const sd = document.getElementById('slot-'+item.slot);
+                            if(sd) sd.innerHTML = `<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/pc/1.20.1/items/${item.name}.png"><span>${item.count>1?item.count:''}</span>`;
                         });
                     }
                 }
             } catch(e) {}
-        }, 1500);
+        }, 1000);
 
         const lb = document.getElementById('logbox');
-        lb.onscroll = () => autoScroll = (lb.scrollHeight - lb.scrollTop - lb.clientHeight < 40);
+        lb.onscroll = () => autoScroll = (lb.scrollHeight - lb.scrollTop - lb.clientHeight < 50);
     </script>
 </body>
 </html>
