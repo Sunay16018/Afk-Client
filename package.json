@@ -1,7 +1,7 @@
 {
-  "name": "mc-afk-bot-panel",
+  "name": "mc-afk-client-panel",
   "version": "1.0.0",
-  "description": "Minecraft AFK Bot ve Web Paneli",
+  "description": "Dinamik Minecraft AFK Bot Paneli",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
