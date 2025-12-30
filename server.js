@@ -1,93 +1,88 @@
-const mineflayer = require('mineflayer');
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const url = require('url');
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const mineflayer = require("mineflayer");
+const path = require("path");
 
-let bots = {};
-let logs = {};
-let botStatus = {};
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
-const server = http.createServer((req, res) => {
-    const parsedUrl = url.parse(req.url, true);
+app.use(express.static(path.join(__dirname)));
 
-    if (parsedUrl.pathname === '/start') {
-        const { host, user, ver } = parsedUrl.query;
-        if (bots[user]) return res.end(JSON.stringify({msg: "Zaten Aktif"}));
+function fixColors(text) {
+  return text.replace(/&([0-9a-fk-or])/g, '§$1');
+}
 
-        // Botu oluştur
-        const bot = mineflayer.createBot({ host, username: user, version: ver, auth: 'offline' });
-        bots[user] = bot;
-        logs[user] = [`<b style="color:#f1c40f">Baglaniliyor: ${user}...</b>`];
+io.on("connection", (socket) => {
+  // Her socket bağlantısı (tarayıcı sekmesi) kendi botunu bu objede tutacak
+  let myBot = null;
 
-        // Mesajları anında yakala
-        bot.on('message', (jsonMsg) => {
-            if (!logs[user]) logs[user] = [];
-            logs[user].push(jsonMsg.toHTML());
-            if (logs[user].length > 100) logs[user].shift();
-        });
+  socket.on("startBot", (d) => {
+    if (myBot) return;
 
-        // Hataları yakala (Konsola mesaj gelmeme sebebini gösterir)
-        bot.on('error', (err) => {
-            if(logs[user]) logs[user].push(`<b style="color:#e74c3c">HATA: ${err.message}</b>`);
-        });
-
-        bot.on('kicked', (reason) => {
-            if(logs[user]) logs[user].push(`<b style="color:#e74c3c">ATILDI: ${reason}</b>`);
-        });
-
-        bot.on('spawn', () => {
-            if(logs[user]) logs[user].push(`<b style="color:#2ecc71">BAŞARIYLA DOĞDU!</b>`);
-            setInterval(() => {
-                if (bot.entity) {
-                    botStatus[user] = {
-                        health: Math.round(bot.health),
-                        food: Math.round(bot.food),
-                        pos: { x: Math.round(bot.entity.position.x), z: Math.round(bot.entity.position.z) },
-                        players: Object.values(bot.entities)
-                            .filter(e => e.type === 'player' && e.username !== bot.username)
-                            .map(e => ({ x: Math.round(e.position.x - bot.entity.position.x), z: Math.round(e.position.z - bot.entity.position.z) }))
-                    };
-                }
-            }, 1000);
-        });
-
-        bot.on('end', () => { 
-            delete bots[user]; 
-            delete botStatus[user]; 
-            // Logları hemen silme ki kullanıcı neden düştüğünü görsün
-        });
-        return res.end(JSON.stringify({msg: "OK"}));
-    }
-
-    if (parsedUrl.pathname === '/getall') {
-        const invs = {};
-        Object.keys(bots).forEach(n => {
-            invs[n] = bots[n].inventory ? bots[n].inventory.slots.filter(s => s !== null).map(s => ({ slot: s.slot, name: s.name, count: s.count })) : [];
-        });
-        res.setHeader('Content-Type', 'application/json');
-        return res.end(JSON.stringify({ activeBots: Object.keys(bots), logs, status: botStatus, invs }));
-    }
-
-    if (parsedUrl.pathname === '/send') {
-        if (bots[parsedUrl.query.user]) bots[parsedUrl.query.user].chat(parsedUrl.query.msg);
-        return res.end(JSON.stringify({ok: true}));
-    }
-
-    if (parsedUrl.pathname === '/quit') {
-        if (bots[parsedUrl.query.user]) bots[parsedUrl.query.user].quit();
-        return res.end(JSON.stringify({ok: true}));
-    }
-
-    let filePath = path.join(__dirname, parsedUrl.pathname === '/' ? 'index.html' : parsedUrl.pathname);
-    const ext = path.extname(filePath);
-    const contentType = ext === '.css' ? 'text/css' : 'text/html';
-    
-    fs.readFile(filePath, (err, data) => {
-        if (err) { res.writeHead(404); res.end(); }
-        else { res.writeHead(200, {'Content-Type': contentType}); res.end(data); }
+    myBot = mineflayer.createBot({
+      host: d.ip,
+      port: Number(d.port) || 25565,
+      username: d.username,
+      version: d.version || false,
+      hideErrors: true
     });
+
+    myBot.once("spawn", () => {
+      socket.emit("log", "§a[SİSTEM] Senin botun başarıyla giriş yaptı.");
+      if (d.password) {
+        setTimeout(() => {
+          myBot.chat(`/register ${d.password} ${d.password}`);
+          myBot.chat(`/login ${d.password}`);
+        }, 1500);
+      }
+    });
+
+    myBot.on("message", (m) => {
+      if (myBot.entity) socket.emit("log", m.toAnsi());
+    });
+
+    myBot.on("kicked", (r) => socket.emit("log", `§c[KICK] ${r}`));
+    myBot.on("error", (err) => socket.emit("log", `§c[HATA] ${err.message}`));
+    
+    myBot.on("end", () => {
+      socket.emit("log", "§e[BİLGİ] Bağlantı kesildi.");
+      myBot = null;
+    });
+  });
+
+  socket.on("stopBot", () => {
+    if (myBot) {
+      myBot.quit();
+      myBot = null;
+    }
+  });
+
+  socket.on("sendChat", (d) => {
+    if (myBot) myBot.chat(fixColors(d.message));
+  });
+
+  socket.on("autoMsg", (cfg) => {
+    if (!myBot) return;
+    if (myBot.autoMsgInt) clearInterval(myBot.autoMsgInt);
+    if (cfg.enabled) {
+      myBot.autoMsgInt = setInterval(() => myBot.chat(fixColors(cfg.message)), cfg.delay * 1000);
+    }
+  });
+
+  socket.on("move", (c) => {
+    if (myBot) myBot.setControlState(c.key, c.state);
+  });
+
+  // Sekme kapatılırsa botu temizle (Opsiyonel: Botun kalmasını istiyorsan burayı sil)
+  socket.on("disconnect", () => {
+    if (myBot) {
+      myBot.quit();
+      myBot = null;
+    }
+  });
 });
 
-server.listen(process.env.PORT || 10000);
+server.listen(process.env.PORT || 3000);
         
