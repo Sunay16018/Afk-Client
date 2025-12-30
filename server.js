@@ -40,8 +40,12 @@ const server = http.createServer((req, res) => {
             }, 1000);
         });
 
-        bot.on('end', () => { delete bots[user]; delete botStatus[user]; });
-        return res.end(JSON.stringify({msg: "Tamam"}));
+        bot.on('end', () => { 
+            delete bots[user]; 
+            delete botStatus[user]; 
+            delete logs[user];
+        });
+        return res.end(JSON.stringify({msg: "OK"}));
     }
 
     if (parsedUrl.pathname === '/getall') {
@@ -65,7 +69,7 @@ const server = http.createServer((req, res) => {
 
     let filePath = path.join(__dirname, parsedUrl.pathname === '/' ? 'index.html' : parsedUrl.pathname);
     const ext = path.extname(filePath);
-    const contentType = ext === '.css' ? 'text/css' : ext === '.js' ? 'text/javascript' : 'text/html';
+    const contentType = ext === '.css' ? 'text/css' : 'text/html';
     
     fs.readFile(filePath, (err, data) => {
         if (err) { res.writeHead(404); res.end(); }
