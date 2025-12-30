@@ -12,7 +12,7 @@
   "dependencies": {
     "express": "^4.19.2",
     "socket.io": "^4.7.5",
-    "mineflayer": "^4.15.0",
+    "mineflayer": "^4.14.0",
     "ansi-to-html": "^0.7.8"
   }
 }
