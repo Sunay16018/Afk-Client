@@ -1,4 +1,3 @@
-
 body{margin:0;height:100vh;background:linear-gradient(135deg,#22c55e,#0ea5e9);
 display:flex;justify-content:center;align-items:center;font-family:Segoe UI}
 .panel{background:#020617;color:white;width:360px;padding:18px;border-radius:18px}
