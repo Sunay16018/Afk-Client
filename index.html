@@ -1,45 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Sade Bot</title>
+    <title>AFK PRO PANEL v8</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app">
-        <div class="header">
-            <button class="btn btn-green" onclick="toggleModal('bot-modal', true)">+ BOT</button>
-            <select id="bot-sel" onchange="selBot=this.value" style="background:#000; color:#0f9; border:1px solid #333;"></select>
-            <button class="btn btn-gray" onclick="toggleModal('set-modal', true)">⚙</button>
-            <button class="btn btn-red" onclick="disconnect()">KOPAR</button>
+        <div class="top-bar">
+            <button class="btn green" onclick="toggleModal('bot-modal', true)">+ BAĞLAN</button>
+            <div class="bot-control-center">
+                <select id="bot-sel" onchange="selBot=this.value"></select>
+                <button class="btn gray" onclick="toggleModal('set-modal', true)">⚙ AYARLAR</button>
+            </div>
+            <button class="btn red" onclick="disconnect()">KES</button>
         </div>
 
         <div id="logs" class="terminal"></div>
 
-        <div class="input-area">
-            <input type="text" id="cin" placeholder="Mesaj yaz...">
-            <button class="btn btn-send" onclick="sendChat()">></button>
+        <div class="input-row">
+            <input type="text" id="cin" placeholder="Sunucuya mesaj gönder..." autocomplete="off">
+            <button class="btn blue" onclick="sendChat()">GÖNDER</button>
         </div>
     </div>
 
     <div id="bot-modal" class="modal">
-        <div class="modal-box">
-            <input type="text" id="ip" placeholder="ip:port">
+        <div class="modal-content">
+            <h3>Yeni Bot Bağlantısı</h3>
+            <input type="text" id="ip" placeholder="Sunucu IP (örn: oyna.server.com)">
             <input type="text" id="nick" placeholder="Bot İsmi">
-            <input type="password" id="pass" placeholder="Şifre">
-            <button class="btn btn-green" onclick="connect()">GİRİŞ YAP</button>
-            <button class="btn btn-gray" onclick="toggleModal('bot-modal', false)">KAPAT</button>
+            <input type="password" id="pass" placeholder="Kayıt Şifresi (Opsiyonel)">
+            <div class="modal-btns">
+                <button class="btn green" onclick="connect()">BAĞLAN</button>
+                <button class="btn red" onclick="toggleModal('bot-modal', false)">KAPAT</button>
+            </div>
         </div>
     </div>
 
     <div id="set-modal" class="modal">
-        <div class="modal-box">
-            <label><input type="checkbox" id="rev-on"> 7/24 Aktif</label>
-            <label><input type="checkbox" id="math-on"> Matematik</label>
-            <label><input type="checkbox" id="msg-on"> Oto-Mesaj</label>
-            <input type="text" id="msg-text" placeholder="Mesaj">
-            <input type="number" id="msg-sec" placeholder="Saniye">
-            <button class="btn btn-green" onclick="saveSettings()">KAYDET</button>
+        <div class="modal-content">
+            <h3>Bot Ayarları</h3>
+            <label><input type="checkbox" id="rev-on"> 7/24 Oto-Bağlan</label>
+            <label><input type="checkbox" id="math-on"> Matematik Çözücü</label>
+            <hr>
+            <label><input type="checkbox" id="msg-on"> Oto-Mesaj (Spam)</label>
+            <input type="text" id="msg-text" placeholder="Mesaj içeriği">
+            <input type="number" id="msg-sec" placeholder="Kaç saniyede bir?">
+            <div class="modal-btns">
+                <button class="btn green" onclick="saveSettings()">KAYDET</button>
+                <button class="btn red" onclick="toggleModal('set-modal', false)">KAPAT</button>
+            </div>
         </div>
     </div>
 
