@@ -1,53 +1,57 @@
 const mineflayer = require('mineflayer');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
-// 1. RENDER İÇİN HTTP SUNUCUSU (Kritik: Port hatasını önler)
+// --- WEB SUNUCUSU AYARLARI ---
 const server = http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Minecraft AFK Botu Aktif!\n');
+    let filePath = '.' + req.url;
+    if (filePath === './') filePath = './index.html';
+
+    const extname = String(path.extname(filePath)).toLowerCase();
+    const mimeTypes = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript' };
+    const contentType = mimeTypes[extname] || 'application/octet-stream';
+
+    fs.readFile(filePath, (error, content) => {
+        if (error) {
+            res.writeHead(404);
+            res.end('Dosya Bulunamadi');
+        } else {
+            res.writeHead(200, { 'Content-Type': contentType });
+            res.end(content, 'utf-8');
+        }
+    });
 });
 
-// Render'ın atadığı portu veya 10000 portunu kullanır
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => {
-    console.log(`Sunucu ${PORT} portunda dinleniyor...`);
-});
+server.listen(PORT, () => console.log(`Panel ${PORT} portunda aktif.`));
 
-// 2. MINECRAFT BOT AYARLARI
+// --- MINECRAFT BOT AYARLARI ---
 const botArgs = {
-    host: 'SUNUCU_IP_ADRESI', // Buraya sunucu IP'sini yaz (örn: play.sunucu.com)
-    port: 25565,              // Genelde 25565'tir
-    username: 'AFK_Bot_Render', // Botun oyundaki adı
-    version: '1.20.1'         // Sunucu sürümünü buraya yaz
+    host: 'SUNUCU_IP_ADRESI', // Burayı değiştir!
+    port: 25565,
+    username: 'Render_Bot_724',
+    version: '1.20.1' // Sunucu sürümünü buraya yaz
 };
 
-let bot;
-
 function createBot() {
-    bot = mineflayer.createBot(botArgs);
+    const bot = mineflayer.createBot(botArgs);
 
     bot.on('spawn', () => {
-        console.log('Bot başarıyla sunucuya giriş yaptı!');
+        console.log('Bot sunucuya girdi!');
+        // Botun AFK atılmaması için 30 saniyede bir zıplamasını sağlar
+        setInterval(() => {
+            bot.setControlState('jump', true);
+            setTimeout(() => bot.setControlState('jump', false), 500);
+        }, 30000);
     });
 
-    bot.on('chat', (username, message) => {
-        if (username === bot.username) return;
-        console.log(`${username}: ${message}`);
-    });
-
-    // Bağlantı kesilirse otomatik yeniden bağlanma
     bot.on('end', () => {
-        console.log('Bağlantı kesildi, 10 saniye sonra tekrar denenecek...');
+        console.log('Bağlantı koptu, 10 sn sonra tekrar denenecek...');
         setTimeout(createBot, 10000);
     });
 
-    bot.on('error', (err) => {
-        console.log('Hata oluştu:', err);
-    });
-
-    bot.on('kicked', (reason) => {
-        console.log('Sunucudan atıldı. Sebep:', reason);
-    });
+    bot.on('error', err => console.log('Hata:', err));
 }
 
 createBot();
