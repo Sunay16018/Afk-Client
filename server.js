@@ -14,16 +14,13 @@ let bots = {};
 function createBot(data, socket) {
     if (bots[data.username]) return;
 
-    // 1.21.1 Hata Çözümü: Sürümü zorla ama "false" yaparak başla
+    // ViaVersion olan sunucular için 1.20.4 en stabil giriştir
     const bot = mineflayer.createBot({
         host: data.host.split(':')[0],
         port: parseInt(data.host.split(':')[1]) || 25565,
         username: data.username,
-        // EĞER 1.21.1 HATASI ALIRSAN: Burayı "1.20.4" yaparsan sunucu 
-        // destekliyorsa (ViaVersion varsa) girebilir. Ama önce '1.21.1' deniyoruz.
-        version: "1.21.1", 
-        hideErrors: true,
-        checkTimeoutInterval: 60000
+        version: "1.20.4", // 1.21.1 hatasını bu şekilde bypass ediyoruz
+        hideErrors: true
     });
 
     bots[data.username] = { 
@@ -33,39 +30,46 @@ function createBot(data, socket) {
 
     bot.on('spawn', () => {
         socket.emit('status', { user: data.username, online: true });
-        socket.emit('log', { user: 'SİSTEM', msg: `✓ 1.21.1 Sunucusuna Başarıyla Girildi!` });
+        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:#00ff00">✓ Minetruth Bağlantısı Başarılı!</span>` });
         
-        // 7/24 Aktiflik
-        setInterval(() => { if(bot.entity) bot.look(bot.entity.yaw + 0.1, bot.entity.pitch); }, 25000);
+        // Anti-AFK (Düşmemek için)
+        setInterval(() => { if(bot.entity) bot.look(bot.entity.yaw + 0.1, bot.entity.pitch); }, 20000);
 
         if (bots[data.username].settings.pass) {
             setTimeout(() => bot.chat(`/login ${bots[data.username].settings.pass}`), 2500);
         }
     });
 
-    // Otomatik Matematik & Mesaj
+    // Matematik ve Oto-Mesaj Analizi (Okuma Kapalı)
     bot.on('message', (json) => {
         const text = json.toString();
         const b = bots[data.username];
-        if (b?.settings.math) {
+        if (b && b.settings.math) {
+            // Zincirleme işlem (1+1+5*2 gibi)
             const mathMatch = text.match(/(\d+[\+\-\*\/]\d+([\+\-\*\/]\d+)*)/);
             if (mathMatch) {
                 try {
-                    const result = eval(mathMatch[0]);
+                    const result = Function('"use strict"; return (' + mathMatch[0] + ')')();
                     if(!isNaN(result)) setTimeout(() => bot.chat(result.toString()), 1000);
                 } catch (e) {}
             }
         }
     });
 
-    bot.on('error', (err) => {
-        // Eğer 1.21.1 protokol hatası gelirse terminale yaz
-        if(err.message.includes('supported')) {
-            socket.emit('log', { user: 'HATA', msg: 'Sunucu 1.21.1 sürümünü bu kütüphane ile kabul etmiyor. Sürüm düşürmeyi deneyin.' });
-        } else {
-            socket.emit('log', { user: 'HATA', msg: `Hata: ${err.message}` });
+    // Oto-Mesaj Döngüsü
+    setInterval(() => {
+        const b = bots[data.username];
+        if (b && b.settings.autoMsg && b.settings.msgText) {
+            const now = Date.now();
+            if (now - b.settings.lastMsg > b.settings.msgDelay * 1000) {
+                bot.chat(b.settings.msgText);
+                b.settings.lastMsg = now;
+            }
         }
-    });
+    }, 1000);
+
+    bot.on('error', (err) => socket.emit('log', { user: 'HATA', msg: err.message }));
+    bot.on('kicked', () => socket.emit('log', { user: 'SİSTEM', msg: 'Sunucudan atıldın veya bağlantı koptu.' }));
 
     bot.on('end', () => {
         const b = bots[data.username];
