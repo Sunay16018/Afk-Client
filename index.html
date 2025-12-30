@@ -1,45 +1,61 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AFK Client Ultimate v5</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/ansi-to-html@0.6.17/dist/ansi_to_html.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AFK Client Ultimate v6</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="terminal">
-  <div id="log"></div>
-</div>
+  <div id="app">
+    <header>
+      <h1>AFK Client Ultimate v6</h1>
+    </header>
 
-<div id="controls">
-  <input id="ip" placeholder="Sunucu IP">
-  <input id="port" placeholder="Port">
-  <input id="username" placeholder="Kullanıcı Adı">
-  <input id="password" placeholder="Şifre">
-  <input id="version" placeholder="Minecraft Versiyon">
-  <button id="start">Başlat</button>
-  <button id="stop">Durdur</button>
-  <input id="chatMsg" placeholder="Mesaj">
-  <button id="send">Gönder</button>
-  <button id="settingsBtn">Ayarlar</button>
-</div>
+    <section id="settings">
+      <h2>Ayarlar</h2>
+      <div class="grid">
+        <input type="text" id="host" placeholder="IP / Host">
+        <input type="number" id="port" placeholder="Port" value="25565">
+        <input type="text" id="username" placeholder="Kullanıcı Adı">
+        <input type="password" id="password" placeholder="Şifre (opsiyonel)">
+        <input type="text" id="version" placeholder="Versiyon (opsiyonel)">
+      </div>
+      <button id="startBtn">Başlat</button>
+      <button id="stopBtn" disabled>Durdur</button>
+    </section>
 
-<div id="settings" class="hidden">
-  <input id="autoMsgText" placeholder="Otomatik mesaj">
-  <input id="autoMsgDelay" placeholder="Süre (sn)">
-  <input type="checkbox" id="autoMsgEnable"> Aç/Kapa
-</div>
+    <section id="terminal">
+      <div id="output"></div>
+    </section>
 
-<div class="controls">
-  <button data-k="forward">↑</button>
-  <button data-k="back">↓</button>
-  <button data-k="left">←</button>
-  <button data-k="right">→</button>
-  <button data-k="jump">Zıpla</button>
-</div>
+    <section id="chat">
+      <input type="text" id="chatInput" placeholder="Mesaj gönder...">
+      <button id="sendChat">Gönder</button>
+    </section>
 
-<script src="script.js"></script>
+    <section id="autoMsg">
+      <h2>Otomatik Mesaj</h2>
+      <input type="text" id="autoText" placeholder="Mesaj">
+      <input type="number" id="autoInterval" placeholder="Saniye" min="1" value="30">
+      <button id="startAuto">Başlat</button>
+      <button id="stopAuto" disabled>Durdur</button>
+    </section>
+
+    <section id="controls">
+      <h2>Hareket Kontrolleri</h2>
+      <div class="control-grid">
+        <button class="ctrl" data-action="forward">▲</button>
+        <button class="ctrl" data-action="left">◀</button>
+        <button class="ctrl" data-action="jump">⭘</button>
+        <button class="ctrl" data-action="right">▶</button>
+        <button class="ctrl" data-action="back">▼</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
 </body>
-</html>
+  </html>
+  
