@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private AFK Client</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ansi-to-html@0.6.17/dist/ansi_to_html.min.js"></script>
+</head>
+<body>
+    <div id="terminal"><div id="log"></div></div>
+
+    <div id="controls">
+        <div class="row">
+            <input id="ip" placeholder="IP">
+            <input id="port" placeholder="25565" style="width: 70px;">
+            <input id="username" placeholder="Bot İsmi">
+            <input id="password" type="password" placeholder="Şifre">
+            <input id="version" placeholder="Sürüm">
+        </div>
+        
+        <div class="row chat-row">
+            <input id="chatMsg" placeholder="Sunucuya mesaj gönder...">
+            <button id="send" style="background:#1565c0;">GÖNDER</button>
+        </div>
+
+        <div class="row">
+            <button id="start" style="background:#2e7d32;">BAŞLAT</button>
+            <button id="stop" style="background:#c62828;">DURDUR</button>
+            <button id="settingsBtn">⚙ AYARLAR</button>
+        </div>
+    </div>
+
+    <div id="settings" class="hidden">
+        <input id="autoMsgText" placeholder="Oto Mesaj">
+        <input id="autoMsgDelay" type="number" placeholder="Sn" style="width: 50px;">
+        <label><input type="checkbox" id="autoMsgEnable"> Oto-Mesaj</label>
+    </div>
+
+    <div class="controls">
+        <button data-k="forward">↑</button>
+        <button data-k="left">←</button>
+        <button data-k="back">↓</button>
+        <button data-k="right">→</button>
+        <button data-k="jump">Z</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
