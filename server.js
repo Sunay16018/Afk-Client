@@ -13,19 +13,31 @@ const server = http.createServer((req, res) => {
 
     if (parsedUrl.pathname === '/start') {
         const { host, user, ver } = parsedUrl.query;
-        if (bots[user]) return res.end(JSON.stringify({msg: "Aktif"}));
+        if (bots[user]) return res.end(JSON.stringify({msg: "Zaten Aktif"}));
 
+        // Botu oluştur
         const bot = mineflayer.createBot({ host, username: user, version: ver, auth: 'offline' });
         bots[user] = bot;
-        logs[user] = [];
+        logs[user] = [`<b style="color:#f1c40f">Baglaniliyor: ${user}...</b>`];
 
+        // Mesajları anında yakala
         bot.on('message', (jsonMsg) => {
             if (!logs[user]) logs[user] = [];
             logs[user].push(jsonMsg.toHTML());
             if (logs[user].length > 100) logs[user].shift();
         });
 
+        // Hataları yakala (Konsola mesaj gelmeme sebebini gösterir)
+        bot.on('error', (err) => {
+            if(logs[user]) logs[user].push(`<b style="color:#e74c3c">HATA: ${err.message}</b>`);
+        });
+
+        bot.on('kicked', (reason) => {
+            if(logs[user]) logs[user].push(`<b style="color:#e74c3c">ATILDI: ${reason}</b>`);
+        });
+
         bot.on('spawn', () => {
+            if(logs[user]) logs[user].push(`<b style="color:#2ecc71">BAŞARIYLA DOĞDU!</b>`);
             setInterval(() => {
                 if (bot.entity) {
                     botStatus[user] = {
@@ -43,7 +55,7 @@ const server = http.createServer((req, res) => {
         bot.on('end', () => { 
             delete bots[user]; 
             delete botStatus[user]; 
-            delete logs[user];
+            // Logları hemen silme ki kullanıcı neden düştüğünü görsün
         });
         return res.end(JSON.stringify({msg: "OK"}));
     }
@@ -51,7 +63,7 @@ const server = http.createServer((req, res) => {
     if (parsedUrl.pathname === '/getall') {
         const invs = {};
         Object.keys(bots).forEach(n => {
-            invs[n] = bots[n].inventory.slots.filter(s => s !== null).map(s => ({ slot: s.slot, name: s.name, count: s.count }));
+            invs[n] = bots[n].inventory ? bots[n].inventory.slots.filter(s => s !== null).map(s => ({ slot: s.slot, name: s.name, count: s.count })) : [];
         });
         res.setHeader('Content-Type', 'application/json');
         return res.end(JSON.stringify({ activeBots: Object.keys(bots), logs, status: botStatus, invs }));
@@ -78,3 +90,4 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(process.env.PORT || 10000);
+        
