@@ -3,47 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Private AFK Client</title>
+    <title>AFK Client - Inventory Edition</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ansi-to-html@0.6.17/dist/ansi_to_html.min.js"></script>
 </head>
 <body>
-    <div id="terminal"><div id="log"></div></div>
 
-    <div id="controls">
-        <div class="row">
-            <input id="ip" placeholder="IP">
-            <input id="port" placeholder="25565" style="width: 70px;">
-            <input id="username" placeholder="Bot İsmi">
-            <input id="password" type="password" placeholder="Şifre">
-            <input id="version" placeholder="Sürüm">
+    <div class="main-container">
+        <div class="left-panel">
+            <div id="terminal"><div id="log"></div></div>
+            
+            <div id="controls">
+                <div class="row">
+                    <input id="ip" placeholder="IP Adresi">
+                    <input id="port" placeholder="25565" style="width: 60px;">
+                    <input id="username" placeholder="Bot İsmi">
+                    <input id="password" type="password" placeholder="Şifre">
+                </div>
+                <div class="row">
+                    <input id="version" placeholder="Sürüm (Örn: 1.16.5)">
+                    <button id="start" class="btn-green">GİRİŞ</button>
+                    <button id="stop" class="btn-red">ÇIKIŞ</button>
+                </div>
+                
+                <div class="row chat-row">
+                    <input id="chatMsg" placeholder="Sohbet...">
+                    <button id="send" class="btn-blue">Yolla</button>
+                    <button id="settingsBtn" class="btn-gray">⚙</button>
+                </div>
+            </div>
+
+            <div id="settings" class="hidden">
+                <input id="autoMsgText" placeholder="Oto Mesaj">
+                <input id="autoMsgDelay" type="number" placeholder="Sn" style="width: 50px;">
+                <label><input type="checkbox" id="autoMsgEnable"> Aktif</label>
+            </div>
+            
+            <div class="move-controls">
+                <button data-k="forward">W</button>
+                <div class="sub-move">
+                    <button data-k="left">A</button>
+                    <button data-k="back">S</button>
+                    <button data-k="right">D</button>
+                </div>
+                <button data-k="jump" style="width: 80%;">ZIPLA</button>
+            </div>
         </div>
-        
-        <div class="row chat-row">
-            <input id="chatMsg" placeholder="Sunucuya mesaj gönder...">
-            <button id="send" style="background:#1565c0;">GÖNDER</button>
+
+        <div class="right-panel">
+            <h3>ENVANTER</h3>
+            <div id="inventory-grid" class="inv-grid">
+                <div class="empty-msg">Envanter Boş</div>
+            </div>
         </div>
-
-        <div class="row">
-            <button id="start" style="background:#2e7d32;">BAŞLAT</button>
-            <button id="stop" style="background:#c62828;">DURDUR</button>
-            <button id="settingsBtn">⚙ AYARLAR</button>
-        </div>
-    </div>
-
-    <div id="settings" class="hidden">
-        <input id="autoMsgText" placeholder="Oto Mesaj">
-        <input id="autoMsgDelay" type="number" placeholder="Sn" style="width: 50px;">
-        <label><input type="checkbox" id="autoMsgEnable"> Oto-Mesaj</label>
-    </div>
-
-    <div class="controls">
-        <button data-k="forward">↑</button>
-        <button data-k="left">←</button>
-        <button data-k="back">↓</button>
-        <button data-k="right">→</button>
-        <button data-k="jump">Z</button>
     </div>
 
     <script src="script.js"></script>
