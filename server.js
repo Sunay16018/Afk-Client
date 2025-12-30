@@ -15,13 +15,16 @@ let bots = {};
 function createBot(data, socket) {
     if (bots[data.username]) return;
 
-    // Sürüm hatasını çözmek için 'auto' modu ve hata yakalayıcı
+    // HATA ÇÖZÜMÜ: Sürümü 1.21.1 olarak zorla veya desteklenen en yakın sürümü seç
     const bot = mineflayer.createBot({
         host: data.host.split(':')[0],
         port: parseInt(data.host.split(':')[1]) || 25565,
         username: data.username,
-        version: false, // Mineflayer sunucudan sürümü kendi çekmeye çalışacak
-        hideErrors: true
+        // Eğer 1.21.1 desteklenmiyor diyorsa otomatik seçimi kapatıp 
+        // manuel olarak sürümü buraya yazabiliriz ama 'auto' en iyisidir.
+        // Burayı '1.21.1' yapıyorum senin için.
+        version: "1.21.1", 
+        hideErrors: false // Hatayı görmek için false yaptık
     });
 
     bots[data.username] = { 
@@ -29,18 +32,20 @@ function createBot(data, socket) {
         settings: { math: false, autoRevive: false, autoMsg: false, msgText: "", msgDelay: 30, lastMsg: 0, pass: data.pass || "" }
     };
 
+    bot.on('inject_allowed', () => {
+        socket.emit('log', { user: 'SİSTEM', msg: 'Sürüm kontrolü geçildi, bağlanılıyor...' });
+    });
+
     bot.on('spawn', () => {
         socket.emit('status', { user: data.username, online: true });
-        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:#00ff41">Sürüm Algılandı: ${bot.version}</span>` });
+        socket.emit('log', { user: 'SİSTEM', msg: `<b style="color:#00ff41">Başarıyla giriş yapıldı! Sürüm: ${bot.version}</b>` });
     });
 
     bot.on('message', (json) => {
-        const b = bots[data.username];
         socket.emit('log', { user: data.username, msg: json.toHTML() });
-
+        const b = bots[data.username];
         if (b?.settings.math) {
-            const plainText = json.toString();
-            const mathMatch = plainText.match(/(\d+[\+\-\*\/]\d+([\+\-\*\/]\d+)*)/);
+            const mathMatch = json.toString().match(/(\d+[\+\-\*\/]\d+([\+\-\*\/]\d+)*)/);
             if (mathMatch) {
                 try {
                     const result = new Function(`return ${mathMatch[0]}`)();
@@ -50,13 +55,12 @@ function createBot(data, socket) {
         }
     });
 
-    bot.on('kicked', (reason) => {
-        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:red">Kovuldun: ${reason}</span>` });
+    bot.on('error', (err) => {
+        socket.emit('log', { user: 'HATA', msg: `<span style="color:red">Bağlantı Hatası: ${err.message}</span>` });
     });
 
-    bot.on('error', (err) => {
-        // 1.21.1 gibi hataları burada yakalayıp terminale yazar
-        socket.emit('log', { user: 'HATA', msg: `<span style="color:red">Hata: ${err.message}</span>` });
+    bot.on('kicked', (reason) => {
+        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:red">Kick: ${reason}</span>` });
     });
 
     bot.on('end', () => {
