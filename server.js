@@ -1,10 +1,14 @@
 const express = require('express');
-const app = express();
-const http = require('server').createServer ? require('http').createServer(app) : require('http').Server(app);
-const io = require('socket.io')(http);
+const http = require('http');
+const { Server } = require('socket.io');
 const mineflayer = require('mineflayer');
 const path = require('path');
 
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+// Dosyaları ana dizinden sunar
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/style.css', (req, res) => res.sendFile(path.join(__dirname, 'style.css')));
 app.get('/script.js', (req, res) => res.sendFile(path.join(__dirname, 'script.js')));
@@ -12,9 +16,12 @@ app.get('/script.js', (req, res) => res.sendFile(path.join(__dirname, 'script.js
 let bots = {};
 
 function createBot(data, socket) {
-    // Aynı isimde bot varsa eskisini zorla kapat
+    // Eğer aynı isimde bot varsa önce eskisini temizle (Zombi bot önleyici)
     if (bots[data.username]) {
-        try { bots[data.username].instance.quit(); } catch(e) {}
+        try { 
+            bots[data.username].settings.autoRevive = false;
+            bots[data.username].instance.quit(); 
+        } catch(e) {}
         delete bots[data.username];
     }
 
@@ -22,19 +29,18 @@ function createBot(data, socket) {
         host: data.host.split(':')[0],
         port: parseInt(data.host.split(':')[1]) || 25565,
         username: data.username,
-        version: false,
-        checkTimeoutInterval: 60000 // Bağlantı zaman aşımı kontrolü
+        version: false
     });
 
     bots[data.username] = { 
         instance: bot, 
-        settings: bots[data.username]?.settings || { mine: false, math: false, autoRevive: false, pass: data.pass || "" },
+        settings: { mine: false, math: false, autoRevive: false, pass: data.pass || "" },
         isMining: false
     };
 
     bot.on('spawn', () => {
         socket.emit('status', { user: data.username, online: true });
-        // Anti-AFK: 30 saniyede bir kafayı oynat
+        // Anti-AFK
         const afk = setInterval(() => { if(bot.entity) bot.look(bot.entity.yaw + 0.1, bot.entity.pitch); }, 30000);
         bots[data.username].afkInterval = afk;
 
@@ -46,21 +52,24 @@ function createBot(data, socket) {
 
     bot.on('message', (json) => {
         socket.emit('log', { user: data.username, msg: json.toHTML() });
-        const b = bots[data.username];
-        if (b?.settings.math) {
-            const txt = json.toString().toLowerCase().replace(/x/g, '*');
-            const mathMatch = txt.match(/(\d+(?:\s*[\+\-\*\/]\s*\d+)+)/);
-            if (mathMatch) { try { const res = eval(mathMatch[0]); if (!isNaN(res)) bot.chat(res.toString()); } catch (e) {} }
-        }
     });
 
+    // KICK MESAJI DÜZELTME (Object Object Hatası Çözümü)
     bot.on('kicked', (reason) => {
-        let msg = "Atıldın";
+        let cleanReason = "";
         try {
-            const p = JSON.parse(reason);
-            msg = p.extra ? p.extra.map(e => e.text).join('') : (p.text || reason);
-        } catch(e) { msg = reason.toString(); }
-        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:#ff4444;font-weight:bold;">[KICK] ${msg}</span>` });
+            const parsed = typeof reason === 'string' ? JSON.parse(reason) : reason;
+            if (parsed.extra) {
+                cleanReason = parsed.extra.map(e => e.text).join('');
+            } else if (parsed.text) {
+                cleanReason = parsed.text;
+            } else {
+                cleanReason = JSON.stringify(reason);
+            }
+        } catch (e) {
+            cleanReason = reason.toString();
+        }
+        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:#ff4444;font-weight:bold;">[!] KICK: ${cleanReason}</span>` });
     });
 
     bot.on('end', () => {
@@ -69,18 +78,22 @@ function createBot(data, socket) {
         const reconnect = b.settings.autoRevive;
         socket.emit('status', { user: data.username, online: false });
         clearInterval(b.afkInterval);
-        delete bots[data.username];
-        if (reconnect) setTimeout(() => createBot(data, socket), 5000);
-    });
-
-    bot.on('error', (err) => {
-        socket.emit('log', { user: 'HATA', msg: err.message });
+        
+        if (reconnect) {
+            socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:#ffa500">Bağlantı koptu, 5sn sonra geri dönülüyor...</span>` });
+            delete bots[data.username];
+            setTimeout(() => createBot(data, socket), 5000);
+        } else {
+            delete bots[data.username];
+        }
     });
 }
 
-// ZOMBİ BOT ÖNLEYİCİ: Render güncellenince botları oyundan çıkar
-process.on('SIGTERM', () => { for (let u in bots) { bots[u].instance.quit(); } process.exit(0); });
-process.on('SIGINT', () => { for (let u in bots) { bots[u].instance.quit(); } process.exit(0); });
+// Render Güncellenince Botları At
+process.on('SIGTERM', () => {
+    for (let u in bots) { bots[u].instance.quit(); }
+    process.exit(0);
+});
 
 io.on('connection', (socket) => {
     socket.on('start-bot', (data) => createBot(data, socket));
@@ -97,4 +110,6 @@ io.on('connection', (socket) => {
     socket.on('update-config', (d) => { if(bots[d.user]) bots[d.user].settings = d.config; });
 });
 
-http.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Sunucu ${PORT} portunda aktif.`));
+           
