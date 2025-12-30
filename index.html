@@ -2,41 +2,58 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>CyberCore AFK PRO</title>
+    <title>ULTIMATE AFK CLIENT</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="dashboard">
-        <div class="sidebar">
-            <h2 style="color: var(--blue); text-align: center;">CYBERCORE</h2>
-            <div id="status-text" class="status" style="color: #ff4b2b;">● ÇEVRİMDIŞI</div>
+    <div class="app-container">
+        <aside class="sidebar">
+            <h1 class="mc-text">AFK <span>PRO</span></h1>
             
-            <input type="text" id="host" placeholder="Server IP:Port">
-            <input type="text" id="username" placeholder="Bot İsmi">
-            <input type="password" id="password" placeholder="Şifre (/login)">
-            
-            <button onclick="connect()" class="btn">SİSTEMİ BAĞLA</button>
-            <button onclick="disconnect()" class="btn" style="background:#ff4b2b; color:#fff;">KES</button>
-
-            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top:20px;">
-                <button onclick="move('forward')" class="btn" style="grid-column: 2">↑</button>
-                <button onclick="move('left')" class="btn">←</button>
-                <button onclick="move('back')" class="btn">↓</button>
-                <button onclick="move('right')" class="btn">→</button>
-                <button onclick="move('jump')" class="btn" style="grid-column: span 3">ZIPLA</button>
-            </div>
-        </div>
-
-        <div class="main-view">
-            <div class="terminal-container">
-                <div id="logs"></div>
+            <div class="card">
+                <input type="text" id="ip" placeholder="Server IP:Port">
+                <input type="text" id="nick" placeholder="Bot Nick">
+                <input type="password" id="pass" placeholder="Login Şifresi">
+                <div class="btn-group">
+                    <button class="btn btn-g" onclick="connect()">BAĞLAN</button>
+                    <button class="btn btn-r" onclick="disconnect()">KES</button>
+                </div>
             </div>
 
-            <div class="chat-controls">
-                <span style="color: var(--blue); font-weight: bold;">CMD></span>
-                <input type="text" id="chat-input" placeholder="Mesaj gönder veya komut yaz..." autocomplete="off">
-                <button onclick="sendMsg()" class="btn">GÖNDER</button>
+            <select id="bot-sel" class="card" onchange="selBot=this.value"></select>
+
+            <div class="movement-box">
+                <button class="m-btn" onclick="move('forward')">▲</button>
+                <div class="m-row">
+                    <button class="m-btn" onclick="move('left')">◀</button>
+                    <button class="m-btn stop-red" onclick="allStop()">■</button>
+                    <button class="m-btn" onclick="move('right')">▶</button>
+                </div>
+                <button class="m-btn" onclick="move('back')">▼</button>
+                <button class="btn btn-b" onclick="move('jump')">ZIPLA</button>
             </div>
+
+            <button class="btn btn-gray" onclick="toggleModal(true)">⚙ AYARLAR</button>
+        </aside>
+
+        <section class="terminal-section">
+            <div class="term-wrapper">
+                <div class="term-title">SUNUCU MESAJLARI</div>
+                <div id="logs" class="logs-container"></div>
+                <div class="chat-sender">
+                    <input type="text" id="cin" placeholder="Mesaj gönder...">
+                    <button onclick="sendChat()">GÖNDER</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="modal" class="modal-bg">
+        <div class="modal-box">
+            <h2 class="mc-text">AYARLAR</h2>
+            <div class="opt-row">Matematik Çözücü: <input type="checkbox" id="m-on"></div>
+            <div class="opt-row">Otomatik Maden: <input type="checkbox" id="mine-on"></div>
+            <button class="btn btn-g" onclick="saveSettings()">KAYDET</button>
         </div>
     </div>
 
