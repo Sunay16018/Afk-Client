@@ -1,74 +1,95 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const mineflayer = require("mineflayer");
-const path = require("path");
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const mineflayer = require('mineflayer');
+const AnsiToHtml = require('ansi-to-html');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-let bots = {};
+const ansiConverter = new AnsiToHtml();
 
-app.use(express.static(path.join(__dirname)));
+// Serve static files from the same directory
+app.use(express.static(__dirname));
 
-// Renk kodlarını çevirir (&a -> §a)
-function fixColors(text) {
-  return text.replace(/&([0-9a-fk-or])/g, '§$1');
+// ---------- Bot Management ----------
+let bot = null;
+
+function createBot(options) {
+  if (bot) bot.end(); // clean previous instance
+
+  bot = mineflayer.createBot({
+    host: options.host,
+    port: options.port,
+    username: options.username,
+    password: options.password,
+    version: options.version || false,
+  });
+
+  bot.on('login', () => {
+    io.emit('status', ansiConverter.toHtml('\u001b[32m[Bot] Bağlandı\u001b[0m'));
+  });
+
+  bot.on('chat', (username, message) => {
+    const formatted = `\u001b[36m<${username}> ${message}\u001b[0m`;
+    io.emit('chat', ansiConverter.toHtml(formatted));
+  });
+
+  bot.on('kicked', (reason) => {
+    io.emit('status', ansiConverter.toHtml(`\u001b[33m[Bot] Atıldı: ${reason}\u001b[0m`));
+    bot.end();
+  });
+
+  bot.on('end', () => {
+    io.emit('status', ansiConverter.toHtml('\u001b[31m[Bot] Bağlantı kapandı\u001b[0m'));
+    bot = null;
+  });
+
+  // Forward any console.log from bot to client (optional)
+  bot.on('error', (err) => {
+    io.emit('status', ansiConverter.toHtml(`\u001b[31m[Bot] Hata: ${err.message}\u001b[0m`));
+  });
 }
 
-function startBot(d, socket){
-  if(bots[d.username]) return;
+// ---------- Socket.io ----------
+io.on('connection', (socket) => {
+  console.log('Browser connected');
 
-  const bot = mineflayer.createBot({
-    host: d.ip,
-    port: Number(d.port) || 25565,
-    username: d.username,
-    version: d.version || false,
-    hideErrors: true
+  socket.on('startBot', (data) => {
+    createBot(data);
   });
 
-  bots[d.username] = bot;
-
-  // Sadece sunucuya girince logları aç
-  bot.once("spawn", () => {
-    socket.emit("log", "§a[SİSTEM] Başarıyla giriş yapıldı.");
-    if(d.password){
-      setTimeout(()=>{
-        bot.chat(`/register ${d.password} ${d.password}`);
-        bot.chat(`/login ${d.password}`);
-      },1500);
-    }
+  socket.on('stopBot', () => {
+    if (bot) bot.end();
   });
 
-  bot.on("message", m => {
-    if(bot.entity) socket.emit("log", m.toAnsi());
+  socket.on('chatMessage', (msg) => {
+    if (bot) bot.chat(msg);
   });
 
-  bot.on("kicked", r => socket.emit("log", `§c[KICK] ${r}`));
-  bot.on("error", err => socket.emit("log", `§c[HATA] ${err.message}`));
-  bot.on("end", () => {
-    socket.emit("log", "§e[BİLGİ] Bağlantı kesildi.");
-    delete bots[d.username];
-  });
-}
-
-io.on("connection", s => {
-  s.on("startBot", d => startBot(d, s));
-  s.on("stopBot", u => { if(bots[u]) { bots[u].quit(); delete bots[u]; } });
-  
-  s.on("sendChat", d => { 
-    if(bots[d.username]) bots[d.username].chat(fixColors(d.message));
+  socket.on('autoMessage', ({ message, interval }) => {
+    if (!bot) return;
+    const send = () => bot.chat(message);
+    const id = setInterval(send, interval * 1000);
+    socket.once('stopAutoMessage', () => clearInterval(id));
   });
 
-  s.on("autoMsg", cfg => {
-    const b = bots[cfg.username];
-    if(!b) return;
-    if(b.autoMsgInt) clearInterval(b.autoMsgInt);
-    if(cfg.enabled) b.autoMsgInt = setInterval(()=>b.chat(fixColors(cfg.message)), cfg.delay*1000);
-  });
+  // Movement controls
+  const moveMap = {
+    forward: 'forward',
+    back: 'back',
+    left: 'left',
+    right: 'right',
+    jump: 'jump',
+  };
 
-  s.on("move", c => { const b = bots[c.username]; if(b) b.setControlState(c.key, c.state); });
+  socket.on('move', ({ action, state }) => {
+    if (!bot) return;
+    if (state) bot.setControlState(moveMap[action], true);
+    else bot.setControlState(moveMap[action], false);
+  });
 });
 
-server.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
