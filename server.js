@@ -4,14 +4,14 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
-let bot;
+let bot = null;
 let logs = [];
+let autoMsgTask = null;
+let botStatus = { health: 20, food: 20, pos: { x: 0, y: 0, z: 0 }, players: [] };
 
 function addLog(msg) {
-    const time = new Date().toLocaleTimeString();
-    logs.push(`[${time}] ${msg}`);
+    logs.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
     if (logs.length > 50) logs.shift();
-    console.log(msg);
 }
 
 const server = http.createServer((req, res) => {
@@ -19,56 +19,69 @@ const server = http.createServer((req, res) => {
 
     // API: Botu Başlat
     if (parsedUrl.pathname === '/start') {
-        const { host, user, ver, port } = parsedUrl.query;
-        if (bot) { bot.quit(); addLog("Eski bot kapatıldı."); }
+        const { host, user, ver } = parsedUrl.query;
+        if (bot) bot.quit();
 
-        addLog(`${host} adresine ${ver} sürümü ile bağlanılıyor...`);
-        
         bot = mineflayer.createBot({
             host: host,
-            port: parseInt(port) || 25565,
+            port: 25565,
             username: user || 'AFK_Bot',
-            version: ver
+            version: ver,
+            auth: 'offline',
+            checkTimeoutInterval: 90000
         });
 
         bot.on('spawn', () => {
-            addLog("Bot başarıyla sunucuya girdi!");
-            // Anti-AFK: 30 saniyede bir zıpla
-            setInterval(() => { if(bot.entity) bot.setControlState('jump', true); setTimeout(() => bot.setControlState('jump', false), 500); }, 30000);
+            addLog("Başarıyla giriş yapıldı!");
+            setInterval(() => {
+                if (bot.entity) {
+                    botStatus = {
+                        health: Math.round(bot.health),
+                        food: Math.round(bot.food),
+                        pos: { x: Math.round(bot.entity.position.x), y: Math.round(bot.entity.position.y), z: Math.round(bot.entity.position.z) },
+                        players: Object.values(bot.entities)
+                            .filter(e => e.type === 'player' && e.username !== bot.username)
+                            .map(e => ({ n: e.username, x: Math.round(e.position.x - bot.entity.position.x), z: Math.round(e.position.z - bot.entity.position.z) }))
+                    };
+                }
+            }, 1000);
         });
 
-        bot.on('chat', (username, message) => addLog(`${username}: ${message}`));
-        bot.on('death', () => { addLog("Bot öldü, yeniden doğuluyor..."); bot.quit(); });
-        bot.on('error', (err) => addLog("Hata: " + err.message));
+        bot.on('chat', (u, m) => addLog(`${u}: ${m}`));
+        bot.on('error', (e) => addLog("Hata: " + e.message));
         bot.on('end', () => addLog("Bağlantı kesildi."));
+        res.end("OK"); return;
+    }
 
-        res.end("OK");
+    // API: Otomatik Mesaj Ayarı
+    if (parsedUrl.pathname === '/automsg') {
+        const { enabled, msg, delay } = parsedUrl.query;
+        if (autoMsgTask) clearInterval(autoMsgTask);
+        if (enabled === 'true' && bot) {
+            autoMsgTask = setInterval(() => {
+                if (bot && bot.chat) bot.chat(msg);
+            }, parseInt(delay) * 1000);
+        }
+        res.end("OK"); return;
+    }
+
+    // API: Veri Çekme
+    if (parsedUrl.pathname === '/getdata') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ logs, status: botStatus }));
         return;
     }
 
-    // API: Komut Gönder
     if (parsedUrl.pathname === '/send' && bot) {
         bot.chat(parsedUrl.query.msg);
-        res.end("OK");
-        return;
+        res.end("OK"); return;
     }
 
-    // API: Logları Getir
-    if (parsedUrl.pathname === '/getlogs') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ logs }));
-        return;
-    }
-
-    // Statik Dosyalar (HTML & CSS)
-    let filePath = '.' + parsedUrl.pathname;
-    if (filePath === './') filePath = './index.html';
-    const ext = path.extname(filePath);
-    const mimeTypes = { '.html': 'text/html', '.css': 'text/css' };
-
+    // Dosyaları Sun
+    let filePath = path.join(__dirname, parsedUrl.pathname === '/' ? 'index.html' : parsedUrl.pathname);
     fs.readFile(filePath, (err, data) => {
-        if (err) { res.writeHead(404); res.end("Dosya bulunamadi"); }
-        else { res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'text/plain' }); res.end(data); }
+        if (err) { res.writeHead(404); res.end(); }
+        else { res.writeHead(200); res.end(data); }
     });
 });
 
