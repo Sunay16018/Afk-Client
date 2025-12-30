@@ -27,10 +27,10 @@ function startBot(d){
   });
 
   bots[d.username] = bot;
-  emit(JSON.stringify({text: "Sunucuya bağlanılıyor..."}));
+  emit("Sunucuya bağlanılıyor...");
 
   bot.once("login", () => {
-    emit(JSON.stringify({text: "Sunucuya bağlanıldı"}));
+    emit("Sunucuya bağlanıldı");
     if(d.password){
       setTimeout(()=>{
         bot.chat(`/register ${d.password} ${d.password}`);
@@ -40,38 +40,36 @@ function startBot(d){
   });
 
   bot.on("message", m => {
-    emit(JSON.stringify(m.toJSON())); // JSON gönder, renkler client tarafında işlenecek
+    emit(m.toAnsi()); // ANSI string direkt gönderiliyor
   });
 
   bot.on("kicked", r => {
-    emit(JSON.stringify({text: "Sunucudan atıldı: "+r}));
+    emit(`Sunucudan atıldı: ${r}`);
   });
 
   bot.on("end", () => {
     delete bots[d.username];
   });
 
-  // movement
+  // Hareket
   io.on("move", c => {
     if(!bots[d.username]) return;
     bot.setControlState(c.key, c.state);
   });
 
-  // auto message
+  // Otomatik mesaj
   let autoMsgInt = null;
   io.on("autoMsg", cfg => {
     if(!bots[d.username]) return;
     clearInterval(autoMsgInt);
     if(cfg.enabled){
-      autoMsgInt = setInterval(()=>{
-        bot.chat(cfg.message);
-      }, cfg.delay*1000);
+      autoMsgInt = setInterval(()=>{ bot.chat(cfg.message); }, cfg.delay*1000);
     }
   });
 }
 
 io.on("connection", s => {
-  s.emit("log", JSON.stringify({text:"Terminal hazır"}));
+  s.emit("log", "Terminal hazır");
 
   s.on("startBot", d => startBot(d));
   s.on("stopBot", u => {
