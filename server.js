@@ -1,80 +1,97 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 const mineflayer = require('mineflayer');
+const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Render.com için Statik Dosya Sunumu (Root Dizini)
 app.use(express.static(__dirname));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-let bots = {};
+let bot;
+let botOptions = {};
 
-function createBot(data, socket) {
-    if (bots[data.username]) return;
+io.on('connection', (socket) => {
+    console.log('Arayüz bağlantısı başarılı.');
 
-    const bot = mineflayer.createBot({
-        host: data.host.split(':')[0],
-        port: parseInt(data.host.split(':')[1]) || 25565,
-        username: data.username,
-        version: false, // OTOMATİK SÜRÜM ALGILAMA
-        hideErrors: true,
-        checkTimeoutInterval: 60000
+    socket.on('join-bot', (data) => {
+        botOptions = data;
+        createBot();
     });
 
-    bots[data.username] = { 
-        instance: bot, 
-        settings: { math: false, autoRevive: false, autoMsg: false, msgText: "", msgDelay: 30, lastMsg: 0, pass: data.pass || "" }
-    };
+    function createBot() {
+        bot = mineflayer.createBot({
+            host: botOptions.host,
+            port: parseInt(botOptions.port) || 25565,
+            username: botOptions.username,
+            version: false // Otomatik versiyon tespiti
+        });
 
-    bot.on('spawn', () => {
-        socket.emit('status', { user: data.username, online: true });
-        socket.emit('log', { user: 'SİSTEM', msg: `<b style="color:#00ff00">✓ Giriş Yapıldı! Sürüm: ${bot.version}</b>` });
-        
-        // Anti-AFK: Hareket etme
-        setInterval(() => { if(bot.entity) bot.look(bot.entity.yaw + 0.1, bot.entity.pitch); }, 20000);
+        bot.loadPlugin(pathfinder);
 
-        if (bots[data.username].settings.pass) {
-            setTimeout(() => bot.chat(`/login ${bots[data.username].settings.pass}`), 2500);
-        }
-    });
+        bot.on('login', () => {
+            io.emit('status', 'Bağlandı! Giriş yapılıyor...');
+            if(botOptions.password) {
+                setTimeout(() => bot.chat(`/login ${botOptions.password}`), 2000);
+            }
+        });
 
-    bot.on('message', (json) => {
-        socket.emit('log', { user: data.username, msg: json.toHTML() });
-        const text = json.toString();
-        const b = bots[data.username];
-        
-        if (b?.settings.math) {
-            const mathMatch = text.match(/(\d+[\+\-\*\/]\d+([\+\-\*\/]\d+)*)/);
-            if (mathMatch) {
-                try {
-                    const res = new Function(`return ${mathMatch[0]}`)();
-                    if(!isNaN(res)) setTimeout(() => bot.chat(res.toString()), 1000);
-                } catch (e) {}
+        bot.on('chat', (username, message) => {
+            io.emit('chat-msg', { username, message });
+            
+            // Matematik Çözücü (Örnek: 12 + 5 nedir?)
+            const mathRegex = /(\d+)\s*([\+\-\*\/])\s*(\d+)/;
+            const match = message.match(mathRegex);
+            if (match) {
+                const res = eval(`${match[1]}${match[2]}${match[3]}`);
+                setTimeout(() => bot.chat(res.toString()), 2000);
+            }
+        });
+
+        // Gelişmiş Savunma Sistemi
+        bot.on('physicsTick', () => {
+            const entity = bot.nearestEntity(e => e.type === 'mob' || e.type === 'player');
+            if (entity && bot.entity.position.distanceTo(entity.position) < 4) {
+                bot.lookAt(entity.position.offset(0, entity.height, 0));
+                bot.attack(entity);
+            }
+        });
+
+        // Radar & Envanter Verisi
+        setInterval(() => {
+            if (!bot) return;
+            const entities = Object.values(bot.entities)
+                .filter(e => e.type === 'player' || e.type === 'mob')
+                .map(e => ({ name: e.username || e.name, dist: bot.entity.position.distanceTo(e.position).toFixed(1) }));
+            
+            const inventory = bot.inventory.items().map(i => `${i.name} x${i.count}`);
+            io.emit('update-data', { entities, inventory });
+        }, 2000);
+
+        bot.on('error', (err) => io.emit('status', `Hata: ${err.message}`));
+        bot.on('end', () => io.emit('status', 'Bağlantı Kesildi.'));
+    }
+
+    socket.on('bot-action', async (action) => {
+        if(!bot) return;
+        if(action === 'mine') {
+            const block = bot.blockAtCursor(4);
+            if(block) {
+                io.emit('status', `Kırılıyor: ${block.name}`);
+                await bot.dig(block); // Asenkron Kırma
+                io.emit('status', 'Kırma bitti.');
             }
         }
     });
-
-    bot.on('error', (err) => socket.emit('log', { user: 'HATA', msg: err.message }));
-    
-    bot.on('end', () => {
-        const b = bots[data.username];
-        const reconnect = b?.settings.autoRevive;
-        socket.emit('status', { user: data.username, online: false }); // HATA BURADAYDI, DÜZELTİLDİ
-        delete bots[data.username];
-        if (reconnect) {
-            socket.emit('log', { user: 'SİSTEM', msg: 'Bağlantı bitti, 5sn sonra tekrar deneniyor...' });
-            setTimeout(() => createBot(data, socket), 5000);
-        }
-    });
-}
-
-io.on('connection', (socket) => {
-    socket.on('start-bot', (data) => createBot(data, socket));
-    socket.on('chat', (d) => { if(bots[d.user]) bots[d.user].instance.chat(d.msg); });
-    socket.on('quit', (u) => { if(bots[u]) { bots[u].settings.autoRevive = false; bots[u].instance.quit(); } });
-    socket.on('update-config', (d) => { if(bots[d.user]) bots[d.user].settings = {...bots[d.user].settings, ...d.config}; });
 });
 
-server.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Sunucu ${PORT} portunda aktif.`));
+        
