@@ -1,88 +1,42 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const mineflayer = require("mineflayer");
-const path = require("path");
+const mineflayer = require('mineflayer');
+const http = require('http');
+const url = require('url');
+const fs = require('fs');
+const path = require('path');
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+let bots = {};
+let logs = {};
 
-app.use(express.static(path.join(__dirname)));
+http.createServer((req, res) => {
+    const q = url.parse(req.url, true).query;
+    const p = url.parse(req.url, true).pathname;
 
-function fixColors(text) {
-  return text.replace(/&([0-9a-fk-or])/g, '§$1');
-}
-
-io.on("connection", (socket) => {
-  // Her socket bağlantısı (tarayıcı sekmesi) kendi botunu bu objede tutacak
-  let myBot = null;
-
-  socket.on("startBot", (d) => {
-    if (myBot) return;
-
-    myBot = mineflayer.createBot({
-      host: d.ip,
-      port: Number(d.port) || 25565,
-      username: d.username,
-      version: d.version || false,
-      hideErrors: true
-    });
-
-    myBot.once("spawn", () => {
-      socket.emit("log", "§a[SİSTEM] Senin botun başarıyla giriş yaptı.");
-      if (d.password) {
-        setTimeout(() => {
-          myBot.chat(`/register ${d.password} ${d.password}`);
-          myBot.chat(`/login ${d.password}`);
-        }, 1500);
-      }
-    });
-
-    myBot.on("message", (m) => {
-      if (myBot.entity) socket.emit("log", m.toAnsi());
-    });
-
-    myBot.on("kicked", (r) => socket.emit("log", `§c[KICK] ${r}`));
-    myBot.on("error", (err) => socket.emit("log", `§c[HATA] ${err.message}`));
-    
-    myBot.on("end", () => {
-      socket.emit("log", "§e[BİLGİ] Bağlantı kesildi.");
-      myBot = null;
-    });
-  });
-
-  socket.on("stopBot", () => {
-    if (myBot) {
-      myBot.quit();
-      myBot = null;
+    if (p === '/start') {
+        if (bots[q.user]) return res.end();
+        const bot = mineflayer.createBot({ host: q.host, username: q.user, version: q.ver, auth: 'offline' });
+        bots[q.user] = bot;
+        logs[q.user] = ["Bağlanıyor..."];
+        bot.on('message', (m) => {
+            logs[q.user].push(m.toHTML());
+            if(logs[q.user].length > 50) logs[q.user].shift();
+        });
+        bot.on('end', () => delete bots[q.user]);
+        return res.end("ok");
     }
-  });
 
-  socket.on("sendChat", (d) => {
-    if (myBot) myBot.chat(fixColors(d.message));
-  });
-
-  socket.on("autoMsg", (cfg) => {
-    if (!myBot) return;
-    if (myBot.autoMsgInt) clearInterval(myBot.autoMsgInt);
-    if (cfg.enabled) {
-      myBot.autoMsgInt = setInterval(() => myBot.chat(fixColors(cfg.message)), cfg.delay * 1000);
+    if (p === '/data') {
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({ active: Object.keys(bots), logs }));
     }
-  });
 
-  socket.on("move", (c) => {
-    if (myBot) myBot.setControlState(c.key, c.state);
-  });
-
-  // Sekme kapatılırsa botu temizle (Opsiyonel: Botun kalmasını istiyorsan burayı sil)
-  socket.on("disconnect", () => {
-    if (myBot) {
-      myBot.quit();
-      myBot = null;
+    if (p === '/send') {
+        if (bots[q.user]) bots[q.user].chat(q.msg);
+        return res.end();
     }
-  });
-});
 
-server.listen(process.env.PORT || 3000);
-        
+    // Basit Dosya Sunucu
+    let f = path.join(__dirname, p === '/' ? 'index.html' : p);
+    fs.readFile(f, (err, data) => {
+        res.end(data);
+    });
+}).listen(process.env.PORT || 10000);
