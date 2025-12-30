@@ -1,51 +1,102 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Private AFK Client</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ansi-to-html@0.6.17/dist/ansi_to_html.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sade Panel</title>
+    <style>
+        * { box-sizing: border-box; user-select: none; font-family: sans-serif; }
+        body { margin: 0; background: #000; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Navigasyon - Sabit */
+        nav { display: flex; background: #111; border-bottom: 1px solid #333; }
+        nav button { flex: 1; padding: 15px; background: none; border: none; color: #fff; cursor: pointer; }
+        nav button.active { border-bottom: 2px solid #2ecc71; color: #2ecc71; }
+
+        /* İçerik Alanı */
+        .tab { display: none; flex: 1; overflow-y: auto; padding: 10px; }
+        .active-tab { display: flex; flex-direction: column; }
+
+        /* Form */
+        input, select, button.action { width: 100%; padding: 12px; margin: 5px 0; border-radius: 5px; border: 1px solid #333; background: #111; color: #fff; }
+        button.action { background: #2ecc71; border: none; font-weight: bold; }
+
+        /* Konsol */
+        #logbox { flex: 1; background: #050505; padding: 10px; font-family: monospace; font-size: 12px; border: 1px solid #222; overflow-y: auto; margin-bottom: 10px; }
+        .bot-card { padding: 15px; background: #111; margin-bottom: 5px; border-radius: 5px; border: 1px solid #333; text-align: center; }
+        .selected { border-color: #2ecc71; background: #16221a; }
+        
+        .input-group { display: flex; gap: 5px; }
+    </style>
 </head>
 <body>
-    <div id="terminal"><div id="log"></div></div>
 
-    <div id="controls">
-        <div class="row">
-            <input id="ip" placeholder="IP">
-            <input id="port" placeholder="25565" style="width: 70px;">
-            <input id="username" placeholder="Bot İsmi">
-            <input id="password" type="password" placeholder="Şifre">
-            <input id="version" placeholder="Sürüm">
-        </div>
-        
-        <div class="row chat-row">
-            <input id="chatMsg" placeholder="Sunucuya mesaj gönder...">
-            <button id="send" style="background:#1565c0;">GÖNDER</button>
-        </div>
+    <nav>
+        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
+        <button onclick="tab('term')" id="btn-term">KONSOL</button>
+    </nav>
 
-        <div class="row">
-            <button id="start" style="background:#2e7d32;">BAŞLAT</button>
-            <button id="stop" style="background:#c62828;">DURDUR</button>
-            <button id="settingsBtn">⚙ AYARLAR</button>
+    <div id="tab-bots" class="tab active-tab">
+        <input id="h" placeholder="Sunucu IP">
+        <input id="u" placeholder="Bot İsmi">
+        <select id="v">
+            <option value="1.8.8">1.8.8</option>
+            <option value="1.20.1">1.20.1</option>
+            <option value="1.21.4">1.21.4</option>
+        </select>
+        <button class="action" onclick="add()">BAĞLAN</button>
+        <hr style="width:100%; border:0.5px solid #222; margin:15px 0;">
+        <div id="list"></div>
+    </div>
+
+    <div id="tab-term" class="tab">
+        <div style="margin-bottom:10px; color:#2ecc71; font-weight:bold;">Seçili: <span id="cur">YOK</span></div>
+        <div id="logbox"></div>
+        <div class="input-group">
+            <input id="m" placeholder="Mesaj yaz..." style="margin:0;">
+            <button onclick="send()" style="padding:10px; background:#2ecc71; border:none; border-radius:5px; color:#fff;">GÖNDER</button>
         </div>
     </div>
 
-    <div id="settings" class="hidden">
-        <input id="autoMsgText" placeholder="Oto Mesaj">
-        <input id="autoMsgDelay" type="number" placeholder="Sn" style="width: 50px;">
-        <label><input type="checkbox" id="autoMsgEnable"> Oto-Mesaj</label>
-    </div>
+    <script>
+        let sel = "";
+        function tab(t) {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
+            document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.add('active-tab');
+            document.getElementById('btn-'+t).classList.add('active');
+        }
 
-    <div class="controls">
-        <button data-k="forward">↑</button>
-        <button data-k="left">←</button>
-        <button data-k="back">↓</button>
-        <button data-k="right">→</button>
-        <button data-k="jump">Z</button>
-    </div>
+        async function add() {
+            const h = document.getElementById('h').value;
+            const u = document.getElementById('u').value;
+            const v = document.getElementById('v').value;
+            await fetch(`/start?host=${h}&user=${u}&ver=${v}`);
+            sel = u;
+            document.getElementById('cur').innerText = u;
+            tab('term');
+        }
 
-    <script src="script.js"></script>
+        async function send() {
+            const m = document.getElementById('m').value;
+            if(!sel || !m) return;
+            await fetch(`/send?user=${sel}&msg=${encodeURIComponent(m)}`);
+            document.getElementById('m').value = "";
+        }
+
+        setInterval(async () => {
+            const r = await fetch('/data');
+            const d = await r.json();
+            
+            document.getElementById('list').innerHTML = d.active.map(n => `
+                <div class="bot-card ${sel==n?'selected':''}" onclick="sel='${n}'; document.getElementById('cur').innerText='${n}'">${n}</div>
+            `).join('');
+
+            if(sel && d.logs[sel]) {
+                const lb = document.getElementById('logbox');
+                lb.innerHTML = d.logs[sel].join('<br>');
+                lb.scrollTop = lb.scrollHeight;
+            }
+        }, 1000);
+    </script>
 </body>
 </html>
