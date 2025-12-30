@@ -1,53 +1,34 @@
 const socket = io();
-let selBot = "";
-const el = (id) => document.getElementById(id);
-
-function openM(id) { el(id).style.display = 'flex'; }
-function closeM(id) { el(id).style.display = 'none'; }
 
 function connect() {
-    socket.emit('start-bot', { host: el('ip').value, username: el('nick').value, pass: el('pass').value });
-    closeM('bot-m');
+    const data = {
+        host: document.getElementById('host').value,
+        username: document.getElementById('user').value,
+        password: document.getElementById('pass').value
+    };
+    socket.emit('join-bot', data);
+    document.getElementById('login-modal').style.display = 'none';
 }
 
-function disconnect() { if(selBot) socket.emit('quit', selBot); }
-
-function save() {
-    if(!selBot) return;
-    socket.emit('update-config', { user: selBot, config: {
-        autoRevive: el('rev-on').checked, math: el('math-on').checked,
-        msgText: el('msg-t').value, msgDelay: parseInt(el('msg-s').value) || 30, autoMsg: !!el('msg-t').value
-    }});
-    closeM('set-m');
+function sendAction(type) {
+    socket.emit('bot-action', type);
 }
 
-function sendChat() {
-    if(selBot && el('cin').value) {
-        socket.emit('chat', { user: selBot, msg: el('cin').value });
-        el('cin').value = "";
-    }
-}
-
-socket.on('status', d => {
-    const s = el('bot-sel');
-    if (d.online) {
-        if (!el("opt-"+d.user)) {
-            let o = document.createElement('option'); o.value = d.user; o.id = "opt-"+d.user; o.innerText = d.user;
-            s.appendChild(o);
-        }
-        selBot = d.user; s.value = d.user;
-    } else {
-        const o = el("opt-"+d.user); if(o) o.remove();
-        selBot = s.value;
-    }
+socket.on('chat-msg', (data) => {
+    const box = document.getElementById('chat-box');
+    box.innerHTML += `<div><strong>${data.username}:</strong> ${data.message}</div>`;
+    box.scrollTop = box.scrollHeight;
 });
 
-socket.on('log', d => {
-    const l = el('logs');
-    const div = document.createElement('div');
-    div.innerHTML = `<span style="color:#888">[${d.user}]</span> ${d.msg}`;
-    l.appendChild(div);
-    l.scrollTop = l.scrollHeight;
+socket.on('status', (msg) => {
+    document.getElementById('bot-status').innerText = `Durum: ${msg}`;
 });
 
-el('cin').onkeydown = (e) => { if(e.key === 'Enter') sendChat(); };
+socket.on('update-data', (data) => {
+    const radar = document.getElementById('radar-list');
+    radar.innerHTML = '<strong>Varlıklar:</strong><br>' + 
+        data.entities.map(e => `[${e.dist}m] ${e.name}`).join('<br>');
+
+    const inv = document.getElementById('inv-list');
+    inv.innerHTML = '<strong>Envanter:</strong><br>' + data.inventory.join('<br>');
+});
