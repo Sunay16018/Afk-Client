@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AFK Client Ultimate</title>
+<link rel="stylesheet" href="/style.css">
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script defer src="/script.js"></script>
+</head>
+<body>
+
+<div class="panel">
+<h2>AFK Client</h2>
+
+<input id="ip" placeholder="Sunucu IP">
+<input id="port" placeholder="Port (boş=25565)">
+<input id="username" placeholder="Bot adı">
+<input id="password" placeholder="Şifre">
+<input id="version" placeholder="Versiyon">
+
+<button id="start">BAŞLAT</button>
+<button id="stop" class="danger">DURDUR</button>
+<button id="settingsBtn">⚙ Ayarlar</button>
+
+<div class="terminal" id="log"></div>
+
+<input id="chatMsg" placeholder="Oyun mesajı">
+<button id="send">MESAJ GÖNDER</button>
+
+<div id="settings" class="settings hidden">
+<h3>Ayarlar</h3>
+<input id="autoMsgText" placeholder="Otomatik mesaj">
+<input id="autoMsgDelay" type="number" placeholder="Süre (sn)">
+<label><input type="checkbox" id="autoMsgEnable"> Otomatik mesaj açık</label>
+</div>
+
+<div class="controls">
+<button data-k="forward">↑</button>
+<div>
+<button data-k="left">←</button>
+<button data-k="back">↓</button>
+<button data-k="right">→</button>
+</div>
+<button data-k="jump">⤴</button>
+</div>
+
+</div>
+</body>
+</html>
