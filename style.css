@@ -1,63 +1,185 @@
-body { background:#111; color:#fff; font-family:sans-serif; margin:0; padding:0; user-select:none; height:100vh; overflow:hidden; }
+/* Genel Sayfa Ayarları */
+body { 
+    background: #0f0f0f; 
+    color: #eeeeee; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    margin: 0; 
+    padding: 0; 
+    user-select: none; /* Yanlışlıkla butonları seçmeyi engeller */
+    overflow: hidden; /* Sayfanın sağa sola kaymasını engeller */
+    height: 100vh;
+}
 
-.main-container { display:flex; height:100%; gap:10px; padding:10px; box-sizing:border-box; }
-.left-panel { flex: 2; display:flex; flex-direction:column; gap:10px; min-width: 300px; }
-.right-panel { flex: 1; background:#222; border:1px solid #444; border-radius:5px; padding:10px; display:flex; flex-direction:column; min-width: 200px; }
+/* Ana Konteyner */
+.app-wrapper {
+    display: flex;
+    flex-direction: row;
+    height: 70vh; /* Ekranın %70'ini kaplar */
+    gap: 10px;
+    padding: 10px;
+}
 
-/* Terminal */
+/* Sol Panel (Terminal ve Girişler) */
+.main-content {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Terminal (Logların aktığı yer) */
 #terminal { 
-    background:#000; flex:1; overflow-y:auto; padding:10px; 
-    border:1px solid #333; border-radius:5px; 
-    font-family:'Courier New', monospace; font-size:12px;
-    user-select:text;
+    background: #000000; 
+    flex: 1; 
+    overflow-y: auto; 
+    padding: 15px; 
+    border: 2px solid #333; 
+    border-radius: 5px;
+    user-select: text; /* SADECE BURASI KOPYALANABİLİR */
+    -webkit-user-select: text;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    box-shadow: inset 0 0 10px #000;
 }
 
-/* Kontroller */
-#controls { background:#1a1a1a; padding:10px; border-radius:5px; border:1px solid #333; }
-.row { display:flex; gap:5px; margin-bottom:5px; }
-input { background:#000; border:1px solid #444; color:#fff; padding:8px; border-radius:4px; flex:1; }
-button { padding:8px; border:none; border-radius:4px; cursor:pointer; color:#fff; font-weight:bold; }
-
-.btn-green { background:#2e7d32; } .btn-red { background:#c62828; }
-.btn-blue { background:#1565c0; } .btn-gray { background:#424242; }
-
-/* Hareket */
-.move-controls { display:flex; flex-direction:column; align-items:center; gap:5px; background:#1a1a1a; padding:5px; border-radius:5px; }
-.sub-move { display:flex; gap:5px; }
-.move-controls button { width:40px; height:40px; background:#333; border:1px solid #555; }
-
-/* Envanter Tasarımı */
-h3 { margin:0 0 10px 0; text-align:center; color:#aaa; font-size:14px; border-bottom:1px solid #444; padding-bottom:5px; }
-.inv-grid { 
-    display:grid; 
-    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); 
-    gap:5px; 
-    overflow-y:auto; 
-    flex:1; 
-    align-content: start;
+/* Envanter Paneli (Sağ taraf) */
+.inventory-panel {
+    flex: 1;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
 }
 
+.inventory-panel h3 {
+    margin-top: 0;
+    font-size: 14px;
+    text-align: center;
+    color: #888;
+    border-bottom: 1px solid #333;
+    padding-bottom: 5px;
+}
+
+#inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+    gap: 5px;
+    overflow-y: auto;
+}
+
+/* Envanter Slotları */
 .inv-slot {
-    width: 40px; height: 40px;
-    background: #333;
-    border: 2px solid #555;
+    width: 45px;
+    height: 45px;
+    background: #252525;
+    border: 2px solid #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 3px;
+    border-radius: 4px;
 }
-.inv-slot:hover { border-color: #fff; background: #444; }
 
-.inv-img { width: 32px; height: 32px; image-rendering: pixelated; }
+.inv-slot:hover {
+    border-color: #fff;
+    background: #333;
+}
+
+.inv-img {
+    width: 34px;
+    height: 34px;
+    image-rendering: pixelated; /* Minecraft ikonları net görünür */
+}
 
 .inv-count {
     position: absolute;
-    bottom: 0px; right: 2px;
+    bottom: 2px;
+    right: 4px;
     font-size: 11px;
     font-weight: bold;
-    color: #fff;
-    text-shadow: 1px 1px 0 #000;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px #000;
 }
 
-.empty-msg { grid-column: 1 / -1; text-align:center; color:#555; margin-top:20px; }
-#settings.hidden { display:none; }
-#settings { padding:5px; background:#222; margin-bottom:5px; border-radius:4px; display:flex; gap:5px; align-items:center; }
+/* Kontrol Paneli (Giriş kutuları ve Butonlar) */
+#controls {
+    background: #1a1a1a;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #333;
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+input {
+    background: #222;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+    outline: none;
+}
+
+input:focus {
+    border-color: #1565c0;
+}
+
+button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+    transition: 0.2s;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+.success { background: #2e7d32; }
+.success:hover { background: #388e3c; }
+
+.danger { background: #c62828; }
+.danger:hover { background: #d32f2f; }
+
+.chat-bar {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.chat-bar input {
+    flex: 1;
+}
+
+/* Hareket Tuşları (Ekranın en altı) */
+.movement-pad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 10px;
+}
+
+.mid-row {
+    display: flex;
+    gap: 5px;
+}
+
+.movement-pad button {
+    width: 55px;
+    height: 55px;
+    background: #333;
+    font-size: 18px;
+    border: 1px solid #555;
+    }
