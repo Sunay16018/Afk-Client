@@ -2,24 +2,44 @@ const socket = io();
 let selBot = "";
 const el = (id) => document.getElementById(id);
 
-function toggleModal(id, show) { el(id).style.display = show ? 'flex' : 'none'; }
+// Pencere (Modal) Açma-Kapama Fonksiyonu
+function toggleModal(id, show) {
+    el(id).style.display = show ? 'flex' : 'none';
+}
 
+// Yeni Bot Bağlama
 function connect() {
-    const data = { host: el('ip').value, username: el('nick').value, pass: el('pass').value };
-    if(!data.host || !data.username) return alert("Bilgileri doldur!");
+    const data = {
+        host: el('ip').value,
+        username: el('nick').value,
+        pass: el('pass').value
+    };
+    
+    if(!data.host || !data.username) {
+        alert("IP ve Nick alanları boş bırakılamaz!");
+        return;
+    }
+
     socket.emit('start-bot', data);
-    toggleModal('bot-modal', false);
+    toggleModal('bot-modal', false); // Bağlan diyince pencereyi kapat
 }
 
-function disconnect() { 
-    if(selBot) {
+// Botun Bağlantısını Kesme
+function disconnect() {
+    if (selBot) {
         socket.emit('quit', selBot);
-        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:red">Bağlantı kesme emri verildi: ${selBot}</span>` });
-    } 
+    } else {
+        alert("Önce listeden bir bot seçmelisin!");
+    }
 }
 
+// Ayarları Kaydetme
 function saveSettings() {
-    if(!selBot) return alert("Önce botu seçmelisin!");
+    if (!selBot) {
+        alert("Ayarları kaydetmek için aktif bir bot seçili olmalı!");
+        return;
+    }
+
     const config = {
         autoRevive: el('rev-on').checked,
         math: el('math-on').checked,
@@ -27,38 +47,64 @@ function saveSettings() {
         msgText: el('msg-text').value,
         msgDelay: parseInt(el('msg-sec').value) || 30
     };
+
     socket.emit('update-config', { user: selBot, config });
-    toggleModal('set-modal', false);
+    toggleModal('set-modal', false); // Kaydedince pencereyi kapat
 }
 
+// Sunucuya Mesaj Gönderme
 function sendChat() {
-    const msg = el('cin').value;
-    if(selBot && msg) { socket.emit('chat', { user: selBot, msg }); el('cin').value = ""; }
+    const msgInput = el('cin');
+    const msg = msgInput.value.trim();
+
+    if (!selBot) {
+        alert("Mesaj göndermek için bağlı bir bot seçmelisin!");
+        return;
+    }
+
+    if (msg) {
+        socket.emit('chat', { user: selBot, msg: msg });
+        msgInput.value = ""; // Gönderdikten sonra kutuyu temizle
+        msgInput.focus(); // Kutuda kalmaya devam et
+    }
 }
 
+// Bot Listesi Güncelleme (Dropdown)
 socket.on('status', d => {
     const s = el('bot-sel');
     if (d.online) {
-        if (!el("opt-"+d.user)) {
-            let o = document.createElement('option'); o.value = d.user; o.id = "opt-"+d.user; o.innerText = d.user;
+        if (!el("opt-" + d.user)) {
+            let o = document.createElement('option');
+            o.value = d.user;
+            o.id = "opt-" + d.user;
+            o.innerText = d.user;
             s.appendChild(o);
         }
-        selBot = d.user; s.value = d.user;
+        selBot = d.user; 
+        s.value = d.user;
     } else {
-        const o = el("opt-"+d.user); if(o) o.remove();
+        const o = el("opt-" + d.user);
+        if (o) o.remove();
         selBot = s.value;
     }
 });
 
+// Terminale Mesaj Yazdırma ve Otomatik Kaydırma
 socket.on('log', d => {
     const l = el('logs');
-    const msgDiv = document.createElement('div');
-    msgDiv.style.marginBottom = "4px";
-    msgDiv.innerHTML = `<span style="color:#888">[${new Date().toLocaleTimeString()}]</span> <b style="color:#00ff41">${d.user}:</b> ${d.msg}`;
-    l.appendChild(msgDiv);
-    
-    // Terminali otomatik en aşağı kaydır
+    const item = document.createElement('div');
+    item.style.marginBottom = "3px";
+    // Sunucudan gelen renkli HTML mesajını ekler
+    item.innerHTML = `<span style="color:#888">[${d.user}]</span> ${d.msg}`;
+    l.appendChild(item);
+
+    // Terminali her zaman en aşağıya kaydırır
     l.scrollTop = l.scrollHeight;
 });
 
-el('cin').onkeydown = (e) => { if(e.key === 'Enter') sendChat(); };
+// Enter Tuşu İle Mesaj Gönderme Dinleyicisi
+el('cin').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        sendChat();
+    }
+});
