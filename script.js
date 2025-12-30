@@ -1,34 +1,35 @@
 const socket = io();
 
-function connect() {
-    const data = {
-        host: document.getElementById('host').value,
-        username: document.getElementById('user').value,
-        password: document.getElementById('pass').value
-    };
-    socket.emit('join-bot', data);
-    document.getElementById('login-modal').style.display = 'none';
+const ip = document.getElementById("ip");
+const port = document.getElementById("port");
+const username = document.getElementById("username");
+const version = document.getElementById("version");
+
+const logBox = document.getElementById("log");
+
+document.getElementById("startBtn").onclick = () => {
+  if (!ip.value || !username.value) {
+    log("⚠️ IP ve Bot İsmi gerekli");
+    return;
+  }
+
+  socket.emit("startBot", {
+    ip: ip.value,
+    port: port.value || 25565,
+    username: username.value,
+    version: version.value
+  });
+};
+
+document.getElementById("stopBtn").onclick = () => {
+  socket.emit("stopBot");
+};
+
+socket.on("log", msg => {
+  log(msg);
+});
+
+function log(msg) {
+  logBox.innerHTML += msg + "<br>";
+  logBox.scrollTop = logBox.scrollHeight;
 }
-
-function sendAction(type) {
-    socket.emit('bot-action', type);
-}
-
-socket.on('chat-msg', (data) => {
-    const box = document.getElementById('chat-box');
-    box.innerHTML += `<div><strong>${data.username}:</strong> ${data.message}</div>`;
-    box.scrollTop = box.scrollHeight;
-});
-
-socket.on('status', (msg) => {
-    document.getElementById('bot-status').innerText = `Durum: ${msg}`;
-});
-
-socket.on('update-data', (data) => {
-    const radar = document.getElementById('radar-list');
-    radar.innerHTML = '<strong>Varlıklar:</strong><br>' + 
-        data.entities.map(e => `[${e.dist}m] ${e.name}`).join('<br>');
-
-    const inv = document.getElementById('inv-list');
-    inv.innerHTML = '<strong>Envanter:</strong><br>' + data.inventory.join('<br>');
-});
