@@ -6,22 +6,9 @@ function showModal(s) { el('modal').style.display = s ? 'flex' : 'none'; }
 function connect() { socket.emit('start-bot', { host: el('ip').value, username: el('nick').value, pass: el('pass').value }); }
 function disconnect() { if(selBot) socket.emit('quit', selBot); }
 function move(dir) { if(selBot) socket.emit('move-toggle', { user: selBot, dir: dir, state: true }); }
-function allStop() {
-    if(!selBot) return;
-    ['forward','back','left','right','jump'].forEach(d => socket.emit('move-toggle', { user: selBot, dir: d, state: false }));
-}
-function save() {
-    socket.emit('update-config', { user: selBot, config: { 
-        mine: el('mine-on').checked, 
-        math: el('m-on').checked, 
-        autoRevive: el('revive-on').checked 
-    }});
-    showModal(false);
-}
-function sendChat() {
-    const v = el('cin').value;
-    if(selBot && v.trim() !== "") { socket.emit('chat', { user: selBot, msg: v }); el('cin').value = ""; }
-}
+function allStop() { if(!selBot) return; ['forward','back','left','right','jump'].forEach(d => socket.emit('move-toggle', { user: selBot, dir: d, state: false })); }
+function save() { socket.emit('update-config', { user: selBot, config: { math: el('m-on').checked, autoRevive: el('revive-on').checked } }); showModal(false); }
+function sendChat() { const v = el('cin').value; if(selBot && v.trim() !== "") { socket.emit('chat', { user: selBot, msg: v }); el('cin').value = ""; } }
 el('cin').onkeydown = (e) => { if(e.key === 'Enter') sendChat(); };
 
 socket.on('status', d => {
