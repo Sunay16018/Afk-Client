@@ -1,34 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #050505; color: #fff; font-family: 'VT323', monospace; height: 100vh; overflow: hidden; }
-
-.app-container { display: flex; height: 100vh; padding: 15px; gap: 15px; }
-.sidebar { width: 300px; background: #111; border: 3px solid #333; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-.mc-text { text-align: center; color: #0f9; font-size: 30px; margin-bottom: 10px; }
-.mc-text span { color: #fff; }
-
-.card { background: #000; border: 2px solid #222; padding: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 5px; }
-input, select { background: #111; border: 1px solid #444; color: #0f9; padding: 8px; font-family: 'VT323'; font-size: 18px; outline: none; }
-
-.btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-.btn { border: none; padding: 10px; cursor: pointer; color: #fff; font-family: 'VT323'; font-size: 18px; border-radius: 4px; }
-.btn-g { background: #2e7d32; } .btn-r { background: #c62828; } .btn-b { background: #1565c0; } .btn-gray { background: #424242; }
-
-/* MOVEMENT */
-.movement-box { background: #000; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-.m-row { display: flex; gap: 5px; }
-.m-btn { width: 45px; height: 45px; background: #333; border: 2px solid #444; color: #fff; cursor: pointer; font-size: 20px; }
-.stop-red { background: #c62828; }
-
-/* TERMINAL FIXED */
-.terminal-section { flex: 1; display: flex; justify-content: center; align-items: flex-start; }
-.term-wrapper { width: 100%; max-width: 650px; height: 480px; background: #000; border: 4px solid #333; display: flex; flex-direction: column; border-radius: 12px; }
-.term-title { background: #1a1a1a; padding: 8px; text-align: center; color: #00e5ff; font-size: 16px; border-bottom: 2px solid #333; }
-.logs-container { flex: 1; padding: 15px; overflow-y: scroll; font-size: 20px; color: #ccc; }
-.chat-sender { display: flex; border-top: 2px solid #333; background: #111; padding: 8px; }
-.chat-sender input { flex: 1; margin: 0; }
-
-/* MODAL */
-.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 100; }
-.modal-box { background: #111; padding: 30px; border: 3px solid #0f9; border-radius: 10px; display: flex; flex-direction: column; gap: 15px; width: 280px; }
-.opt-row { display: flex; justify-content: space-between; }
+* { box-sizing: border-box; margin:0; padding:0; }
+body { background:#000; color:#fff; font-family:'VT323'; height:100vh; overflow:hidden; }
+.wrapper { display:flex; height:100vh; padding:15px; gap:15px; }
+.side { width:280px; background:#111; border:3px solid #222; padding:15px; display:flex; flex-direction:column; gap:10px; }
+.neon { color:#0f9; text-align:center; text-shadow:0 0 5px #0f9; font-size: 35px; }
+.box { background:#000; border:1px solid #333; padding:10px; display:flex; flex-direction:column; gap:8px; }
+input, select { background:#111; border:1px solid #444; color:#0f9; padding:8px; font-family:'VT323'; font-size:18px; outline:none; }
+.btn { border:none; padding:10px; cursor:pointer; color:#fff; font-family:'VT323'; font-size:18px; border-radius:4px; }
+.g { background:#2e7d32; } .r { background:#c62828; } .b { background:#1565c0; } .gray { background:#444; }
+.row { display:flex; gap:5px; } .row .btn { flex:1; }
+.move-ui { background:#000; padding:10px; display:flex; flex-direction:column; align-items:center; gap:5px; border-radius:10px; }
+.m { width:45px; height:45px; background:#222; border:1px solid #444; color:#fff; cursor:pointer; font-size: 20px; }
+.stop { background:#c62828; }
+.main { flex:1; display:flex; justify-content:center; }
+.term { width:100%; max-width:650px; height:500px; background:#000; border:4px solid #222; display:flex; flex-direction:column; border-radius:10px; }
+.head { background:#111; padding:10px; text-align:center; color:#0af; border-bottom: 2px solid #222; }
+.logs { flex:1; padding:15px; overflow-y:scroll; font-size:20px; color:#ccc; line-height: 1.3; }
+.chat { display:flex; padding:8px; background:#111; border-top:1px solid #222; }
+.chat input { flex:1; }
+.modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.9); display:none; align-items:center; justify-content:center; z-index: 1000; }
+.modal-box { background:#111; padding:30px; border:3px solid #0f9; display:flex; flex-direction:column; gap:20px; width:280px; }
