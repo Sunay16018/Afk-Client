@@ -1,85 +1,87 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const mineflayer = require('mineflayer');
-const OpenAI = require('openai');
-
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+const mineflayer = require('mineflayer');
+const path = require('path');
 
-app.use(express.static(__dirname));
+// Klasör zorunluluğunu kaldırıyoruz, her şeyi ana dizinden okuyor
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/style.css', (req, res) => res.sendFile(path.join(__dirname, 'style.css')));
+app.get('/script.js', (req, res) => res.sendFile(path.join(__dirname, 'script.js')));
 
-const OPENAI_KEY = "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";
-const openai = new OpenAI({ apiKey: OPENAI_KEY });
-
-let bot = null;
-
-function solveSmart(message) {
-    const cleanMsg = message.replace(/§[0-9a-fk-or]/gi, '').trim();
-    const mathMatch = cleanMsg.match(/(\d+)\s*([\+\-\*x\/])\s*(\d+)/);
-    if (mathMatch) {
-        const n1 = parseInt(mathMatch[1]);
-        const op = mathMatch[2];
-        const n2 = parseInt(mathMatch[3]);
-        let res;
-        if (op === '+') res = n1 + n2;
-        else if (op === '-') res = n1 - n2;
-        else if (op === '*' || op === 'x') res = n1 * n2;
-        else if (op === '/') res = n2 !== 0 ? Math.floor(n1 / n2) : null;
-        if (res !== null) return res.toString();
-    }
-    return null;
-}
+let bots = {};
 
 io.on('connection', (socket) => {
-    socket.on('start-bot', (c) => {
-        if (bot) { try { bot.quit(); } catch(e){} }
-        
-        bot = mineflayer.createBot({
-            host: c.host,
-            port: parseInt(c.port) || 25565,
-            username: c.username
+    socket.on('start-bot', (data) => {
+        if (!data.host || !data.username || bots[data.username]) return;
+
+        const bot = mineflayer.createBot({
+            host: data.host.split(':')[0],
+            port: parseInt(data.host.split(':')[1]) || 25565,
+            username: data.username,
+            version: false
         });
 
-        bot.on('message', async (jsonMsg) => {
-            // Renk kodlarını doğrudan HTML'e çevirip gönderiyoruz
-            socket.emit('log', { html: jsonMsg.toHTML() });
-            
-            const rawText = jsonMsg.toString();
-            const answer = solveSmart(rawText);
-            if (answer) setTimeout(() => bot.chat(answer), 1100);
+        bots[data.username] = { 
+            instance: bot, 
+            settings: { mine: false, math: false, pass: data.pass || "" },
+            isMining: false 
+        };
 
-            // ChatGPT Zekası: Bot ismi geçerse cevap verir
-            if (rawText.includes(bot.username) && !rawText.includes("<" + bot.username + ">")) {
-                try {
-                    const aiRes = await openai.chat.completions.create({
-                        model: "gpt-3.5-turbo",
-                        messages: [{role: "system", content: "Sen zeki bir Minecraft botusun."}, {role: "user", content: rawText}],
-                        max_tokens: 50
-                    });
-                    bot.chat(aiRes.choices[0].message.content);
-                } catch(e) {}
+        bot.on('spawn', () => {
+            socket.emit('status', { user: data.username, online: true });
+            const b = bots[data.username];
+            if (b.settings.pass) {
+                setTimeout(() => bot.chat(`/register ${b.settings.pass} ${b.settings.pass}`), 2000);
+                setTimeout(() => bot.chat(`/login ${b.settings.pass}`), 3500);
             }
         });
 
-        bot.on('login', () => {
-            socket.emit('status', { connected: true, msg: "SİSTEM ÇEVRİMİÇİ" });
-            if (c.password) bot.chat(`/login ${c.password}`);
+        // GELİŞMİŞ MİNİNG SİSTEMİ
+        bot.on('physicsTick', async () => {
+            const b = bots[data.username];
+            if (!b || !b.settings.mine || b.isMining) return;
+            const block = bot.blockAtCursor(4);
+            if (block && block.name !== 'air') {
+                b.isMining = true;
+                try {
+                    bot.swingArm('right');
+                    await bot.dig(block);
+                } catch (e) {} finally { b.isMining = false; }
+            }
         });
 
-        bot.on('end', () => socket.emit('status', { connected: false, msg: "BAĞLANTI KESİLDİ" }));
-        bot.on('error', (err) => socket.emit('log', { html: `<span style="color:#f00">HATA: ${err.message}</span>` }));
+        bot.on('message', (json) => {
+            socket.emit('log', { user: data.username, msg: json.toHTML() });
+            // Matematik Çözücü
+            const b = bots[data.username];
+            if (b?.settings.math) {
+                const txt = json.toString().toLowerCase().replace(/x/g, '*');
+                const mathMatch = txt.match(/(\d+(?:\s*[\+\-\*\/]\s*\d+)+)/);
+                if (mathMatch) {
+                    try {
+                        const res = eval(mathMatch[0]);
+                        if (!isNaN(res)) bot.chat(res.toString());
+                    } catch (e) {}
+                }
+            }
+        });
+
+        bot.on('kicked', (reason) => {
+            socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:#ff5555">KICK: ${reason}</span>` });
+        });
+
+        bot.on('end', () => {
+            socket.emit('status', { user: data.username, online: false });
+            delete bots[data.username];
+        });
     });
 
-    socket.on('send-chat', (m) => { if(bot) bot.chat(m); });
-    socket.on('move', (dir) => {
-        if(bot) {
-            bot.setControlState(dir, true);
-            setTimeout(() => bot.setControlState(dir, false), 500);
-        }
-    });
-    socket.on('stop-bot', () => { if(bot) bot.quit(); });
+    socket.on('move-toggle', (d) => { if (bots[d.user]) bots[d.user].instance.setControlState(d.dir, d.state); });
+    socket.on('chat', (d) => { if (bots[d.user]) bots[d.user].instance.chat(d.msg); });
+    socket.on('quit', (u) => { if (bots[u]) bots[u].instance.quit(); });
+    socket.on('update-config', (d) => { if (bots[d.user]) bots[d.user].settings = d.config; });
 });
 
-server.listen(process.env.PORT || 3000, () => console.log("CyberCore Sunucusu Hazır!"));
+http.listen(process.env.PORT || 3000, () => console.log('Sistem Aktif!'));
