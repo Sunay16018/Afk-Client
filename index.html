@@ -1,46 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Universal Bot Panel</title>
+    <title>Cyber AFK Client</title>
     <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-    <div class="app">
-        <div class="top">
-            <button class="btn green" onclick="openM('bot-m')">BAĞLAN</button>
-            <select id="bot-sel" onchange="selBot=this.value"></select>
-            <button class="btn gray" onclick="openM('set-m')">AYARLAR</button>
-            <button class="btn red" onclick="disconnect()">DURDUR</button>
-        </div>
-        <div id="logs" class="terminal"></div>
-        <div class="input-area">
-            <input type="text" id="cin" placeholder="Mesaj..." autocomplete="off">
-            <button class="btn blue" onclick="sendChat()">GÖNDER</button>
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h2>BOT GİRİŞ PANELİ</h2>
+            <input type="text" id="host" placeholder="Sunucu IP (play.server.com)">
+            <input type="text" id="user" placeholder="Kullanıcı Adı">
+            <input type="password" id="pass" placeholder="Şifre (Varsa)">
+            <button onclick="connect()">Sisteme Bağlan</button>
         </div>
     </div>
 
-    <div id="bot-m" class="modal"><div class="m-box">
-        <h3>Yeni Bağlantı</h3>
-        <input type="text" id="ip" placeholder="ip:port">
-        <input type="text" id="nick" placeholder="Kullanıcı Adı">
-        <input type="password" id="pass" placeholder="Şifre (Varsa)">
-        <button class="btn green" onclick="connect()">BAĞLAN</button>
-        <button class="btn red" onclick="closeM('bot-m')">KAPAT</button>
-    </div></div>
+    <div class="container">
+        <div class="panel controls">
+            <h3>KONTROLLER</h3>
+            <button onclick="sendAction('mine')">Blok Kır</button>
+            <div class="status" id="bot-status">Durum: Bekleniyor...</div>
+        </div>
 
-    <div id="set-m" class="modal"><div class="m-box">
-        <h3>Bot Ayarları</h3>
-        <label><input type="checkbox" id="rev-on"> 7/24 Aktif Kal</label>
-        <label><input type="checkbox" id="math-on"> Matematik Çözücü</label>
-        <hr>
-        <input type="text" id="msg-t" placeholder="Oto Mesaj Yazısı">
-        <input type="number" id="msg-s" placeholder="Saniye (Bekleme)">
-        <button class="btn green" onclick="save()">AYARLARI KAYDET</button>
-        <button class="btn red" onclick="closeM('set-m')">KAPAT</button>
-    </div></div>
+        <div class="panel terminal">
+            <h3>CANLI TERMİNAL</h3>
+            <div id="chat-box"></div>
+        </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+        <div class="panel radar">
+            <h3>RADAR & ENVANTER</h3>
+            <div id="radar-list"></div>
+            <hr>
+            <div id="inv-list"></div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
