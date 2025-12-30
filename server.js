@@ -15,61 +15,59 @@ let bots = {};
 function createBot(data, socket) {
     if (bots[data.username]) return;
 
-    // HATA ÇÖZÜMÜ: Sürümü 1.21.1 olarak zorla veya desteklenen en yakın sürümü seç
-    const bot = mineflayer.createBot({
-        host: data.host.split(':')[0],
-        port: parseInt(data.host.split(':')[1]) || 25565,
-        username: data.username,
-        // Eğer 1.21.1 desteklenmiyor diyorsa otomatik seçimi kapatıp 
-        // manuel olarak sürümü buraya yazabiliriz ama 'auto' en iyisidir.
-        // Burayı '1.21.1' yapıyorum senin için.
-        version: "1.21.1", 
-        hideErrors: false // Hatayı görmek için false yaptık
-    });
+    try {
+        const bot = mineflayer.createBot({
+            host: data.host.split(':')[0],
+            port: parseInt(data.host.split(':')[1]) || 25565,
+            username: data.username,
+            version: "1.21.1", // Sürümü burada zorla tanımladık
+            hideErrors: true
+        });
 
-    bots[data.username] = { 
-        instance: bot, 
-        settings: { math: false, autoRevive: false, autoMsg: false, msgText: "", msgDelay: 30, lastMsg: 0, pass: data.pass || "" }
-    };
+        bots[data.username] = { 
+            instance: bot, 
+            settings: { math: false, autoRevive: false, autoMsg: false, msgText: "", msgDelay: 30, lastMsg: 0, pass: data.pass || "" }
+        };
 
-    bot.on('inject_allowed', () => {
-        socket.emit('log', { user: 'SİSTEM', msg: 'Sürüm kontrolü geçildi, bağlanılıyor...' });
-    });
+        bot.on('spawn', () => {
+            socket.emit('status', { user: data.username, online: true });
+            socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:#00ff41">Giriş Başarılı (1.21.1)</span>` });
+        });
 
-    bot.on('spawn', () => {
-        socket.emit('status', { user: data.username, online: true });
-        socket.emit('log', { user: 'SİSTEM', msg: `<b style="color:#00ff41">Başarıyla giriş yapıldı! Sürüm: ${bot.version}</b>` });
-    });
-
-    bot.on('message', (json) => {
-        socket.emit('log', { user: data.username, msg: json.toHTML() });
-        const b = bots[data.username];
-        if (b?.settings.math) {
-            const mathMatch = json.toString().match(/(\d+[\+\-\*\/]\d+([\+\-\*\/]\d+)*)/);
-            if (mathMatch) {
-                try {
-                    const result = new Function(`return ${mathMatch[0]}`)();
-                    if(!isNaN(result)) setTimeout(() => bot.chat(result.toString()), 1000);
-                } catch (e) {}
+        bot.on('message', (json) => {
+            socket.emit('log', { user: data.username, msg: json.toHTML() });
+            const b = bots[data.username];
+            if (b?.settings.math) {
+                const plainText = json.toString();
+                const mathMatch = plainText.match(/(\d+[\+\-\*\/]\d+([\+\-\*\/]\d+)*)/);
+                if (mathMatch) {
+                    try {
+                        const result = eval(mathMatch[0]); // Zincirleme işlem için
+                        if(!isNaN(result)) setTimeout(() => bot.chat(result.toString()), 1000);
+                    } catch (e) {}
+                }
             }
-        }
-    });
+        });
 
-    bot.on('error', (err) => {
-        socket.emit('log', { user: 'HATA', msg: `<span style="color:red">Bağlantı Hatası: ${err.message}</span>` });
-    });
+        bot.on('error', (err) => {
+            socket.emit('log', { user: 'HATA', msg: `<span style="color:red">${err.message}</span>` });
+        });
 
-    bot.on('kicked', (reason) => {
-        socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:red">Kick: ${reason}</span>` });
-    });
+        bot.on('kicked', (reason) => {
+            socket.emit('log', { user: 'SİSTEM', msg: `<span style="color:orange">Atıldın: ${reason}</span>` });
+        });
 
-    bot.on('end', () => {
-        const b = bots[data.username];
-        const reconnect = b?.settings.autoRevive;
-        socket.emit('status', { user: data.username, online: false });
-        delete bots[data.username];
-        if (reconnect) setTimeout(() => createBot(data, socket), 5000);
-    });
+        bot.on('end', () => {
+            const b = bots[data.username];
+            const reconnect = b?.settings.autoRevive;
+            socket.emit('status', { user: data.username, online: false });
+            delete bots[data.username];
+            if (reconnect) setTimeout(() => createBot(data, socket), 5000);
+        });
+
+    } catch (error) {
+        socket.emit('log', { user: 'SİSTEM', msg: 'Bot başlatılamadı.' });
+    }
 }
 
 io.on('connection', (socket) => {
@@ -79,4 +77,5 @@ io.on('connection', (socket) => {
     socket.on('update-config', (d) => { if(bots[d.user]) bots[d.user].settings = {...bots[d.user].settings, ...d.config}; });
 });
 
-server.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
