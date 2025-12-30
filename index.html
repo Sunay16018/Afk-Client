@@ -3,25 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Panel v9</title>
+    <title>Master Panel v11</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; }
+        nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
         nav button { flex: 1; border: none; background: none; color: #8b949e; font-weight: bold; cursor: pointer; }
         nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; background: #1c2128; }
         .tab { display: none; flex: 1; flex-direction: column; padding: 12px; overflow-y: auto; }
         .active-tab { display: flex; }
         .card { background: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
         input, select { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 5px; width: 100%; margin: 5px 0; }
-        #logbox { flex: 1; background: #000; border: 2px solid #2ecc71; border-radius: 8px; padding: 10px; overflow-y: auto; font-family: monospace; color: #2ecc71; margin-bottom: 10px; }
-        .btn { border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
+        #logbox { height: 250px; background: #000; border: 2px solid #2ecc71; border-radius: 8px; padding: 10px; overflow-y: auto; font-family: 'Consolas', monospace; color: #2ecc71; margin-bottom: 10px; flex-shrink: 0; }
+        .btn { border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; }
         .btn-green { background: #238636; width: 100%; }
         .btn-red { background: #da3633; }
         .btn-blue { background: #1f6feb; }
-        .status-msg { font-size: 11px; padding: 5px; text-align: center; border-radius: 4px; margin-bottom: 8px; display: none; }
-        .bot-item { padding: 12px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .selected-bot { border-color: #2ecc71; box-shadow: 0 0 5px #2ecc7133; }
+        .status-msg { font-size: 11px; padding: 8px; text-align: center; border-radius: 4px; margin: 5px 12px; display: none; }
+        .bot-item { padding: 12px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .selected-bot { border-color: #2ecc71; background: #23863611; }
+        h4 { font-size: 11px; color: #58a6ff; text-transform: uppercase; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -36,13 +37,25 @@
 
     <div id="tab-bots" class="tab active-tab">
         <div class="card">
+            <h4>Yeni Bot Bağla</h4>
             <input id="h" placeholder="Sunucu IP:Port">
             <input id="u" placeholder="Bot Kullanıcı Adı">
             <select id="v">
                 <option value="1.8.8">1.8.8</option>
+                <option value="1.9.4">1.9.4</option>
+                <option value="1.10.2">1.10.2</option>
+                <option value="1.11.2">1.11.2</option>
                 <option value="1.12.2">1.12.2</option>
+                <option value="1.13.2">1.13.2</option>
+                <option value="1.14.4">1.14.4</option>
+                <option value="1.15.2">1.15.2</option>
                 <option value="1.16.5">1.16.5</option>
+                <option value="1.17.1">1.17.1</option>
+                <option value="1.18.2">1.18.2</option>
+                <option value="1.19.2">1.19.2</option>
+                <option value="1.19.4">1.19.4</option>
                 <option value="1.20.1">1.20.1</option>
+                <option value="1.20.4">1.20.4</option>
                 <option value="1.21">1.21</option>
             </select>
             <button class="btn btn-green" onclick="add()">SUNUCUYA BAĞLAN</button>
@@ -51,10 +64,10 @@
     </div>
 
     <div id="tab-settings" class="tab">
-        <div style="margin-bottom:10px;">Seçili Bot: <b id="cur_settings" style="color:#2ecc71">-</b></div>
+        <div style="margin-bottom:10px;">Seçili: <b id="cur_settings" style="color:#2ecc71">-</b></div>
         <div class="card">
             <h4>Oto Mesaj</h4>
-            <input id="cfg_msg_text" placeholder="Mesaj yazın...">
+            <input id="cfg_msg_text" placeholder="Mesaj içeriği...">
             <div style="display:flex; gap:5px;">
                 <input id="cfg_msg_sec" type="number" value="30" style="flex:1">
                 <button class="btn btn-blue" onclick="upd('msg','on')">AÇ</button>
@@ -62,24 +75,27 @@
             </div>
         </div>
         <div class="card">
-            <h4>Kazma & Sağ Tık</h4>
+            <h4>Otomasyon Modları</h4>
             <div style="display:flex; gap:5px; margin-bottom:8px;">
                 <button class="btn btn-blue" onclick="upd('mining','on')" style="flex:1">KAZMAYI BAŞLAT</button>
-                <button class="btn btn-red" onclick="upd('mining','off')" style="flex:1">DURDUR</button>
+                <button class="btn btn-red" onclick="upd('mining','off')" style="flex:1">KAPAT</button>
             </div>
             <div style="display:flex; gap:5px;">
-                <input id="cfg_click_sec" type="number" value="5" style="width:60px">
-                <button class="btn btn-blue" onclick="upd('click','on')" style="flex:1; background:#d29922">SAĞ TIK MODU AÇ</button>
+                <input id="cfg_click_sec" type="number" value="5" style="width:50px">
+                <button class="btn btn-blue" onclick="upd('click','on')" style="flex:1; background:#d29922">SAĞ TIK MODU</button>
                 <button class="btn btn-red" onclick="upd('click','off')">KAPAT</button>
             </div>
         </div>
     </div>
 
     <div id="tab-term" class="tab">
+        <div style="margin-bottom:10px;">Konsol: <b id="cur_term" style="color:#58a6ff">-</b></div>
         <div id="logbox"></div>
-        <div style="display:flex; gap:5px;">
-            <input id="m" placeholder="Sohbete mesaj gönder..." style="margin:0;">
-            <button onclick="send()" class="btn btn-blue">GÖNDER</button>
+        <div class="card" style="padding: 10px; margin-bottom: 0;">
+            <div style="display:flex; gap:5px;">
+                <input id="m" placeholder="Mesaj gönder..." style="margin:0; flex:1;">
+                <button onclick="send()" class="btn btn-blue">GÖNDER</button>
+            </div>
         </div>
     </div>
 
@@ -94,7 +110,7 @@
             el.style.display = 'block';
             el.style.background = color === 'red' ? '#da363333' : '#23863633';
             el.style.color = color === 'red' ? '#f85149' : '#3fb950';
-            setTimeout(() => { el.style.display = 'none'; }, 4000);
+            setTimeout(() => { el.style.display = 'none'; }, 3000);
         }
 
         function tab(t) {
@@ -106,25 +122,25 @@
 
         async function add() {
             const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
-            if(!h || !u) return showInfo("Lütfen tüm alanları doldurun!", "red");
+            if(!h || !u) return showInfo("Eksik bilgi!", "red");
             await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
-            sel = u; tab('term'); showInfo("Bağlantı isteği gönderildi.", "green");
+            sel = u; tab('term'); showInfo("Bağlanıyor...", "green");
         }
 
         async function stopBot(name) {
             await fetch(`/stop?sid=${mySID}&user=${name}`);
             if(sel === name) sel = "";
-            showInfo(name + " bağlantısı kesildi.", "red");
+            showInfo("Bağlantı kesildi.", "red");
         }
 
         async function upd(type, status) {
-            if(!sel) return showInfo("Önce bir bot seçmelisiniz!", "red");
+            if(!sel) return showInfo("Bot seç!", "red");
             let val = encodeURIComponent(document.getElementById('cfg_msg_text').value);
             let sec = (type==='click') ? document.getElementById('cfg_click_sec').value : document.getElementById('cfg_msg_sec').value;
             const r = await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&val=${val}&sec=${sec}`);
             const res = await r.text();
             if(res === "offline") showInfo("Bot oyunda değil!", "red");
-            else showInfo("Ayarlar güncellendi.", "green");
+            else showInfo("Güncellendi.", "green");
         }
 
         async function send() {
@@ -138,20 +154,17 @@
             try {
                 const r = await fetch(`/data?sid=${mySID}`);
                 const d = await r.json();
-                
-                // Bot listeden düştüyse seçimi temizle
                 if(sel && !d.active.includes(sel)) {
                     sel = "";
                     document.getElementById('cur_settings').innerText = "-";
+                    document.getElementById('cur_term').innerText = "-";
                 }
-
                 document.getElementById('list').innerHTML = d.active.map(n => `
-                    <div class="bot-item ${sel==n?'selected-bot':''}" onclick="sel='${n}'; document.getElementById('cur_settings').innerText='${n}'">
+                    <div class="bot-item ${sel==n?'selected-bot':''}" onclick="sel='${n}'; document.getElementById('cur_settings').innerText='${n}'; document.getElementById('cur_term').innerText='${n}';">
                         <b>${n}</b>
-                        <button class="btn btn-red" style="padding:4px 8px; font-size:10px;" onclick="stopBot('${n}')">KAPAT</button>
+                        <button class="btn btn-red" style="padding:4px 8px; font-size:10px;" onclick="stopBot('${n}')">DURDUR</button>
                     </div>
                 `).join('');
-                
                 if(sel && d.logs[sel]) {
                     const lb = document.getElementById('logbox');
                     lb.innerHTML = d.logs[sel].join('<br>');
