@@ -1,27 +1,174 @@
-body { 
-    background:#1a1a1a; 
-    color:#fff; 
-    font-family:sans-serif; 
-    margin:0; 
-    padding:0; 
-    /* Sayfa genelinde seçimi kapat */
-    user-select: none; 
-    -webkit-user-select: none;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-#terminal { 
-    background:#000; 
-    color:#0f0; 
-    height:40vh; 
-    overflow-y:auto; 
-    padding:10px; 
-    /* Sadece terminal içinde seçime izin ver */
-    user-select: text; 
-    -webkit-user-select: text;
+/* Layout */
+body {
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #111;
+  color: #eee;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-#controls, #settings { padding:10px; display:flex; flex-wrap:wrap; gap:5px; }
-#settings.hidden { display:none; }
-input, button { padding:5px; font-size:14px; border-radius:4px; border:1px solid #444; background:#333; color:#fff; }
-button { cursor:pointer; font-weight:bold; }
-.controls button { width:50px; height:50px; }
+#app {
+  width: 100%;
+  max-width: 800px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* Panels (settings & auto‑message) */
+.panel {
+  background: #222;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.panel.hidden {
+  display: none;
+}
+.panel h2 {
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  color: #0ff;
+}
+.panel label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+}
+.panel input,
+.panel textarea {
+  margin-top: 0.2rem;
+  padding: 0.4rem;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #111;
+  color: #eee;
+}
+.panel button {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #0a84ff;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+}
+.panel button:hover {
+  background: #0066cc;
+}
+
+/* Terminal */
+#terminal {
+  flex: 1;
+  background: #000;
+  color: #0f0;
+  font-family: "Courier New", monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  padding: 0.8rem;
+  border-radius: 6px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+/* Chat box */
+#chatBox {
+  display: flex;
+  gap: 0.4rem;
+}
+#chatInput {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #111;
+  color: #eee;
+}
+#sendChatBtn {
+  padding: 0.5rem 1rem;
+  background: #28a745;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+}
+#sendChatBtn:hover {
+  background: #1e7e34;
+}
+
+/* Movement controls */
+#controls {
+  display: grid;
+  grid-template-areas:
+    ".   up   ."
+    "left . right"
+    ".  down  .";
+  gap: 0.4rem;
+  justify-items: center;
+  margin-top: 0.5rem;
+}
+.moveBtn {
+  width: 48px;
+  height: 48px;
+  background: #444;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.moveBtn:active {
+  background: #666;
+}
+.moveBtn[data-dir="forward"] { grid-area: up; }
+.moveBtn[data-dir="back"]    { grid-area: down; }
+.moveBtn[data-dir="left"]   { grid-area: left; }
+.moveBtn[data-dir="right"]  { grid-area: right; }
+.moveBtn[data-dir="jump"]   { grid-area: up; margin-top: 2.5rem; }
+
+/* Toggle buttons */
+#toggleSettings,
+#toggleAutoMsg {
+  position: fixed;
+  bottom: 1rem;
+  padding: 0.6rem 1rem;
+  background: #555;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+}
+#toggleSettings { left: 1rem; }
+#toggleAutoMsg  { right: 1rem; }
+#toggleSettings:hover,
+#toggleAutoMsg:hover {
+  background: #777;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  #app { padding: 0.5rem; }
+  .panel { padding: 0.8rem; }
+  #controls { grid-template-areas:
+                "up"
+                "left"
+                "right"
+                "down"
+                "jump"; }
+  .moveBtn { width: 40px; height: 40px; font-size: 1rem; }
+    }
+    
