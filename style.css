@@ -1,34 +1,24 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #050505; color: #fff; font-family: 'Consolas', monospace; height: 100vh; overflow: hidden; }
+body { background: #0e0e0e; color: #fff; font-family: 'Consolas', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; }
 
-.main-container { display: flex; flex-direction: column; height: 100vh; padding: 10px; }
+.app { width: 450px; background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
-.top-bar { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 10px; border-radius: 4px; border: 1px solid #222; }
-.brand { color: #00ff41; font-weight: bold; letter-spacing: 1px; }
+.header { display: flex; justify-content: space-between; margin-bottom: 15px; }
+.btn { border: none; padding: 8px 12px; cursor: pointer; border-radius: 5px; color: #fff; font-size: 11px; font-weight: bold; }
+.btn-green { background: #28a745; } .btn-red { background: #dc3545; } .btn-gray { background: #444; }
 
-.actions { display: flex; gap: 8px; }
-select { background: #000; color: #00ff41; border: 1px solid #333; padding: 5px; outline: none; border-radius: 4px; }
-
-.terminal-view { 
-    flex: 1; background: #000; border: 1px solid #222; margin: 10px 0; border-radius: 4px; 
-    padding: 15px; overflow-y: auto; font-size: 14px; line-height: 1.6; word-wrap: break-word;
+/* KÜÇÜK TERMINAL BURADA */
+.terminal { 
+    height: 250px; background: #000; border: 1px solid #222; 
+    border-radius: 5px; padding: 10px; overflow-y: auto; 
+    font-size: 12px; line-height: 1.4; color: #00ff41; margin-bottom: 15px;
 }
-.terminal-view span { display: block; } /* Her mesaj yeni satır */
 
-.bottom-bar { display: flex; gap: 8px; }
-.bottom-bar input { flex: 1; background: #111; border: 1px solid #222; color: #fff; padding: 12px; outline: none; border-radius: 4px; }
-.bottom-bar input:focus { border-color: #00ff41; }
+.input-area { display: flex; gap: 5px; }
+.input-area input { flex: 1; background: #000; border: 1px solid #333; color: #fff; padding: 10px; outline: none; border-radius: 4px; }
+.btn-send { background: #007bff; width: 60px; }
 
-.btn { border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; color: #fff; font-weight: bold; font-size: 12px; }
-.btn-add { background: #28a745; }
-.btn-set { background: #555; }
-.btn-quit { background: #c82333; }
-.btn-send { background: #007bff; width: 100px; }
-.btn-cancel { background: #333; }
-
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 100; }
-.modal-box { background: #111; padding: 25px; border: 1px solid #333; width: 320px; border-radius: 8px; display: flex; flex-direction: column; gap: 15px; }
-.modal-box input { background: #000; border: 1px solid #222; color: #fff; padding: 10px; outline: none; border-radius: 4px; }
-.modal-box label { font-size: 13px; display: flex; align-items: center; gap: 10px; }
-.modal-actions { display: flex; gap: 10px; }
-.modal-actions button { flex: 1; }
+/* Modal */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; }
+.modal-box { background: #1a1a1a; padding: 20px; border-radius: 8px; width: 300px; display: flex; flex-direction: column; gap: 10px; }
+.modal-box input { background: #000; border: 1px solid #333; color: #fff; padding: 8px; outline: none; }
