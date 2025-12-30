@@ -2,17 +2,17 @@ const socket = io();
 let selBot = "";
 const el = (i) => document.getElementById(i);
 
-function toggleModal(s) { el('modal').style.display = s ? 'flex' : 'none'; }
+function showModal(s) { el('modal').style.display = s ? 'flex' : 'none'; }
 function connect() { socket.emit('start-bot', { host: el('ip').value, username: el('nick').value, pass: el('pass').value }); }
 function disconnect() { if(selBot) socket.emit('quit', selBot); }
 function move(dir) { if(selBot) socket.emit('move-toggle', { user: selBot, dir: dir, state: true }); }
 function allStop() {
     if(!selBot) return;
-    ['forward','back','left','right','jump'].forEach(d => { socket.emit('move-toggle', { user: selBot, dir: d, state: false }); });
+    ['forward','back','left','right','jump'].forEach(d => socket.emit('move-toggle', { user: selBot, dir: d, state: false }));
 }
-function saveSettings() {
+function save() {
     socket.emit('update-config', { user: selBot, config: { mine: el('mine-on').checked, math: el('m-on').checked } });
-    toggleModal(false);
+    showModal(false);
 }
 function sendChat() {
     const v = el('cin').value;
@@ -36,6 +36,6 @@ socket.on('status', d => {
 
 socket.on('log', d => {
     const l = el('logs');
-    l.innerHTML += `<div><span style="color:#0f9">></span> ${d.msg}</div>`;
+    l.innerHTML += `<div>${d.msg}</div>`;
     l.scrollTop = l.scrollHeight;
 });
