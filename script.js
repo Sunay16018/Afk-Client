@@ -1,13 +1,9 @@
 const s = io();
 const logBox = document.getElementById("log");
 const settings = document.getElementById("settings");
-const Convert = new AnsiConvert();
+const Convert = new AnsiConvert({escapeXML:true, fg:'#fff', bg:'#000'});
 
 function log(m){
- try{
-   let obj = JSON.parse(m);
-   if(obj.text) m = obj.text;
- }catch(e){}
  logBox.innerHTML += Convert.toHtml(m) + "<br>";
  logBox.scrollTop = logBox.scrollHeight;
 }
