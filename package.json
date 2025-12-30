@@ -1,7 +1,7 @@
 {
-  "name": "mc-afk-bot",
+  "name": "mc-afk-bot-panel",
   "version": "1.0.0",
-  "description": "Render 7/24 AFK Bot",
+  "description": "Minecraft AFK Bot ve Web Paneli",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
