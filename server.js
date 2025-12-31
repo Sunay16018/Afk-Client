@@ -34,7 +34,7 @@ function startBot(sid, host, user, ver) {
     bot.on('error', (e) => { logs[key].push("<b style='color:#ff4757'>[HATA] " + e.message + "</b>"); delete sessions[sid][user]; });
     bot.on('message', (m) => {
         logs[key].push(m.toHTML());
-        if(logs[key].length > 60) logs[key].shift();
+        if(logs[key].length > 50) logs[key].shift();
     });
 }
 
@@ -84,4 +84,3 @@ http.createServer((req, res) => {
     let f = path.join(__dirname, p === '/' ? 'index.html' : p);
     fs.readFile(f, (err, data) => res.end(data));
 }).listen(process.env.PORT || 10000);
-    
