@@ -1,165 +1,146 @@
 const mineflayer = require('mineflayer');
-const http = require('http');
-const url = require('url');
-const fs = require('fs');
-const path = require('path');
+const express = require('express');
+const app = express();
+const bots = {};
 
-// --- HAFINZA ---
-let sessions = {}; 
-let logs = {}; 
-let configs = {}; 
+// Her botun kendine has verilerini tutacak obje
+const botData = {};
 
-// [YARDIMCI] Saat Damgası
-function timestamp() {
-    const d = new Date();
-    return `[${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}]`;
-}
-
-// [ÖNEMLİ] Mesaj Temizleyici (JSON karmaşasını çözer)
-function cleanMessage(msg) {
-    if (!msg) return "";
-    
-    // 1. Eğer Mineflayer mesaj nesnesiyse HTML'e çevir
-    if (typeof msg === 'object' && msg.toHTML) {
-        return msg.toHTML(); 
-    }
-
-    // 2. Eğer yazı JSON formatındaysa (örn: atılma sebepleri)
-    if (typeof msg === 'string') {
-        try {
-            const parsed = JSON.parse(msg);
-            // JSON içinden sadece yazıyı al
-            if (parsed.text) return parsed.text;
-            if (parsed.extra) return parsed.extra.map(e => e.text).join('');
-            if (parsed.translate) return parsed.translate; // Çeviri kodları
-            return JSON.stringify(parsed); // Tanınmayan format
-        } catch (e) {
-            // JSON değilse düz yazıdır, olduğu gibi döndür
-            return msg; 
-        }
-    }
-    return String(msg);
-}
-
-function startBot(sid, host, user, ver) {
-    if (!sessions[sid]) sessions[sid] = {};
-    if (sessions[sid][user]) return;
-
-    const key = sid + "_" + user;
+app.get('/start', (req, res) => {
+    const { sid, host, user } = req.query;
     const [ip, port] = host.split(':');
 
+    if (bots[user]) bots[user].quit();
+
     const bot = mineflayer.createBot({
-        host: ip, port: parseInt(port) || 25565, 
-        username: user, version: ver || false, auth: 'offline'
+        host: ip,
+        port: port || 25565,
+        username: user
     });
 
-    sessions[sid][user] = bot;
-    configs[key] = { mining: null, afk: null, clicker: null };
-    
-    // Log Dizisini Başlat
-    logs[key] = [`<span style="color:cyan">${timestamp()} [SİSTEM] Bot başlatılıyor...</span>`];
+    // Bot verilerini sıfırla (Yeni giriş yapıldığında eskiler silinir)
+    botData[user] = {
+        logs: [`[Sistem] ${user} için bağlantı başlatıldı.`],
+        health: 20,
+        food: 20,
+        inventory: [],
+        intervals: {} // Oto-mesaj gibi tekrarlı işler için
+    };
 
-    // --- OLAYLAR ---
-
-    bot.on('login', () => {
-        logs[key].push(`<span style="color:#2ecc71">${timestamp()} ✔ BAŞARILI: Sunucuya girildi.</span>`);
+    bot.on('message', (jsonMsg) => {
+        const msg = jsonMsg.toString();
+        // Sadece anlamlı mesajları al, boşlukları temizle
+        if (msg.trim().length > 0) {
+            botData[user].logs.push(msg);
+            // Bellek şişmesin diye son 100 mesajı tut
+            if (botData[user].logs.length > 100) botData[user].logs.shift();
+        }
     });
 
-    bot.on('end', () => {
-        logs[key].push(`<span style="color:gray">${timestamp()} ⚠ Bağlantı kapandı.</span>`);
+    bot.on('health', () => {
+        botData[user].health = bot.health;
+        botData[user].food = bot.food;
     });
 
-    bot.on('kicked', (reason) => {
-        // Atılma sebebini temizle
-        const cleanReason = cleanMessage(reason);
-        logs[key].push(`<span style="color:#ff4757; font-weight:bold;">${timestamp()} ✖ ATILDI: ${cleanReason}</span>`);
+    bot.on('spawn', () => {
+        botData[user].logs.push(">>> Bot sunucuya giriş yaptı!");
     });
 
-    bot.on('error', (err) => {
-        logs[key].push(`<span style="color:orange">${timestamp()} ⚡ HATA: ${err.message}</span>`);
-    });
-    
-    bot.on('message', (m) => {
-        // Chat mesajlarını temizle ve HTML formatında al
-        const html = cleanMessage(m);
-        logs[key].push(`<span style="opacity:0.7; font-size:11px; margin-right:5px;">${timestamp()}</span><span>${html}</span>`);
-        
-        // Log şişmesini önle (Son 200 mesaj)
-        if(logs[key].length > 200) logs[key].shift();
-    });
-}
+    bot.on('error', (err) => botData[user].logs.push(`!!! Hata: ${err.message}`));
+    bot.on('kicked', (reason) => botData[user].logs.push(`!!! Atıldı: ${reason}`));
 
-http.createServer((req, res) => {
-    const q = url.parse(req.url, true).query;
-    const p = url.parse(req.url, true).pathname;
-    const sid = q.sid;
-    const bot = sessions[sid]?.[q.user];
+    bots[user] = bot;
+    res.send({ status: 'ok' });
+});
 
-    // --- KOMUTLAR ---
-    if (p === '/start' && sid) { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
-    if (p === '/stop' && bot) { bot.quit(); delete sessions[sid][q.user]; return res.end("ok"); }
-    if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
+app.get('/update', (req, res) => {
+    const { user, type, status, val } = req.query;
+    const bot = bots[user];
+    if (!bot) return res.send({ status: 'error' });
 
-    // --- GÜNCELLEMELER ---
-    if (p === '/update' && bot) {
-        const key = sid + "_" + q.user;
-        const conf = configs[key];
-        
-        if (q.type === 'inv_action') {
-            const slot = parseInt(q.slot);
-            const item = bot.inventory.slots[slot];
+    const data = botData[user];
+
+    switch (type) {
+        case 'auto_msg':
+            // Önce varsa eski döngüyü temizle
+            clearInterval(data.intervals.spam);
+            if (status === 'on') {
+                const [msg, sec] = val.split('|');
+                const ms = parseInt(sec) * 1000 || 30000;
+                bot.chat(msg); // İlk mesajı hemen at
+                data.intervals.spam = setInterval(() => {
+                    bot.chat(msg);
+                }, ms);
+            }
+            break;
+
+        case 'look':
+            const yaw = bot.entity.yaw;
+            if (val === 'left') bot.look(yaw + Math.PI / 2, 0);
+            if (val === 'right') bot.look(yaw - Math.PI / 2, 0);
+            if (val === 'back') bot.look(yaw + Math.PI, 0);
+            break;
+
+        case 'move':
+            bot.setControlState('forward', status === 'on');
+            break;
+
+        case 'jump':
+            if (val === 'once') {
+                bot.setControlState('jump', true);
+                setTimeout(() => bot.setControlState('jump', false), 100);
+            } else {
+                bot.setControlState('jump', status === 'on');
+            }
+            break;
+
+        case 'action':
+            if (val === 'swing') bot.swingArm();
+            break;
+
+        case 'inv_action':
+            const item = bot.inventory.slots[val];
             if (item) {
-                if (q.act === 'drop') bot.tossStack(item);
-                if (q.act === 'equip') bot.equip(item, 'hand');
-                if (q.act === 'use') bot.activateItem();
+                if (status === 'drop') bot.tossStack(item);
+                if (status === 'equip') bot.equip(item, 'hand');
             }
-        }
-        
-        if (q.type === 'mining') {
-            clearInterval(conf.mining);
-            if (q.status === 'on') {
-                conf.mining = setInterval(() => {
-                    const b = bot.blockAtCursor(4);
-                    if(b) bot.dig(b, 'ignore').catch(()=>{});
-                }, parseFloat(q.val) * 1000);
-            }
-        }
-
-        if (q.type === 'afk') {
-            clearInterval(conf.afk);
-            if (q.status === 'on') {
-                conf.afk = setInterval(() => {
-                    bot.look(Math.random() * Math.PI, Math.random() * Math.PI);
-                }, 5000);
-            }
-        }
-
-        if (q.type === 'clicker') {
-            clearInterval(conf.clicker);
-            if (q.status === 'on') {
-                conf.clicker = setInterval(() => {
-                    bot.swingArm('right');
-                }, parseFloat(q.val) * 1000);
-            }
-        }
-        return res.end("ok");
+            break;
     }
+    res.send({ status: 'ok' });
+});
 
-    // --- VERİ ÇEKME ---
-    if (p === '/data' && sid) {
-        const active = sessions[sid] ? Object.keys(sessions[sid]) : [];
-        const botData = {};
-        if (q.user && bot) {
-            botData[q.user] = {
-                logs: logs[sid + "_" + q.user] || [],
-                health: bot.health || 20,
-                food: bot.food || 20,
-                inventory: bot.inventory.slots.map(s => s ? { name: s.name, count: s.count, slot: s.slot, displayName: s.displayName } : null)
-            };
-        }
-        res.setHeader('Content-Type', 'application/json');
-        return res.end(JSON.stringify({ active, botData }));
+app.get('/data', (req, res) => {
+    const { user } = req.query;
+    const activeBots = Object.keys(bots);
+    const response = { active: activeBots, botData: {} };
+
+    if (user && bots[user]) {
+        const bot = bots[user];
+        response.botData[user] = {
+            logs: botData[user].logs,
+            health: bot.health,
+            food: bot.food,
+            inventory: bot.inventory.items().map(i => ({
+                name: i.name,
+                count: i.count,
+                slot: i.slot
+            }))
+        };
+        // Logları gönderdikten sonra geçici listeyi temizle (HTML tarafında birikmemesi için)
+        botData[user].logs = [];
     }
+    res.json(response);
+});
 
-    fs.readFile(path.join(__dirname, p === '/' ? 'index.html' : p), (err, data) => res.end(data));
-}).listen(process.env.PORT || 10000);
+app.get('/stop', (req, res) => {
+    const { user } = req.query;
+    if (bots[user]) {
+        clearInterval(botData[user].intervals.spam);
+        bots[user].quit();
+        delete bots[user];
+        delete botData[user];
+    }
+    res.send({ status: 'ok' });
+});
+
+app.listen(3000, () => console.log('BotMaster Backend 3000 portunda aktif!'));
