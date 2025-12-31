@@ -3,6 +3,7 @@ const http = require('http');
 const url = require('url');
 const fs = require('fs');
 const path = require('path');
+const Vec3 = require('vec3');
 
 let sessions = {}; 
 let logs = {}; 
@@ -26,7 +27,10 @@ function startBot(sid, host, user, ver) {
 
     bot.on('login', () => logs[key].push("<b style='color:#2ecc71'>[GİRİŞ] Başarılı!</b>"));
     bot.on('kicked', (r) => logs[key].push("<b style='color:#ff4757'>[ATILDI] " + r + "</b>"));
-    bot.on('end', () => { logs[key].push("<b style='color:#f39c12'>[BAĞLANTI KESİLDİ]</b>"); delete sessions[sid][user]; });
+    bot.on('end', () => { 
+        logs[key].push("<b style='color:#f39c12'>[BAĞLANTI KESİLDİ]</b>"); 
+        delete sessions[sid][user]; 
+    });
     bot.on('error', (e) => logs[key].push("<b style='color:#ff4757'>[HATA] " + e.message + "</b>"));
 
     bot.on('message', (m) => {
@@ -48,65 +52,50 @@ http.createServer((req, res) => {
     if (p === '/update' && bot) {
         const key = sid + "_" + q.user;
         const conf = configs[key];
-        const sec = parseInt(q.sec) * 1000 || 1000;
 
-        // BAKIŞ KONTROLÜ
+        // YÖN DEĞİŞTİRME - KESİN ÇÖZÜM (lookAt ve Koordinat Hesaplama)
         if (q.type === 'look') {
-            let yaw = bot.entity.yaw;
-            let pitch = bot.entity.pitch;
-            if (q.dir === 'left') yaw += Math.PI / 2;
-            if (q.dir === 'right') yaw -= Math.PI / 2;
-            if (q.dir === 'up') pitch = Math.PI / 2;
-            if (q.dir === 'down') pitch = -Math.PI / 2;
-            if (q.dir === 'front') pitch = 0;
-            bot.look(yaw, pitch, true);
+            const pos = bot.entity.position;
+            if (q.dir === 'left') bot.look(bot.entity.yaw + Math.PI / 2, bot.entity.pitch, true);
+            if (q.dir === 'right') bot.look(bot.entity.yaw - Math.PI / 2, bot.entity.pitch, true);
+            if (q.dir === 'up') bot.look(bot.entity.yaw, Math.PI / 2, true);
+            if (q.dir === 'down') bot.look(bot.entity.yaw, -Math.PI / 2, true);
+            if (q.dir === 'front') bot.look(bot.entity.yaw, 0, true);
         }
 
-        // AKILLI KAZMA SİSTEMİ (RESETLENMEZ)
+        // AKILLI KAZMA (WAIT UNTIL BROKEN)
         if (q.type === 'mining') {
             if (q.status === 'on') {
-                if (conf.mining) return res.end("already_on");
+                if (conf.mining) return res.end("ok");
                 conf.mining = true;
-                const doMine = async () => {
-                    while (conf.mining && sessions[sid]?.[q.user]) {
+                const mineLoop = async () => {
+                    while(conf.mining && sessions[sid]?.[q.user]) {
                         const block = bot.blockAtCursor(4);
                         if (block && block.name !== 'air') {
                             try {
-                                // Önce bloğa kilitlen
-                                await bot.lookAt(block.position.offset(0.5, 0.5, 0.5));
-                                // Blok kırılana kadar BEKLE (Wait until finished)
-                                await bot.dig(block); 
-                            } catch (e) {
-                                // Blok kırılamazsa (mesafe vb) kısa bekle
-                                await new Promise(r => setTimeout(r, 500));
-                            }
+                                await bot.dig(block, true); // true: kazarken başka yere bakma
+                            } catch (e) { await new Promise(r => setTimeout(r, 100)); }
                         } else {
-                            // Önünde blok yoksa bekle
                             await new Promise(r => setTimeout(r, 200));
                         }
                     }
                 };
-                doMine();
+                mineLoop();
             } else {
                 conf.mining = false;
                 bot.stopDigging();
             }
         }
 
-        // ZIPLAMA
+        // ZIPLAMA & SAĞ TIK
+        const sec = parseInt(q.sec) * 1000 || 1000;
         if (q.type === 'jump') {
             clearInterval(conf.jump);
-            if (q.status === 'on') {
-                conf.jump = setInterval(() => { bot.setControlState('jump', true); setTimeout(() => bot.setControlState('jump', false), 400); }, sec);
-            }
+            if (q.status === 'on') conf.jump = setInterval(() => { bot.setControlState('jump', true); setTimeout(() => bot.setControlState('jump', false), 400); }, sec);
         }
-
-        // SAĞ TIK
         if (q.type === 'rclick') {
             clearInterval(conf.rclick);
-            if (q.status === 'on') {
-                conf.rclick = setInterval(() => { bot.activateItem(); }, sec);
-            }
+            if (q.status === 'on') conf.rclick = setInterval(() => bot.activateItem(), sec);
         }
 
         if (q.type === 'drop' && bot.heldItem) bot.tossStack(bot.heldItem);
