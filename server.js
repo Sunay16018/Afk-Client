@@ -17,66 +17,47 @@ function startBot(sid, host, user, ver) {
     
     logs[key] = ["Bağlantı kuruluyor..."];
 
-    const bot = mineflayer.createBot({
-        host: ip, 
-        port: parseInt(port) || 25565, 
-        username: user, 
-        version: ver, 
-        auth: 'offline',
-        // SUNUCU KORUMASINI GEÇMEK İÇİN AYARLAR
-        viewDistance: "tiny",
-        language: "tr_tr",
-        checkTimeoutInterval: 90000,
-        skinParts: {
-            showCape: true,
-            showJacked: true,
-            showLeftSleeve: true,
-            showRightSleeve: true,
-            showLeftPants: true,
-            showRightPants: true,
-            showHat: true
-        }
-    });
-
-    sessions[sid][user] = bot;
-    configs[key] = { msgT: null, clickT: null, mining: false };
-
-    bot.on('login', () => {
-        logs[key].push("<b style='color:#2ecc71'>BAŞARIYLA GİRİLDİ!</b>");
-        // Giriş yapınca sunucuya minik bir paket gönder (ayarlar paketi)
-        bot.write('settings', {
-            locale: 'tr_TR',
-            viewDistance: 8,
-            chatFlags: 0,
-            chatColors: true,
-            skinParts: 127,
-            mainHand: 1
+    try {
+        const bot = mineflayer.createBot({
+            host: ip, 
+            port: parseInt(port) || 25565, 
+            username: user, 
+            version: ver, // Kullanıcının yazdığı sürüm
+            auth: 'offline',
+            checkTimeoutInterval: 60000
         });
-    });
 
-    bot.on('kicked', (reason) => {
-        let msg = reason;
-        try { 
-            if(typeof reason === 'object') {
-                msg = reason.extra ? reason.extra.map(e => e.text).join("") : (reason.text || JSON.stringify(reason));
+        sessions[sid][user] = bot;
+        configs[key] = { msgT: null };
+
+        bot.on('login', () => logs[key].push("<b style='color:#2ecc71'>BAŞARIYLA GİRDİ!</b>"));
+        
+        bot.on('kicked', (reason) => {
+            let msg = typeof reason === 'string' ? reason : JSON.stringify(reason);
+            try { if(reason.extra) msg = reason.extra.map(e => e.text).join(""); } catch(e){}
+            logs[key].push("<b style='color:#e74c3c'>SUNUCU ATTI: " + msg + "</b>");
+            delete sessions[sid][user];
+        });
+
+        bot.on('error', (err) => {
+            let errorMsg = err.message;
+            if (errorMsg.includes("unsupported minecraft version")) {
+                errorMsg = "BU SÜRÜM MEVCUT DEĞİL VEYA DESTEKLENMİYOR!";
             }
-        } catch(e){}
-        logs[key].push("<b style='color:#e74c3c'>SUNUCU ATTI: " + msg + "</b>");
-        delete sessions[sid][user];
-    });
+            logs[key].push("<b style='color:#e74c3c'>HATA: " + errorMsg + "</b>");
+            delete sessions[sid][user];
+        });
 
-    bot.on('error', (err) => {
-        logs[key].push("<b style='color:#e74c3c'>HATA: " + err.message + "</b>");
-        delete sessions[sid][user];
-    });
+        bot.on('message', (m) => {
+            logs[key].push(m.toHTML());
+            if(logs[key].length > 50) logs[key].shift();
+        });
 
-    bot.on('message', (m) => {
-        logs[key].push(m.toHTML());
-        if(logs[key].length > 50) logs[key].shift();
-    });
+    } catch (e) {
+        logs[key].push("<b style='color:red'>Sistem Hatası: " + e.message + "</b>");
+    }
 }
 
-// HTTP API (Aynen devam)
 http.createServer((req, res) => {
     const q = url.parse(req.url, true).query;
     const p = url.parse(req.url, true).pathname;
@@ -92,7 +73,9 @@ http.createServer((req, res) => {
         const b = sessions[sid]?.[q.user];
         if (!b) return res.end("offline");
         clearInterval(configs[key].msgT);
-        if (q.type === 'msg' && q.status === 'on') configs[key].msgT = setInterval(() => b.chat(q.val), q.sec * 1000);
+        if (q.type === 'msg' && q.status === 'on') {
+            configs[key].msgT = setInterval(() => b.chat(decodeURIComponent(q.val)), q.sec * 1000);
+        }
         return res.end("ok");
     }
     if (p === '/data' && sid) {
