@@ -14,57 +14,50 @@ function startBot(sid, host, user, ver) {
 
     const key = sid + "_" + user;
     const [ip, port] = host.split(':');
-    
-    logs[key] = ["<b style='color:yellow'>[SİSTEM] Bağlantı başlatılıyor...</b>"];
+    logs[key] = ["<b style='color:gray'>Bağlanılıyor...</b>"];
 
     const bot = mineflayer.createBot({
-        host: ip, 
-        port: parseInt(port) || 25565, 
-        username: user, 
-        version: ver, 
-        auth: 'offline',
-        checkTimeoutInterval: 60000 // 60 saniye sessizlikte bağlantıyı kopar
+        host: ip, port: parseInt(port) || 25565, 
+        username: user, version: ver, auth: 'offline'
     });
 
     sessions[sid][user] = bot;
     configs[key] = { msgT: null, afkT: null, mining: false };
 
-    // MESAJ İŞLEYİCİ
-    const parseReason = (reason) => {
-        if (!reason) return "Bilinmeyen bir sebep (Bağlantı koptu).";
+    // Sadece sunucunun gönderdiği asıl metni ayıklar
+    const getCleanReason = (reason) => {
+        if (!reason) return "Sunucu bağlantıyı kesti.";
         if (typeof reason === 'string') return reason;
         try {
             if (reason.extra) return reason.extra.map(e => e.text || "").join("");
             if (reason.text) return reason.text;
-        } catch (e) { return JSON.stringify(reason); }
+        } catch (e) {}
         return "Bağlantı kesildi.";
     };
 
-    bot.on('login', () => {
-        logs[key].push("<b style='color:#2ecc71'>[GİRİŞ] Sunucuya başarıyla bağlanıldı!</b>");
-    });
+    bot.on('login', () => logs[key].push("<b style='color:#2ecc71'>Giriş Başarılı!</b>"));
 
-    // SUNUCU ATTIĞINDA ÇALIŞIR
     bot.on('kicked', (reason) => {
-        const msg = parseReason(reason);
-        logs[key].push("<b style='color:#ff4757; font-size:15px;'>[ATILDI] " + msg + "</b>");
-        // Hemen silme ki kullanıcı sebebi okuyabilsin
-        setTimeout(() => { if(sessions[sid]) delete sessions[sid][user]; }, 5000);
+        const msg = getCleanReason(reason);
+        logs[key].push("<b style='color:#ff4757; font-size:14px;'>Atıldı: " + msg + "</b>");
+        delete sessions[sid][user];
     });
 
-    // BAĞLANTI TAMAMEN KOPTUĞUNDA ÇALIŞIR
-    bot.on('end', () => {
-        logs[key].push("<b style='color:#ffa502'>[KOPTU] Bağlantı tamamen sonlandı.</b>");
-        setTimeout(() => { if(sessions[sid]) delete sessions[sid][user]; }, 5000);
-    });
-
+    // Hata ve sonlanma mesajlarını tek satıra indirdim, kalabalık yapmaz
     bot.on('error', (err) => {
-        logs[key].push("<b style='color:#ff4757'>[HATA] " + err.message + "</b>");
+        if(!err.message.includes("kicked")) logs[key].push("<b style='color:#ff4757'>Hata: " + err.message + "</b>");
+    });
+
+    bot.on('end', () => {
+        if (sessions[sid]?.[user]) {
+            logs[key].push("<b style='color:#ffa502'>Bağlantı bitti.</b>");
+            delete sessions[sid][user];
+        }
     });
 
     bot.on('message', (m) => {
         logs[key].push(m.toHTML());
-        if(logs[key].length > 50) logs[key].shift();
+        if(logs[key].length > 40) logs[key].shift();
     });
 }
 
@@ -76,29 +69,23 @@ http.createServer((req, res) => {
     const bot = sessions[sid]?.[q.user];
 
     if (p === '/start' && sid) { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
-    
-    if (p === '/send' && bot) {
-        bot.chat(decodeURIComponent(q.msg));
-        return res.end("ok");
-    }
+    if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
 
     if (p === '/update' && bot) {
         const conf = configs[key];
         if (q.type === 'msg') {
             clearInterval(conf.msgT);
             if (q.status === 'on') conf.msgT = setInterval(() => bot.chat(decodeURIComponent(q.val)), q.sec * 1000);
-        } 
-        else if (q.type === 'afk') {
+        } else if (q.type === 'afk') {
             clearInterval(conf.afkT);
             if (q.status === 'on') {
                 conf.afkT = setInterval(() => {
-                    bot.look(Math.random() * 3.14, (Math.random() - 0.5) * 1.5);
+                    bot.look(Math.random() * 6, (Math.random() - 0.5));
                     bot.setControlState('jump', true);
                     setTimeout(() => bot.setControlState('jump', false), 400);
                 }, 10000);
             }
-        }
-        else if (q.type === 'mining') {
+        } else if (q.type === 'mining') {
             if (q.status === 'on') {
                 conf.mining = true;
                 const mine = async () => {
@@ -117,8 +104,7 @@ http.createServer((req, res) => {
     if (p === '/data' && sid) {
         const active = sessions[sid] ? Object.keys(sessions[sid]) : [];
         const sLogs = {};
-        // Loglar silinse bile son hali burada kalsın
-        Object.keys(logs).forEach(k => { if(k.startsWith(sid)) sLogs[k.split('_')[1]] = logs[k]; });
+        active.forEach(u => { sLogs[u] = logs[sid + "_" + u] || []; });
         res.setHeader('Content-Type', 'application/json');
         return res.end(JSON.stringify({ active, logs: sLogs }));
     }
