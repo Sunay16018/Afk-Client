@@ -3,271 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BotMaster v18 - Private Edition</title>
+    <title>BotMaster v18</title>
     <style>
-        :root { 
-            --bg: #09090b; --panel: #111114; --border: #27272a; 
-            --accent: #8b5cf6; --text: #fafafa; --green: #10b981; 
-            --red: #ef4444; --card-bg: #18181b;
-        }
+        :root { --bg: #09090b; --panel: #111114; --border: #27272a; --accent: #8b5cf6; --text: #fafafa; --green: #10b981; --red: #ef4444; }
         * { box-sizing: border-box; outline: none; }
-        body { 
-            background: var(--bg); color: var(--text); margin: 0; 
-            font-family: 'Inter', system-ui, sans-serif; 
-            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
-        }
-
-        /* ÜST BAR */
-        nav { 
-            display: flex; background: var(--panel); height: 65px; 
-            border-bottom: 1px solid var(--border); padding: 0 15px; 
-            align-items: center; gap: 10px; flex-shrink: 0;
-        }
-        nav button { 
-            flex: 1; background: #27272a; border: 1px solid transparent; 
-            color: #a1a1aa; font-weight: 600; font-size: 11px; cursor: pointer; 
-            padding: 12px 5px; border-radius: 8px; transition: 0.3s;
-        }
-        nav button.active { background: var(--accent); color: white; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
-        
-        /* İÇERİK YAPISI */
-        .tab { 
-            display: none; height: calc(100vh - 65px); padding: 20px; 
-            overflow-y: auto; flex-direction: column; width: 100%; max-width: 700px; margin: 0 auto;
-        }
-        .tab.show { display: flex; }
-
-        /* KART TASARIMI */
-        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 20px; }
-        .title { color: var(--accent); font-size: 12px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; display: block; letter-spacing: 1px; }
-        
-        .input-box { width: 100%; padding: 14px; background: #09090b; border: 1px solid var(--border); color: white; border-radius: 10px; margin-bottom: 12px; font-size: 14px; }
-        .input-box:focus { border-color: var(--accent); }
-
-        /* KONSOL SİSTEMİ */
-        .console-container { 
-            display: flex; flex-direction: column; background: #000; border: 1px solid var(--border); 
-            border-radius: 14px; overflow: hidden; height: 50vh !important;
-        }
-        #log-output { 
-            flex: 1; overflow-y: auto; padding: 12px; font-size: 12px; 
-            line-height: 1.6; color: #d4d4d8; font-family: 'Consolas', monospace;
-            background: #050505;
-        }
-        .log-line { border-bottom: 1px solid #111; padding: 4px 0; display: block; word-break: break-all; }
-        .log-line.system { color: var(--accent); font-style: italic; }
-
-        .chat-area { display: flex; background: #0f0f12; padding: 10px; gap: 8px; border-top: 1px solid var(--border); }
-        .chat-area input { flex: 1; background: #18181b; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; }
-        .chat-area button { background: var(--accent); border: none; padding: 0 20px; border-radius: 8px; color: white; cursor: pointer; font-weight: bold; }
-
-        /* ENVANTER VE DURUM */
-        .progress { height: 10px; background: #27272a; border-radius: 5px; margin: 8px 0 15px; overflow: hidden; }
-        .progress-fill { height: 100%; width: 0%; transition: 0.5s ease-out; }
-
-        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px; }
-        .slot { aspect-ratio: 1; background: #09090b; border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; position: relative; }
-        .slot img { width: 70%; image-rendering: pixelated; }
-        .slot:hover { border-color: var(--accent); }
-
-        /* AYARLAR - GELİŞMİŞ */
-        .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #27272a; }
-        .setting-info { display: flex; flex-direction: column; }
-        .setting-info span { font-size: 14px; font-weight: 600; }
-        .setting-info small { color: #71717a; font-size: 11px; }
-
-        .toggle-btn { 
-            padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); 
-            background: #18181b; color: #71717a; cursor: pointer; font-weight: bold; transition: 0.2s;
-        }
-        .toggle-btn.on { background: var(--green); color: white; border-color: var(--green); }
-        .num-input { width: 60px; padding: 8px; background: #09090b; border: 1px solid var(--border); color: white; border-radius: 6px; text-align: center; }
-
-        #ctx { display: none; position: fixed; background: #1c1c1f; border: 1px solid var(--border); border-radius: 10px; z-index: 999; width: 130px; }
-        #ctx button { display: block; width: 100%; padding: 12px; background: none; border: none; color: white; text-align: left; border-bottom: 1px solid #27272a; cursor: pointer; }
+        body { background: var(--bg); color: var(--text); margin: 0; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        nav { display: flex; background: var(--panel); height: 60px; border-bottom: 1px solid var(--border); padding: 0 10px; align-items: center; gap: 5px; }
+        nav button { flex: 1; background: #27272a; border: none; color: #a1a1aa; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        nav button.active { background: var(--accent); color: white; }
+        .tab { display: none; height: calc(100vh - 60px); padding: 15px; overflow-y: auto; width: 100%; max-width: 600px; margin: 0 auto; }
+        .tab.show { display: flex; flex-direction: column; }
+        .card { background: #18181b; border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .input-box { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 10px; }
+        .console-box { display: flex; flex-direction: column; background: #000; border: 1px solid var(--border); border-radius: 10px; height: 45vh !important; }
+        #log-output { flex: 1; overflow-y: auto; padding: 10px; font-size: 12px; font-family: monospace; color: #ccc; }
+        .log-line { border-bottom: 1px solid #111; padding: 2px 0; display: block; }
+        .chat-area { display: flex; padding: 10px; gap: 5px; border-top: 1px solid var(--border); }
+        .chat-area input { flex: 1; background: #18181b; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 5px; }
+        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
+        .slot { aspect-ratio: 1; background: #000; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; position: relative; }
+        .slot img { width: 80%; image-rendering: pixelated; }
+        .toggle-btn { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--border); background: #27272a; color: white; cursor: pointer; margin-top: 5px; }
+        .toggle-btn.on { background: var(--green); }
+        #ctx { display: none; position: fixed; background: #1c1c1f; border: 1px solid var(--border); z-index: 99; width: 100px; }
+        #ctx button { display: block; width: 100%; padding: 10px; background: none; border: none; color: white; border-bottom: 1px solid #27272a; }
     </style>
 </head>
-<body onclick="closeCtx()">
-
+<body onclick="document.getElementById('ctx').style.display='none'">
     <nav>
-        <button onclick="changeTab('bots', this)" class="active">BAĞLANTI</button>
-        <button onclick="changeTab('console', this)">KONSOL</button>
-        <button onclick="changeTab('status', this)">DURUM</button>
-        <button onclick="changeTab('settings', this)">AYARLAR</button>
+        <button onclick="tab('bots', this)" class="active">GİRİŞ</button>
+        <button onclick="tab('console', this)">KONSOL</button>
+        <button onclick="tab('status', this)">DURUM</button>
+        <button onclick="tab('settings', this)">AYARLAR</button>
     </nav>
-
-    <div id="ctx"><button onclick="invAct('drop')">🗑️ At</button><button onclick="invAct('equip')">⚔️ Elinde Tut</button></div>
-
+    <div id="ctx"><button onclick="invAct('drop')">At</button><button onclick="invAct('equip')">Tut</button></div>
     <div id="p-bots" class="tab show">
-        <div class="card">
-            <span class="title">Sisteme Giriş</span>
-            <input id="in-ip" class="input-box" placeholder="Sunucu IP:Port">
-            <input id="in-user" class="input-box" placeholder="Bot Kullanıcı Adı">
-            <button onclick="startBot()" style="width: 100%; padding: 15px; border-radius: 12px; background: var(--green); color: white; border: none; font-weight: 800; cursor: pointer;">BOTU BAŞLAT</button>
-        </div>
-        <div id="bot-list"></div>
+        <div class="card"><input id="ip" class="input-box" placeholder="IP:Port"><input id="user" class="input-box" placeholder="Kullanıcı"><button onclick="start()" class="toggle-btn" style="background:var(--green)">BAĞLAN</button></div>
+        <div id="blist"></div>
     </div>
-
     <div id="p-console" class="tab">
-        <span class="title" id="console-label">Bot Seçilmedi</span>
-        <div class="console-container">
-            <div id="log-output"></div>
-            <div class="chat-area">
-                <input id="chat-msg" placeholder="Mesajınızı yazın..." onkeydown="if(event.key==='Enter') sendChat()">
-                <button onclick="sendChat()">GÖNDER</button>
-            </div>
-        </div>
+        <div class="console-box"><div id="log-output"></div><div class="chat-area"><input id="msg" placeholder="Mesaj..."><button onclick="send()">></button></div></div>
     </div>
-
     <div id="p-status" class="tab">
-        <div class="card">
-            <span class="title">Karakter Durumu</span>
-            <div style="display:flex; justify-content:space-between; font-size:12px"><span>Sağlık</span><span id="hp-txt">0/20</span></div>
-            <div class="progress"><div id="hp-bar" class="progress-fill" style="background:var(--red)"></div></div>
-            <div style="display:flex; justify-content:space-between; font-size:12px"><span>Açlık</span><span id="fd-txt">0/20</span></div>
-            <div class="progress"><div id="fd-bar" class="progress-fill" style="background:var(--green)"></div></div>
-        </div>
-        <div class="card">
-            <span class="title">Envanter</span>
-            <div id="inv-render" class="inv-grid"></div>
-        </div>
+        <div class="card">Can: <span id="hp">0</span>/20<br>Açlık: <span id="fd">0</span>/20</div>
+        <div class="card"><div id="inv" class="inv-grid"></div></div>
     </div>
-
     <div id="p-settings" class="tab">
-        <div class="card">
-            <span class="title">Otomatik Mesaj (Spammer)</span>
-            <input id="auto-msg-text" class="input-box" placeholder="Gönderilecek mesaj...">
-            <div class="setting-row">
-                <div class="setting-info"><span>Gecikme (Saniye)</span><small>Mesaj aralığını belirleyin</small></div>
-                <input type="number" id="auto-msg-sec" class="num-input" value="30">
-            </div>
-            <button id="sw-msg" class="toggle-btn" style="width:100%; margin-top:10px" onclick="toggleSetting('auto_msg', this, ['auto-msg-text', 'auto-msg-sec'])">OTOMATİK MESAJI AÇ</button>
-        </div>
-
-        <div class="card">
-            <span class="title">Hareket Kontrolü</span>
-            <div class="setting-row">
-                <div class="setting-info"><span>Sürekli İlerle</span><small>Bot durmadan ileri yürür</small></div>
-                <button id="sw-move" class="toggle-btn" onclick="toggleSetting('move', this)">KAPALI</button>
-            </div>
-            <div class="setting-row">
-                <div class="setting-info"><span>Zıplayarak Git</span><small>Hareket halindeyken zıplar</small></div>
-                <button id="sw-jump" class="toggle-btn" onclick="toggleSetting('jump', this)">KAPALI</button>
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px">
-                <button class="toggle-btn" onclick="directAction('look', 'left')">⬅️ SOLA DÖN</button>
-                <button class="toggle-btn" onclick="directAction('look', 'right')">➡️ SAĞA DÖN</button>
-                <button class="toggle-btn" onclick="directAction('look', 'back')">🔄 GERİYE DÖN</button>
-                <button class="toggle-btn" onclick="directAction('action', 'swing')">👊 EL SALLA</button>
-            </div>
-        </div>
+        <div class="card">Oto Mesaj: <input id="atxt" class="input-box" placeholder="Mesaj..."><input id="asec" type="number" class="input-box" value="30"><button id="s-msg" class="toggle-btn" onclick="tgl('auto_msg', this, ['atxt', 'asec'])">KAPALI</button></div>
+        <div class="card"><button class="toggle-btn" onclick="act('look', 'left')">SOLA DÖN</button><button class="toggle-btn" onclick="act('look', 'right')">SAĞA DÖN</button><button id="s-move" class="toggle-btn" onclick="tgl('move', this)">OTO YÜRÜ</button></div>
     </div>
-
     <script>
-        const SESSION_ID = 'S_' + Math.random().toString(36).substr(2, 6);
-        let currentBot = null;
-        let botLogs = {}; // Hesap bazlı loglar burada tutulur
-        let slotIndex = 0;
-
-        function changeTab(id, btn) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('show'));
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-            document.getElementById('p-' + id).classList.add('show');
-            btn.classList.add('active');
-            if(id === 'console' && currentBot) renderLogs();
-        }
-
-        function renderLogs() {
-            const out = document.getElementById('log-output');
-            out.innerHTML = (botLogs[currentBot] || []).map(l => `<span class="log-line">${l}</span>`).join('');
-            // Otomatik aşağı kaydırma kapalı. Kullanıcı kendisi kaydırır.
-        }
-
-        async function startBot() {
-            const ip = document.getElementById('in-ip').value;
-            const user = document.getElementById('in-user').value;
-            if(!ip || !user) return;
-            
-            await fetch(`/start?sid=${SESSION_ID}&host=${ip}&user=${user}`);
-            currentBot = user;
-            if(!botLogs[user]) botLogs[user] = ["<span class='system'>Sistem: Bağlantı başlatıldı...</span>"];
-            
-            document.getElementById('console-label').innerText = "Aktif: " + user;
-            changeTab('console', document.querySelectorAll('nav button')[1]);
-        }
-
-        async function sendChat() {
-            const inp = document.getElementById('chat-msg');
-            if(!currentBot || !inp.value) return;
-            await fetch(`/send?sid=${SESSION_ID}&user=${currentBot}&msg=${encodeURIComponent(inp.value)}`);
-            inp.value = '';
-        }
-
-        async function toggleSetting(type, btn, inputIds = []) {
-            if(!currentBot) return;
-            const isOff = !btn.classList.contains('on');
-            let vals = inputIds.map(id => document.getElementById(id).value);
-            
-            await fetch(`/update?sid=${SESSION_ID}&user=${currentBot}&type=${type}&status=${isOff?'on':'off'}&val=${vals.join('|')}`);
-            
-            btn.classList.toggle('on');
-            btn.innerText = btn.classList.contains('on') ? "ÖZELLİK AKTİF" : "ÖZELLİK KAPALI";
-        }
-
-        async function directAction(type, val) {
-            if(!currentBot) return;
-            await fetch(`/update?sid=${SESSION_ID}&user=${currentBot}&type=${type}&val=${val}`);
-        }
-
-        function openCtx(e, s) { e.stopPropagation(); slotIndex=s; const m=document.getElementById('ctx'); m.style.display='block'; m.style.left=e.pageX+'px'; m.style.top=e.pageY+'px'; }
-        function closeCtx() { document.getElementById('ctx').style.display='none'; }
-        async function invAct(act) { await fetch(`/update?sid=${SESSION_ID}&user=${currentBot}&type=inv_action&slot=${slotIndex}&act=${act}`); }
-
-        // ANA DÖNGÜ
+        let sel = null; let logs = {}; const sid = 'S'+Math.random().toString(36).substr(2,4);
+        function tab(id, b) { document.querySelectorAll('.tab').forEach(t=>t.classList.remove('show')); document.querySelectorAll('nav button').forEach(n=>n.classList.remove('active')); document.getElementById('p-'+id).classList.add('show'); b.classList.add('active'); if(id==='console') rlog(); }
+        function rlog() { const o = document.getElementById('log-output'); o.innerHTML = (logs[sel]||[]).map(l=>`<span class="log-line">${l}</span>`).join(''); }
+        async function start() { const i=document.getElementById('ip').value, u=document.getElementById('user').value; await fetch(`/start?sid=${sid}&host=${i}&user=${u}`); sel=u; if(!logs[u]) logs[u]=[]; tab('console', document.querySelectorAll('nav button')[1]); }
+        async function send() { const m=document.getElementById('msg'); if(!sel||!m.value) return; await fetch(`/send?sid=${sid}&user=${sel}&msg=${encodeURIComponent(m.value)}`); m.value=''; }
+        async function tgl(t, b, ids=[]) { if(!sel) return; const ison=b.classList.toggle('on'); const v=ids.map(i=>document.getElementById(i).value).join('|'); await fetch(`/update?sid=${sid}&user=${sel}&type=${t}&status=${ison?'on':'off'}&val=${v}`); b.innerText=ison?'AÇIK':'KAPALI'; }
+        async function act(t, v) { await fetch(`/update?sid=${sid}&user=${sel}&type=${t}&val=${v}`); }
+        let cS = 0; function openInv(e, s) { e.stopPropagation(); cS=s; const m=document.getElementById('ctx'); m.style.display='block'; m.style.left=e.pageX+'px'; m.style.top=e.pageY+'px'; }
+        async function invAct(a) { await fetch(`/update?sid=${sid}&user=${sel}&type=inv_action&slot=${cS}&status=${a}`); }
         setInterval(async () => {
-            try {
-                const res = await fetch(`/data?sid=${SESSION_ID}&user=${currentBot || ''}`);
-                const data = await res.json();
-
-                // Aktif Bot Listesi
-                const bl = document.getElementById('bot-list');
-                bl.innerHTML = data.active.map(b => `
-                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-color:${currentBot==b?'var(--accent)':'var(--border)'}" onclick="currentBot='${b}'; document.getElementById('console-label').innerText='Aktif: ${b}'; renderLogs();">
-                        <strong>${b}</strong>
-                        <button onclick="fetch('/stop?sid=${SESSION_ID}&user=${b}')" style="background:var(--red); color:white; border:none; padding:6px 12px; border-radius:8px; font-size:10px; cursor:pointer">ÇIKIŞ YAP</button>
-                    </div>
-                `).join('');
-
-                if(currentBot && data.botData[currentBot]) {
-                    const b = data.botData[currentBot];
-                    
-                    // Hesap Bazlı Log Birleştirme
-                    if(b.logs && b.logs.length > 0) {
-                        if(!botLogs[currentBot]) botLogs[currentBot] = [];
-                        // Sadece yeni logları ekle
-                        const newLogs = b.logs.filter(l => !botLogs[currentBot].includes(l));
-                        if(newLogs.length > 0) {
-                            botLogs[currentBot].push(...newLogs);
-                            renderLogs();
-                        }
-                    }
-
-                    // Durum Barları
-                    document.getElementById('hp-txt').innerText = `${Math.round(b.health)}/20`;
-                    document.getElementById('hp-bar').style.width = (b.health / 20 * 100) + '%';
-                    document.getElementById('fd-txt').innerText = `${Math.round(b.food)}/20`;
-                    document.getElementById('fd-bar').style.width = (b.food / 20 * 100) + '%';
-
-                    // Envanter Render
-                    const ir = document.getElementById('inv-render');
-                    ir.innerHTML = '';
-                    for(let i=9; i<45; i++) {
-                        const it = b.inventory.find(x => x && x.slot === i);
-                        ir.innerHTML += `<div class="slot" oncontextmenu="openCtx(event, ${i})">${it?`<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png">`:''}</div>`;
-                    }
-                }
-            } catch(e) {}
-        }, 1200);
+            const r = await fetch(`/data?sid=${sid}&user=${sel||''}`); const d = await r.json();
+            document.getElementById('blist').innerHTML = d.active.map(b=>`<div class="card" onclick="sel='${b}';rlog()">${b}</div>`).join('');
+            if(sel && d.botData[sel]) {
+                const b = d.botData[sel]; if(b.logs.length>0) { if(!logs[sel]) logs[sel]=[]; logs[sel].push(...b.logs); rlog(); }
+                document.getElementById('hp').innerText=Math.round(b.health); document.getElementById('fd').innerText=Math.round(b.food);
+                const iG = document.getElementById('inv'); iG.innerHTML = '';
+                for(let i=9; i<45; i++) { const it=b.inventory.find(x=>x.slot===i); iG.innerHTML += `<div class="slot" onclick="openInv(event, ${i})">${it?`<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png">`:''}</div>`; }
+            }
+        }, 1500);
     </script>
 </body>
 </html>
