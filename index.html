@@ -3,72 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bot Master v6</title>
+    <title>Bot Master v8</title>
     <style>
         * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
-        body { background: #0b0e14; color: #adbac7; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        nav { display: flex; background: #1c2128; border-bottom: 1px solid #444c56; height: 50px; }
-        nav button { flex: 1; border: none; background: none; color: #768390; cursor: pointer; font-weight: bold; }
-        nav button.active { color: #538bff; border-bottom: 3px solid #538bff; }
+        body { background: #0b0e14; color: #adbac7; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        nav { display: flex; background: #1c2128; border-bottom: 1px solid #444c56; height: 50px; flex-shrink: 0; }
+        nav button { flex: 1; border: none; background: none; color: #768390; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        nav button.active { color: #538bff; border-bottom: 3px solid #538bff; background: #22272e; }
         .tab { display: none; flex: 1; flex-direction: column; padding: 15px; overflow-y: auto; }
         .active-tab { display: flex; }
-        .card { background: #22272e; padding: 15px; border-radius: 10px; border: 1px solid #444c56; margin-bottom: 15px; }
-        .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #316dca; }
-        .btn-green { background: #347d39; } .btn-red { background: #ae2e24; } .btn-gray { background: #444c56; }
-        input { background: #1c2128; border: 1px solid #444c56; color: #adbac7; padding: 10px; width: 100%; border-radius: 6px; margin-bottom: 8px; }
-        label { font-size: 11px; color: #768390; display: block; margin-bottom: 4px; text-transform: uppercase; }
-        #logbox { height: 200px; background: #000; padding: 10px; overflow-y: auto; color: #adbac7; font-family: monospace; border-radius: 8px; border: 1px solid #444c56; margin-bottom: 10px; }
-        .bot-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #1c2128; border: 1px solid #444c56; margin-top: 5px; border-radius: 8px; }
-        .bot-item.active-bot { border-color: #538bff; background: #22272e; }
+        .card { background: #22272e; padding: 12px; border-radius: 10px; border: 1px solid #444c56; margin-bottom: 10px; }
+        .btn { padding: 8px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; background: #316dca; margin: 2px; }
+        .btn-red { background: #ae2e24; } .btn-green { background: #347d39; }
+        input { background: #1c2128; border: 1px solid #444c56; color: #adbac7; padding: 8px; width: 100%; border-radius: 6px; margin-bottom: 5px; }
+        
+        /* CAN VE AÇLIK BARLARI */
+        .bar-container { display: flex; gap: 2px; margin: 5px 0; flex-wrap: wrap; }
+        .icon { width: 18px; height: 18px; background-size: contain; background-repeat: no-repeat; }
+        .heart { background-image: url('https://minecraft.wiki/images/Heart_PC32.png'); }
+        .heart-half { background-image: url('https://minecraft.wiki/images/Half_Heart_PC32.png'); }
+        .heart-empty { background-image: url('https://minecraft.wiki/images/Empty_Heart_PC32.png'); }
+        .food { background-image: url('https://minecraft.wiki/images/Hunger_PC32.png'); }
+        
+        /* ENVANTER TASARIMI */
+        .inventory-grid { 
+            display: grid; 
+            grid-template-columns: repeat(9, 1fr); 
+            gap: 2px; 
+            background: #8b8b8b; 
+            padding: 4px; 
+            border: 2px solid #373737;
+            width: fit-content;
+            margin: 0 auto;
+        }
+        .inv-slot { 
+            width: 34px; height: 34px; 
+            background: #8b8b8b; 
+            border: 2px solid #373737; 
+            display: flex; align-items: center; justify-content: center;
+            position: relative; cursor: pointer;
+        }
+        .inv-slot:hover { background: #c6c6c6; }
+        .item-count { position: absolute; bottom: 1px; right: 1px; font-size: 10px; color: white; text-shadow: 1px 1px black; }
+        .item-img { width: 24px; height: 24px; }
+
+        #logbox { flex: 1; background: #000; padding: 10px; overflow-y: auto; color: #adbac7; font-family: monospace; border-radius: 8px; border: 1px solid #444c56; }
     </style>
 </head>
 <body>
     <nav>
-        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
+        <button onclick="tab('bots')" id="btn-bots" class="active">BAĞLANTI</button>
         <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
+        <button onclick="tab('stats')" id="btn-stats">İSTATİSTİK</button>
         <button onclick="tab('term')" id="btn-term">KONSOL</button>
     </nav>
 
     <div id="tab-bots" class="tab active-tab">
-        <div class="card">
-            <label>Yeni Bot Bağla</label>
-            <input id="h" placeholder="IP:Port">
-            <input id="u" placeholder="Bot Nick">
-            <input id="v" placeholder="Sürüm (örn: 1.16.5)">
-            <button class="btn btn-green" style="width:100%" onclick="add()">BOTU BAŞLAT</button>
-        </div>
-        <label>Aktif Botlar (Seçmek için tıkla)</label>
+        <div class="card"><input id="h" placeholder="IP:Port"><input id="u" placeholder="Nick"><input id="v" placeholder="Sürüm"><button class="btn btn-green" style="width:100%" onclick="add()">BAŞLAT</button></div>
         <div id="list"></div>
     </div>
 
     <div id="tab-settings" class="tab">
-        <div class="card" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; text-align: center;">
-            <div style="grid-column: 2;"><button class="btn btn-gray" onclick="upd('look','up')">↑</button></div>
-            <button class="btn btn-gray" onclick="upd('look','left')">←</button>
-            <button class="btn btn-gray" onclick="upd('look','front')">BAK</button>
-            <button class="btn btn-gray" onclick="upd('look','right')">→</button>
-            <div style="grid-column: 2;"><button class="btn btn-gray" onclick="upd('look','down')">↓</button></div>
+        <div class="card" style="text-align:center;">
+            <button class="btn" onclick="upd('look','up')">↑</button><br>
+            <button class="btn" onclick="upd('look','left')">←</button> <button class="btn" onclick="upd('look','front')">BAK</button> <button class="btn" onclick="upd('look','right')">→</button><br>
+            <button class="btn" onclick="upd('look','down')">↓</button>
         </div>
-
         <div class="card">
-            <label>Sol Tık (Kazma) Hızı (Sn)</label>
-            <input id="s_mine" type="number" value="1.2" step="0.1">
-            <div style="display: flex; gap: 5px; margin-bottom:15px;">
-                <button class="btn btn-green" style="flex:1" onclick="upd('mining','on','s_mine')">BAŞLAT</button>
-                <button class="btn btn-red" style="flex:1" onclick="upd('mining','off')">DURDUR</button>
-            </div>
+            <label>Kazma Hızı (Sn)</label><input id="s_mine" type="number" value="1.2" step="0.1">
+            <button class="btn btn-green" onclick="upd('mining','on','s_mine')">AÇ</button><button class="btn btn-red" onclick="upd('mining','off')">KAPAT</button>
+            <hr style="border:0; border-top:1px solid #444c56; margin:10px 0;">
+            <label>Oto Mesaj</label><input id="s_msg_txt" placeholder="Mesaj..."><input id="s_msg_time" type="number" value="10">
+            <button class="btn btn-green" onclick="upd_msg('on')">BAŞLAT</button><button class="btn btn-red" onclick="upd_msg('off')">DURDUR</button>
+        </div>
+    </div>
 
-            <label>Oto Mesaj (Enter Düzeltildi)</label>
-            <input id="s_msg_txt" placeholder="Mesaj içeriği...">
-            <input id="s_msg_time" type="number" value="10">
-            <button class="btn btn-green" style="width:100%" onclick="upd_msg('on')">OTO MESAJI AÇ</button>
+    <div id="tab-stats" class="tab">
+        <div class="card">
+            <h4>Durum: <span id="stat-name">Seçilmedi</span></h4>
+            <label>Can:</label> <div id="heart-bar" class="bar-container"></div>
+            <label>Açlık:</label> <div id="food-bar" class="bar-container"></div>
+        </div>
+        <div class="card" style="overflow-x:auto;">
+            <label>Envanter (Slotlara Tıkla)</label>
+            <div id="inv-main" class="inventory-grid"></div>
+            <div style="margin-top:10px;" id="inv-hotbar" class="inventory-grid"></div>
         </div>
     </div>
 
     <div id="tab-term" class="tab">
         <div id="logbox"></div>
-        <div style="display:flex; gap:5px;">
-            <input id="m" placeholder="Mesaj yaz ve Enter'a bas..." style="flex:1; margin:0;" onkeydown="if(event.key==='Enter') doSend()">
+        <div style="display:flex; gap:5px; margin-top:5px;">
+            <input id="m" placeholder="Mesaj..." onkeydown="if(event.key==='Enter') doSend()">
             <button onclick="doSend()" class="btn">GÖNDER</button>
         </div>
     </div>
@@ -77,6 +103,11 @@
         const mySID = localStorage.getItem('sid') || 'sid_'+Math.random().toString(36).substr(2,9);
         localStorage.setItem('sid', mySID);
         let sel = "";
+        let autoScroll = true;
+
+        document.getElementById('logbox').addEventListener('scroll', function() {
+            autoScroll = (this.scrollHeight - this.scrollTop <= this.clientHeight + 10);
+        });
 
         function tab(t) {
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
@@ -87,22 +118,24 @@
 
         async function add() {
             const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
-            if(!h || !u) return alert("IP ve Nick gir!");
             await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
             sel = u; tab('term');
         }
 
-        // BAĞLANTI KESME FONKSİYONU
-        async function quitBot(name) {
-            if(!confirm(name + " bağlantısı kesilsin mi?")) return;
-            await fetch(`/stop?sid=${mySID}&user=${name}`);
-            if(sel === name) sel = "";
-        }
-
         async function upd(type, status, inputId) {
-            if(!sel) return alert("Önce listeden bir bot seç!");
+            if(!sel) return;
             let sec = inputId ? document.getElementById(inputId).value : 1;
             await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&sec=${sec}${type==='look'?'&dir='+status:''}`);
+        }
+
+        async function upd_msg(status) {
+            const txt = document.getElementById('s_msg_txt').value;
+            const sec = document.getElementById('s_msg_time').value;
+            await fetch(`/update?sid=${mySID}&user=${sel}&type=automsg&status=${status}&msg=${encodeURIComponent(txt)}&sec=${sec}`);
+        }
+
+        async function invAction(slot, act) {
+            await fetch(`/update?sid=${mySID}&user=${sel}&type=inv_action&slot=${slot}&act=${act}`);
         }
 
         async function doSend() {
@@ -112,26 +145,68 @@
             i.value = "";
         }
 
+        function drawBars(val, max, type) {
+            let html = '';
+            for(let i=0; i<max/2; i++) {
+                let cls = (type==='heart') ? 'heart-empty' : 'food-empty';
+                if (val >= (i+1)*2) cls = type;
+                else if (val >= i*2 + 1) cls = type + '-half';
+                html += `<div class="icon ${cls}"></div>`;
+            }
+            return html;
+        }
+
         setInterval(async () => {
             try {
-                const r = await fetch(`/data?sid=${mySID}`);
+                const r = await fetch(`/data?sid=${mySID}&user=${sel}`);
                 const d = await r.json();
                 
-                // BOT LİSTESİ VE BAĞLANTI KES BUTONU
                 document.getElementById('list').innerHTML = d.active.map(n => `
-                    <div class="bot-item ${sel==n?'active-bot':''}" onclick="sel='${n}'">
+                    <div style="display:flex; justify-content:space-between; padding:10px; background:#1c2128; border:1px solid ${sel==n?'#538bff':'#444c56'}; margin-top:5px; border-radius:8px;" onclick="sel='${n}'">
                         <span>${n}</span>
-                        <button class="btn btn-red" style="padding:5px 10px; font-size:10px;" onclick="event.stopPropagation(); quitBot('${n}')">KES</button>
+                        <button class="btn btn-red" style="font-size:10px;" onclick="fetch('/stop?sid=${mySID}&user=${n}')">KES</button>
                     </div>
                 `).join('');
 
-                if(sel && d.logs[sel]) {
+                if(sel && d.botData[sel]) {
+                    const b = d.botData[sel];
+                    document.getElementById('stat-name').innerText = sel;
+                    document.getElementById('heart-bar').innerHTML = drawBars(b.health, 20, 'heart');
+                    document.getElementById('food-bar').innerHTML = drawBars(b.food, 20, 'food');
+
+                    // Logbox güncelleme
                     const lb = document.getElementById('logbox');
-                    lb.innerHTML = d.logs[sel].join('<br>');
-                    lb.scrollTop = lb.scrollHeight;
+                    lb.innerHTML = b.logs.join('<br>');
+                    if(autoScroll) lb.scrollTop = lb.scrollHeight;
+
+                    // Envanter çizimi
+                    let mainInv = '', hotbar = '';
+                    for(let i=9; i<=35; i++) mainInv += drawSlot(b.inventory[i], i);
+                    for(let i=36; i<=44; i++) hotbar += drawSlot(b.inventory[i], i);
+                    document.getElementById('inv-main').innerHTML = mainInv;
+                    document.getElementById('inv-hotbar').innerHTML = hotbar;
                 }
             } catch(e) {}
-        }, 1000);
+        }, 1500);
+
+        function drawSlot(item, slot) {
+            let content = '';
+            if(item) {
+                // Minecraft item ikonları için CDN kullanımı
+                content = `<img class="item-img" src="https://minecraft.wiki/images/${item.name.charAt(0).toUpperCase() + item.name.slice(1).replace(/_/g, '_')}.png" onerror="this.src='https://minecraft.wiki/images/Barrier_PC.png'">
+                           <span class="item-count">${item.count > 1 ? item.count : ''}</span>`;
+            }
+            return `<div class="inv-slot" onclick="showInvMenu(${slot}, '${item?item.name:''}')">${content}</div>`;
+        }
+
+        function showInvMenu(slot, name) {
+            if(!name) return;
+            const act = prompt(`${name} için işlem seç:\n1: Hepsini At\n2: 1 Tane At\n3: Sol Tık\n4: Sağ Tık`);
+            if(act == '1') invAction(slot, 'drop_all');
+            if(act == '2') invAction(slot, 'drop_one');
+            if(act == '3') invAction(slot, 'click_left');
+            if(act == '4') invAction(slot, 'click_right');
+        }
     </script>
 </body>
 </html>
