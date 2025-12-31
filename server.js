@@ -4,7 +4,7 @@ const url = require('url');
 const fs = require('fs');
 const path = require('path');
 
-let sessions = {}; 
+let sessions = {}; // Yapı: { "tarayici_id": { "bot_nick": bot_objesi } }
 let logs = {}; 
 let configs = {}; 
 
@@ -14,7 +14,7 @@ function startBot(sid, host, user, ver) {
 
     const key = sid + "_" + user;
     const [ip, port] = host.split(':');
-    logs[key] = ["<b style='color:gray'>Bağlanılıyor...</b>"];
+    logs[key] = ["<b style='color:gray'>Bağlantı isteği gönderildi...</b>"];
 
     const bot = mineflayer.createBot({
         host: ip, port: parseInt(port) || 25565, 
@@ -24,35 +24,21 @@ function startBot(sid, host, user, ver) {
     sessions[sid][user] = bot;
     configs[key] = { msgT: null, afkT: null, mining: false };
 
-    // Sadece sunucunun gönderdiği asıl metni ayıklar
-    const getCleanReason = (reason) => {
-        if (!reason) return "Sunucu bağlantıyı kesti.";
-        if (typeof reason === 'string') return reason;
-        try {
-            if (reason.extra) return reason.extra.map(e => e.text || "").join("");
-            if (reason.text) return reason.text;
-        } catch (e) {}
-        return "Bağlantı kesildi.";
-    };
-
-    bot.on('login', () => logs[key].push("<b style='color:#2ecc71'>Giriş Başarılı!</b>"));
+    bot.on('login', () => logs[key].push("<b style='color:#2ecc71'>Bot oyuna girdi!</b>"));
 
     bot.on('kicked', (reason) => {
-        const msg = getCleanReason(reason);
-        logs[key].push("<b style='color:#ff4757; font-size:14px;'>Atıldı: " + msg + "</b>");
+        logs[key].push("<b style='color:#ff4757'>Atıldı: Sunucu bağlantıyı kesti.</b>");
         delete sessions[sid][user];
     });
 
-    // Hata ve sonlanma mesajlarını tek satıra indirdim, kalabalık yapmaz
     bot.on('error', (err) => {
-        if(!err.message.includes("kicked")) logs[key].push("<b style='color:#ff4757'>Hata: " + err.message + "</b>");
+        logs[key].push("<b style='color:#ff4757'>Hata: " + err.message + "</b>");
+        delete sessions[sid][user];
     });
 
     bot.on('end', () => {
-        if (sessions[sid]?.[user]) {
-            logs[key].push("<b style='color:#ffa502'>Bağlantı bitti.</b>");
-            delete sessions[sid][user];
-        }
+        logs[key].push("<b style='color:#ffa502'>Bağlantı sonlandırıldı.</b>");
+        delete sessions[sid][user];
     });
 
     bot.on('message', (m) => {
@@ -64,14 +50,25 @@ function startBot(sid, host, user, ver) {
 http.createServer((req, res) => {
     const q = url.parse(req.url, true).query;
     const p = url.parse(req.url, true).pathname;
-    const sid = q.sid;
-    const key = sid + "_" + q.user;
+    const sid = q.sid; // Tarayıcıdan gelen özel kimlik
     const bot = sessions[sid]?.[q.user];
 
     if (p === '/start' && sid) { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
-    if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
+    
+    // ANINDA BAĞLANTIYI KES
+    if (p === '/stop' && bot) {
+        bot.quit();
+        delete sessions[sid][q.user];
+        return res.end("ok");
+    }
+
+    if (p === '/send' && bot) {
+        bot.chat(decodeURIComponent(q.msg));
+        return res.end("ok");
+    }
 
     if (p === '/update' && bot) {
+        const key = sid + "_" + q.user;
         const conf = configs[key];
         if (q.type === 'msg') {
             clearInterval(conf.msgT);
@@ -112,3 +109,4 @@ http.createServer((req, res) => {
     let f = path.join(__dirname, p === '/' ? 'index.html' : p);
     fs.readFile(f, (err, data) => res.end(data));
 }).listen(process.env.PORT || 10000);
+                
