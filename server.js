@@ -14,7 +14,8 @@ function startBot(sid, host, user, ver) {
 
     const key = sid + "_" + user;
     const [ip, port] = host.split(':');
-    logs[key] = ["Bağlantı kuruluyor..."];
+    
+    logs[key] = ["<b style='color:yellow'>[SİSTEM] Bağlantı başlatılıyor...</b>"];
 
     const bot = mineflayer.createBot({
         host: ip, 
@@ -22,51 +23,43 @@ function startBot(sid, host, user, ver) {
         username: user, 
         version: ver, 
         auth: 'offline',
-        checkTimeoutInterval: 60000
+        checkTimeoutInterval: 60000 // 60 saniye sessizlikte bağlantıyı kopar
     });
 
     sessions[sid][user] = bot;
-    configs[key] = { msgT: null };
+    configs[key] = { msgT: null, afkT: null, mining: false };
 
-    // --- KRİTİK MESAJ İŞLEYİCİ ---
+    // MESAJ İŞLEYİCİ
     const parseReason = (reason) => {
-        if (!reason) return "Bilinmeyen bir sebeple bağlantı kesildi.";
+        if (!reason) return "Bilinmeyen bir sebep (Bağlantı koptu).";
         if (typeof reason === 'string') return reason;
-        
-        // Minecraft'ın JSON formatındaki mesajlarını (extra/text) düz metne çevirir
         try {
             if (reason.extra) return reason.extra.map(e => e.text || "").join("");
             if (reason.text) return reason.text;
-            if (reason.translate) return reason.translate;
-        } catch (e) {
-            return "Hata kodu çözülemedi: " + JSON.stringify(reason);
-        }
-        return JSON.stringify(reason);
+        } catch (e) { return JSON.stringify(reason); }
+        return "Bağlantı kesildi.";
     };
 
     bot.on('login', () => {
-        logs[key].push("<b style='color:#2ecc71'>[SİSTEM] Sunucuya giriş başarılı!</b>");
+        logs[key].push("<b style='color:#2ecc71'>[GİRİŞ] Sunucuya başarıyla bağlanıldı!</b>");
     });
 
+    // SUNUCU ATTIĞINDA ÇALIŞIR
     bot.on('kicked', (reason) => {
-        const cleanMessage = parseReason(reason);
-        logs[key].push("<b style='color:#ff4757'>[ATILDI] " + cleanMessage + "</b>");
-        delete sessions[sid][user];
+        const msg = parseReason(reason);
+        logs[key].push("<b style='color:#ff4757; font-size:15px;'>[ATILDI] " + msg + "</b>");
+        // Hemen silme ki kullanıcı sebebi okuyabilsin
+        setTimeout(() => { if(sessions[sid]) delete sessions[sid][user]; }, 5000);
+    });
+
+    // BAĞLANTI TAMAMEN KOPTUĞUNDA ÇALIŞIR
+    bot.on('end', () => {
+        logs[key].push("<b style='color:#ffa502'>[KOPTU] Bağlantı tamamen sonlandı.</b>");
+        setTimeout(() => { if(sessions[sid]) delete sessions[sid][user]; }, 5000);
     });
 
     bot.on('error', (err) => {
-        let errorMsg = err.message;
-        if (errorMsg.includes("unsupported minecraft version")) errorMsg = "Sürüm hatalı veya desteklenmiyor!";
-        logs[key].push("<b style='color:#ff4757'>[HATA] " + errorMsg + "</b>");
-        delete sessions[sid][user];
-    });
-
-    bot.on('end', () => {
-        // Eğer bot listeden silinmemişse ama kapandıysa bilgilendir
-        if (sessions[sid]?.[user]) {
-            logs[key].push("<b style='color:#ffa502'>[BİLGİ] Botun sunucuyla bağlantısı kesildi.</b>");
-            delete sessions[sid][user];
-        }
+        logs[key].push("<b style='color:#ff4757'>[HATA] " + err.message + "</b>");
     });
 
     bot.on('message', (m) => {
@@ -75,35 +68,61 @@ function startBot(sid, host, user, ver) {
     });
 }
 
-// HTTP API
 http.createServer((req, res) => {
     const q = url.parse(req.url, true).query;
     const p = url.parse(req.url, true).pathname;
     const sid = q.sid;
+    const key = sid + "_" + q.user;
+    const bot = sessions[sid]?.[q.user];
 
     if (p === '/start' && sid) { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
-    if (p === '/send' && sid) {
-        if (sessions[sid]?.[q.user]) { sessions[sid][q.user].chat(decodeURIComponent(q.msg)); return res.end("ok"); }
-        return res.end("error");
+    
+    if (p === '/send' && bot) {
+        bot.chat(decodeURIComponent(q.msg));
+        return res.end("ok");
     }
-    if (p === '/update' && sid) {
-        const key = sid + "_" + q.user;
-        const b = sessions[sid]?.[q.user];
-        if (!b) return res.end("offline");
-        clearInterval(configs[key].msgT);
-        if (q.type === 'msg' && q.status === 'on') {
-            configs[key].msgT = setInterval(() => b.chat(decodeURIComponent(q.val)), q.sec * 1000);
+
+    if (p === '/update' && bot) {
+        const conf = configs[key];
+        if (q.type === 'msg') {
+            clearInterval(conf.msgT);
+            if (q.status === 'on') conf.msgT = setInterval(() => bot.chat(decodeURIComponent(q.val)), q.sec * 1000);
+        } 
+        else if (q.type === 'afk') {
+            clearInterval(conf.afkT);
+            if (q.status === 'on') {
+                conf.afkT = setInterval(() => {
+                    bot.look(Math.random() * 3.14, (Math.random() - 0.5) * 1.5);
+                    bot.setControlState('jump', true);
+                    setTimeout(() => bot.setControlState('jump', false), 400);
+                }, 10000);
+            }
+        }
+        else if (q.type === 'mining') {
+            if (q.status === 'on') {
+                conf.mining = true;
+                const mine = async () => {
+                    if (!conf.mining || !sessions[sid]?.[q.user]) return;
+                    const bl = bot.blockAtCursor(4);
+                    if (bl && bl.type !== 0) {
+                        try { await bot.lookAt(bl.position); await bot.dig(bl); } catch(e) {}
+                    }
+                    setTimeout(mine, 300);
+                }; mine();
+            } else conf.mining = false;
         }
         return res.end("ok");
     }
+
     if (p === '/data' && sid) {
         const active = sessions[sid] ? Object.keys(sessions[sid]) : [];
         const sLogs = {};
-        active.forEach(u => { sLogs[u] = logs[sid + "_" + u] || []; });
+        // Loglar silinse bile son hali burada kalsın
+        Object.keys(logs).forEach(k => { if(k.startsWith(sid)) sLogs[k.split('_')[1]] = logs[k]; });
         res.setHeader('Content-Type', 'application/json');
         return res.end(JSON.stringify({ active, logs: sLogs }));
     }
+    
     let f = path.join(__dirname, p === '/' ? 'index.html' : p);
     fs.readFile(f, (err, data) => res.end(data));
 }).listen(process.env.PORT || 10000);
-    
