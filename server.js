@@ -14,7 +14,7 @@ function startBot(sid, host, user, ver) {
 
     const key = sid + "_" + user;
     const [ip, port] = host.split(':');
-    logs[key] = ["<b style='color:gray'>[SİSTEM] Bağlantı başlatıldı...</b>"];
+    logs[key] = ["<b style='color:gray'>[SİSTEM] Başlatılıyor...</b>"];
 
     const bot = mineflayer.createBot({
         host: ip, port: parseInt(port) || 25565, 
@@ -34,7 +34,7 @@ function startBot(sid, host, user, ver) {
     bot.on('error', (e) => { logs[key].push("<b style='color:#ff4757'>[HATA] " + e.message + "</b>"); delete sessions[sid][user]; });
     bot.on('message', (m) => {
         logs[key].push(m.toHTML());
-        if(logs[key].length > 50) logs[key].shift();
+        if(logs[key].length > 40) logs[key].shift();
     });
 }
 
