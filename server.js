@@ -3,50 +3,37 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-// Render'ın otomatik atadığı portu kullanmak zorunludur
 const PORT = process.env.PORT || 10000;
-
 const bots = {};
 const botData = {};
 
-// STATIK DOSYALAR (HTML dosyanın adının index.html olduğunu varsayıyorum)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// RENDER YAŞAM SİNYALİ (Bu rota olmazsa Render projeyi kapatır)
+// index.html dosyasını ana dizinden oku
 app.get('/', (req, res) => {
-    res.send('BotMaster Backend Aktif - Render Uyumluluk Modu');
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// BOT BAŞLATMA
 app.get('/start', (req, res) => {
     const { sid, host, user } = req.query;
-    if (!host || !user) return res.send({ status: 'error', msg: 'Eksik bilgi' });
+    if (!host || !user) return res.send({ status: 'error' });
 
     const [ip, port] = host.split(':');
-
-    // Eğer bot zaten varsa temizle
-    if (bots[user]) {
-        try { bots[user].quit(); } catch(e) {}
-    }
+    if (bots[user]) { try { bots[user].quit(); } catch(e) {} }
 
     const bot = mineflayer.createBot({
         host: ip,
         port: parseInt(port) || 25565,
-        username: user
+        username: user,
+        checkTimeoutInterval: 60000
     });
 
-    // Hesap bazlı veriyi sıfırla
     botData[user] = {
-        logs: [`[Sistem] ${user} için oturum açıldı.`],
-        health: 20,
-        food: 20,
-        inventory: [],
-        intervals: {}
+        logs: [`[Sistem] ${user} oturumu hazır.`],
+        health: 20, food: 20, inventory: [], intervals: {}
     };
 
     bot.on('message', (jsonMsg) => {
-        const msg = jsonMsg.toString();
-        if (msg.trim()) {
+        const msg = jsonMsg.toString().trim();
+        if (msg && botData[user]) {
             botData[user].logs.push(msg);
             if (botData[user].logs.length > 50) botData[user].logs.shift();
         }
@@ -59,7 +46,7 @@ app.get('/start', (req, res) => {
         }
     });
 
-    bot.on('spawn', () => botData[user].logs.push(">> Sunucuya başarıyla girildi!"));
+    bot.on('spawn', () => botData[user].logs.push(">> Giriş yapıldı!"));
     bot.on('error', (err) => botData[user].logs.push("!! Hata: " + err.message));
     bot.on('kicked', (reason) => botData[user].logs.push("!! Atıldı: " + reason));
 
@@ -67,7 +54,6 @@ app.get('/start', (req, res) => {
     res.send({ status: 'ok' });
 });
 
-// GÜNCELLEME VE AYARLAR
 app.get('/update', (req, res) => {
     const { user, type, status, val } = req.query;
     const bot = bots[user];
@@ -84,26 +70,15 @@ app.get('/update', (req, res) => {
                 data.intervals.spam = setInterval(() => bot.chat(text), ms);
             }
             break;
-
         case 'look':
-            const currentYaw = bot.entity.yaw;
-            if (val === 'left') bot.look(currentYaw + 1.57, 0);
-            if (val === 'right') bot.look(currentYaw - 1.57, 0);
-            if (val === 'back') bot.look(currentYaw + 3.14, 0);
+            const yaw = bot.entity.yaw;
+            if (val === 'left') bot.look(yaw + 1.57, 0);
+            if (val === 'right') bot.look(yaw - 1.57, 0);
+            if (val === 'back') bot.look(yaw + 3.14, 0);
             break;
-
-        case 'move':
-            bot.setControlState('forward', status === 'on');
-            break;
-
-        case 'jump':
-            bot.setControlState('jump', status === 'on');
-            break;
-
-        case 'action':
-            if (val === 'swing') bot.swingArm();
-            break;
-
+        case 'move': bot.setControlState('forward', status === 'on'); break;
+        case 'jump': bot.setControlState('jump', status === 'on'); break;
+        case 'action': if (val === 'swing') bot.swingArm(); break;
         case 'inv_action':
             const item = bot.inventory.slots[val];
             if (item) {
@@ -115,28 +90,23 @@ app.get('/update', (req, res) => {
     res.send({ status: 'ok' });
 });
 
-// VERİ SENKRONİZASYONU
 app.get('/data', (req, res) => {
     const { user } = req.query;
     const response = { active: Object.keys(bots), botData: {} };
-
     if (user && bots[user] && botData[user]) {
         response.botData[user] = {
-            logs: [...botData[user].logs], // Logları kopyala
+            logs: [...botData[user].logs],
             health: bots[user].health || 20,
             food: bots[user].food || 20,
             inventory: bots[user].inventory.items().map(i => ({
                 name: i.name, count: i.count, slot: i.slot
             }))
         };
-        // Logları temizleme: İstersen temizle, istersen HTML tarafında kontrol et. 
-        // Burada temizliyoruz ki HTML sadece yenileri alsın.
         botData[user].logs = [];
     }
     res.json(response);
 });
 
-// DURDURMA
 app.get('/stop', (req, res) => {
     const { user } = req.query;
     if (bots[user]) {
@@ -148,8 +118,6 @@ app.get('/stop', (req, res) => {
     res.send({ status: 'ok' });
 });
 
-// SUNUCUYU BAŞLAT
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Render Uyumluluk Modu: Port ${PORT} dinleniyor.`);
+    console.log(`Sunucu ${PORT} üzerinde aktif.`);
 });
-                                
