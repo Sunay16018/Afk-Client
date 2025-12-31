@@ -14,7 +14,7 @@
         }
 
         /* [NAVİGASYON] */
-        nav { display: flex; background: var(--panel); height: 55px; border-bottom: 1px solid var(--border); padding: 0 10px; align-items: center; gap: 5px; }
+        nav { display: flex; background: var(--panel); height: 55px; border-bottom: 1px solid var(--border); padding: 0 10px; align-items: center; gap: 5px; flex-shrink: 0; }
         nav button { 
             flex: 1; background: transparent; border: 1px solid transparent; color: #71717a; 
             font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px; border-radius: 6px; transition: 0.2s; 
@@ -32,25 +32,27 @@
         }
         .title { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px; display: block; opacity: 0.8; }
 
-        /* [KONSOL - ÖZEL] */
+        /* [KONSOL - SABİT BOYUT DÜZENLEMESİ] */
+        #p-console { height: calc(100vh - 55px); overflow: hidden; padding: 10px; }
         .console-box { 
-            flex: 1; display: flex; flex-direction: column; background: #000; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
-            font-family: 'Consolas', 'Monaco', monospace; 
+            flex: 1; display: flex; flex-direction: column; background: #000; border: 2px solid var(--border); border-radius: 12px; overflow: hidden;
+            font-family: 'Consolas', 'Monaco', monospace; height: 100%; box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
         #log-output { 
-            flex: 1; overflow-y: auto; padding: 12px; font-size: 13px; line-height: 1.6; color: #d4d4d8; 
-            scrollbar-width: thin; scrollbar-color: #3f3f46 #18181b;
+            flex: 1; overflow-y: auto; padding: 15px; font-size: 13px; line-height: 1.6; color: #d4d4d8; 
+            scrollbar-width: thin; scrollbar-color: var(--accent) #18181b; background: linear-gradient(to bottom, #000, #050505);
         }
-        /* Konsol renkli yazılar için span ayarları */
-        #log-output span { white-space: pre-wrap; word-break: break-word; }
+        #log-output span { white-space: pre-wrap; word-break: break-word; display: block; margin-bottom: 2px; border-bottom: 1px solid rgba(255,255,255,0.03); }
 
-        .chat-input-area { display: flex; border-top: 1px solid var(--border); background: #18181b; padding: 8px; }
+        .chat-input-area { display: flex; border-top: 1px solid var(--border); background: #111; padding: 12px; gap: 8px; }
         .chat-input-area input { 
-            flex: 1; background: #27272a; border: none; color: white; padding: 10px; border-radius: 6px; font-family: inherit; font-size: 13px; 
+            flex: 1; background: #1d1d20; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; font-family: inherit; font-size: 14px; transition: 0.2s;
         }
+        .chat-input-area input:focus { border-color: var(--accent); background: #222; }
         .chat-input-area button {
-            background: var(--accent); color: white; border: none; padding: 0 20px; margin-left: 8px; border-radius: 6px; font-weight: bold; cursor: pointer;
+            background: var(--accent); color: white; border: none; padding: 0 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;
         }
+        .chat-input-area button:hover { opacity: 0.9; transform: scale(0.98); }
 
         /* [GİRDİLER] */
         input.main-input { width: 100%; padding: 12px; background: #27272a; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 10px; transition: 0.2s; }
@@ -118,12 +120,12 @@
         </div>
     </div>
 
-    <div id="p-console" class="tab" style="padding: 10px; height: 100%;">
+    <div id="p-console" class="tab">
         <div class="console-box">
             <div id="log-output"></div>
             <div class="chat-input-area">
-                <input id="chat-in" placeholder="Sohbete yaz veya komut gönder..." onkeydown="if(event.key==='Enter') sendChat()">
-                <button onclick="sendChat()">></button>
+                <input id="chat-in" placeholder="Mesaj gönder..." onkeydown="if(event.key==='Enter') sendChat()">
+                <button onclick="sendChat()">GÖNDER</button>
             </div>
         </div>
     </div>
@@ -131,14 +133,11 @@
     <div id="p-inv" class="tab">
         <div class="card">
             <span class="title">Bot Durumu</span>
-            
             <div class="stat-row"><span>Can</span><span id="txt-hp">20</span></div>
             <div class="progress-bg"><div id="bar-hp" class="progress-fill hp" style="width:100%"></div></div>
-            
             <div class="stat-row" style="margin-top:10px;"><span>Açlık</span><span id="txt-fd">20</span></div>
             <div class="progress-bg"><div id="bar-fd" class="progress-fill fd" style="width:100%"></div></div>
         </div>
-
         <div class="card">
             <span class="title">Envanter Yönetimi</span>
             <div id="inv-grid" class="inv-grid"></div>
@@ -148,7 +147,6 @@
     <div id="p-settings" class="tab">
         <div class="card">
             <span class="title">Otomasyon</span>
-            
             <div class="setting-item">
                 <div class="setting-info"><h4>Oto-Kazma</h4><p>Önündeki bloğu kırar</p></div>
                 <div>
@@ -156,12 +154,10 @@
                     <button class="toggle" onclick="toggle('mining', 'val-mine', this)">KAPALI</button>
                 </div>
             </div>
-
             <div class="setting-item">
                 <div class="setting-info"><h4>Anti-AFK</h4><p>Rastgele etrafa bakar</p></div>
                 <button class="toggle" onclick="toggle('afk', null, this)">KAPALI</button>
             </div>
-
             <div class="setting-item">
                 <div class="setting-info"><h4>Oto-Vurma (Clicker)</h4><p>Sürekli saldırır</p></div>
                 <div>
@@ -175,34 +171,23 @@
     <script>
         const sid = localStorage.getItem('sid') || 's_'+Math.random().toString(36).substr(2);
         localStorage.setItem('sid', sid);
-        
-        let sel = null; 
-        let ctxSlot = null;
-        let autoScroll = true;
+        let sel = null; let ctxSlot = null; let autoScroll = true;
 
-        // UI Geçişleri
         function tab(id) {
             document.querySelectorAll('.tab').forEach(e => e.classList.remove('show'));
             document.querySelectorAll('nav button').forEach(e => e.classList.remove('active'));
             document.getElementById('p-'+id).classList.add('show');
             document.getElementById('t-'+id).classList.add('active');
+            if(id === 'console') {
+                const logDiv = document.getElementById('log-output');
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
         }
 
-        function openCtx(e, s) { 
-            e.stopPropagation(); ctxSlot=s; 
-            const m=document.getElementById('ctx'); 
-            m.style.display='block'; 
-            m.style.left=e.pageX+'px'; 
-            m.style.top=e.pageY+'px'; 
-        }
+        function openCtx(e, s) { e.stopPropagation(); ctxSlot=s; const m=document.getElementById('ctx'); m.style.display='block'; m.style.left=e.pageX+'px'; m.style.top=e.pageY+'px'; }
         function closeCtx() { document.getElementById('ctx').style.display='none'; }
+        document.getElementById('log-output').addEventListener('scroll', function() { autoScroll = (this.scrollTop + this.clientHeight >= this.scrollHeight - 20); });
 
-        // Konsol Kaydırma Kontrolü
-        document.getElementById('log-output').addEventListener('scroll', function() {
-            autoScroll = (this.scrollTop + this.clientHeight >= this.scrollHeight - 20);
-        });
-
-        // --- İSTEKLER ---
         async function startBot() {
             const h = document.getElementById('host').value, u = document.getElementById('user').value;
             if(!h || !u) return alert("Bilgileri girin!");
@@ -219,74 +204,49 @@
             i.value = '';
         }
 
-        async function act(type) {
-            await fetch(`/update?sid=${sid}&user=${sel}&type=inv_action&slot=${ctxSlot}&act=${type}`);
-            closeCtx();
-        }
+        async function act(type) { await fetch(`/update?sid=${sid}&user=${sel}&type=inv_action&slot=${ctxSlot}&act=${type}`); closeCtx(); }
 
         async function toggle(type, valId, btn) {
             if(!sel) return alert("Önce botu bağlayın!");
             const isActive = btn.classList.contains('on');
             const status = isActive ? 'off' : 'on';
             const val = valId ? document.getElementById(valId).value : 0;
-            
             await fetch(`/update?sid=${sid}&user=${sel}&type=${type}&status=${status}&val=${val}`);
-            
-            if(!isActive) { btn.classList.add('on'); btn.innerText = "AÇIK"; }
-            else { btn.classList.remove('on'); btn.innerText = "KAPALI"; }
+            btn.classList.toggle('on');
+            btn.innerText = btn.classList.contains('on') ? "AÇIK" : "KAPALI";
         }
 
-        // --- DÖNGÜ ---
         setInterval(async () => {
             try {
                 const res = await fetch(`/data?sid=${sid}&user=${sel || ''}`);
                 const data = await res.json();
-
-                // Bot Listesi
                 const list = document.getElementById('bot-list');
                 if(data.active.length === 0) list.innerHTML = "Aktif bot yok.";
-                else list.innerHTML = data.active.map(b => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:${sel==b?'#27272a':'transparent'}; border-radius:6px; margin-bottom:5px; border:1px solid ${sel==b?'var(--accent)':'#27272a'}; cursor:pointer;" onclick="sel='${b}'">
-                        <span style="font-weight:bold; color:white;">${b}</span>
-                        <button style="background:var(--red); border:none; color:white; font-size:10px; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="event.stopPropagation(); stopBot('${b}')">ÇIKIŞ</button>
-                    </div>
-                `).join('');
+                else list.innerHTML = data.active.map(b => `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:${sel==b?'#27272a':'transparent'}; border-radius:6px; margin-bottom:5px; border:1px solid ${sel==b?'var(--accent)':'#27272a'}; cursor:pointer;" onclick="sel='${b}'"><span style="font-weight:bold; color:white;">${b}</span><button style="background:var(--red); border:none; color:white; font-size:10px; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="event.stopPropagation(); stopBot('${b}')">ÇIKIŞ</button></div>`).join('');
 
                 if(sel && data.botData[sel]) {
                     const b = data.botData[sel];
-                    
-                    // Loglar (HTML olarak render et)
                     const logDiv = document.getElementById('log-output');
-                    // Sadece içerik değişmişse güncelle (Performans için basit kontrol eklenebilir ama şimdilik direkt yazıyoruz)
-                    logDiv.innerHTML = b.logs.join('<br>');
+                    logDiv.innerHTML = b.logs.join('');
                     if(autoScroll) logDiv.scrollTop = logDiv.scrollHeight;
-
-                    // Durum
-                    const hpP = (b.health / 20) * 100;
-                    const fdP = (b.food / 20) * 100;
-                    document.getElementById('bar-hp').style.width = hpP + '%';
+                    document.getElementById('bar-hp').style.width = (b.health / 20 * 100) + '%';
                     document.getElementById('txt-hp').innerText = Math.round(b.health);
-                    document.getElementById('bar-fd').style.width = fdP + '%';
+                    document.getElementById('bar-fd').style.width = (b.food / 20 * 100) + '%';
                     document.getElementById('txt-fd').innerText = Math.round(b.food);
-
-                    // Envanter
                     const invDiv = document.getElementById('inv-grid');
                     invDiv.innerHTML = ''; 
                     for(let i=9; i<45; i++) {
                         const item = b.inventory.find(x => x && x.slot === i);
                         let html = `<div class="slot" onclick="${item ? `openCtx(event, ${i})` : ''}" title="${item ? item.name : ''}">`;
                         if(item) {
-                            // 1.16.1 Assets (Stabil)
                             html += `<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${item.name}.png">`;
                             if(item.count > 1) html += `<span class="count">${item.count}</span>`;
                         }
-                        html += `</div>`;
-                        invDiv.innerHTML += html;
+                        invDiv.innerHTML += html + `</div>`;
                     }
                 }
             } catch(e) {}
         }, 1000);
     </script>
 </body>
-                </html>
-        
+</html>
