@@ -37,6 +37,14 @@ http.createServer((req, res) => {
     if (p === '/stop' && bot) { bot.quit(); delete sessions[sid][q.user]; return res.end("ok"); }
     if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
     if (p === '/update' && bot) {
+        if (q.type === 'inv_action') {
+            const slot = parseInt(q.slot);
+            const item = bot.inventory.slots[slot];
+            if (item) {
+                if (q.act === 'drop') bot.tossStack(item);
+                if (q.act === 'use') bot.activateItem();
+            }
+        }
         if (q.type === 'mining') {
             const conf = configs[sid + "_" + q.user];
             clearInterval(conf.mining);
@@ -48,10 +56,6 @@ http.createServer((req, res) => {
                 }, parseFloat(q.sec) * 1000);
             }
         }
-        if (q.type === 'inv_action') {
-            const item = bot.inventory.slots[parseInt(q.slot)];
-            if (item) bot.tossStack(item);
-        }
         return res.end("ok");
     }
     if (p === '/data' && sid) {
@@ -60,8 +64,8 @@ http.createServer((req, res) => {
         if (q.user && bot) {
             botData[q.user] = {
                 logs: logs[sid + "_" + q.user] || [],
-                health: bot.health,
-                food: bot.food,
+                health: bot.health || 20,
+                food: bot.food || 20,
                 inventory: bot.inventory.slots.map(s => s ? { name: s.name, count: s.count, slot: s.slot } : null)
             };
         }
