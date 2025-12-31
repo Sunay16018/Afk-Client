@@ -2,16 +2,16 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Master Panel v17</title>
+    <title>Kararlı Bot Paneli</title>
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
         nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
         nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; }
         .tab { display: none; flex: 1; flex-direction: column; padding: 12px; overflow-y: auto; }
         .active-tab { display: flex; }
-        #logbox { height: 300px; background: #000; border: 1px solid #30363d; padding: 10px; overflow-y: auto; color: #2ecc71; font-family: monospace; border-radius: 5px; margin-bottom: 10px; }
+        #logbox { flex: 1; background: #000; border: 1px solid #30363d; padding: 10px; overflow-y: auto; color: #2ecc71; font-family: monospace; border-radius: 5px; margin-bottom: 10px; line-height: 1.5; }
         .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
         input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; width: 100%; margin: 5px 0; border-radius: 5px; }
         .btn { padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
@@ -26,10 +26,10 @@
 
     <div id="tab-bots" class="tab active-tab">
         <div class="card">
-            <input id="h" placeholder="IP:Port (örn: oyna.pixel.com)">
-            <input id="u" placeholder="Bot Nick">
-            <input id="v" placeholder="Sürüm (örn: 1.20.1 veya 1.8.8)">
-            <button class="btn" style="background:#238636; width:100%; margin-top:5px;" onclick="add()">BAĞLAN</button>
+            <input id="h" placeholder="Sunucu IP:Port">
+            <input id="u" placeholder="Kullanıcı Adı">
+            <input id="v" placeholder="Sürüm (Örn: 1.16.5)">
+            <button class="btn" style="background:#238636; width:100%; margin-top:5px;" onclick="add()">BOTU BAŞLAT</button>
         </div>
         <div id="list"></div>
     </div>
@@ -38,16 +38,16 @@
         <div class="card">
             <h4>Otomatik Mesaj</h4>
             <input id="cfg_msg_text" placeholder="Gidecek mesaj...">
-            <input id="cfg_msg_sec" type="number" value="30" placeholder="Saniye">
+            <input id="cfg_msg_sec" type="number" value="30">
             <button class="btn" onclick="upd('msg','on')">BAŞLAT</button>
-            <button class="btn" onclick="upd('msg','off')" style="background:red">DURDUR</button>
+            <button class="btn" onclick="upd('msg','off')" style="background:#ff4757">DURDUR</button>
         </div>
     </div>
 
     <div id="tab-term" class="tab">
         <div id="logbox"></div>
         <div style="display:flex; gap:5px; background:#161b22; padding:10px; border-radius:5px;">
-            <input id="m" placeholder="Sohbete yaz..." style="margin:0; flex:1;">
+            <input id="m" placeholder="Komut veya mesaj yaz..." style="margin:0; flex:1;">
             <button onclick="doSend()" class="btn">GÖNDER</button>
         </div>
     </div>
@@ -66,7 +66,7 @@
 
         async function add() {
             const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
-            if(!h || !u || !v) return alert("Tüm alanları doldur!");
+            if(!h || !u || !v) return;
             await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
             sel = u; tab('term');
         }
