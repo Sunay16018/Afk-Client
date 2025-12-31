@@ -14,7 +14,7 @@ function startBot(sid, host, user, ver) {
 
     const key = sid + "_" + user;
     const [ip, port] = host.split(':');
-    logs[key] = ["<b style='color:gray'>[SİSTEM] Bot hazırlanıyor...</b>"];
+    logs[key] = ["<b style='color:gray'>[SİSTEM] Bot başlatılıyor...</b>"];
 
     const bot = mineflayer.createBot({
         host: ip, port: parseInt(port) || 25565, 
@@ -50,7 +50,7 @@ http.createServer((req, res) => {
         const conf = configs[key];
         const ms = parseFloat(q.sec) * 1000 || 1000;
 
-        // YÖN KONTROLÜ (Kesin Dönüş)
+        // YÖN
         if (q.type === 'look') {
             if (q.dir === 'left') bot.look(bot.entity.yaw + Math.PI/2, bot.entity.pitch, true);
             if (q.dir === 'right') bot.look(bot.entity.yaw - Math.PI/2, bot.entity.pitch, true);
@@ -59,30 +59,26 @@ http.createServer((req, res) => {
             if (q.dir === 'front') bot.look(bot.entity.yaw, 0, true);
         }
 
-        // KAZMA: Paket seviyesinde zorlama
+        // SOL TIK (KAZMA) SÜRELİ
         if (q.type === 'mining') {
             clearInterval(conf.mining);
             if (q.status === 'on') {
                 conf.mining = setInterval(() => {
                     const block = bot.blockAtCursor(4);
-                    if (block && block.name !== 'air') {
-                        bot.swingArm('right'); 
-                        bot.dig(block, true).catch(() => {}); 
-                    }
-                }, 100); // 100ms hızıyla sürekli "kazmayı dene" (Vurma efektini korur)
+                    bot.swingArm('right');
+                    if (block && block.name !== 'air') bot.dig(block, 'ignore').catch(() => {});
+                }, ms);
             }
         }
 
-        // SAĞ TIK: Paket seviyesinde zorlama
+        // SAĞ TIK SÜRELİ
         if (q.type === 'rclick') {
             clearInterval(conf.rclick);
             if (q.status === 'on') {
                 conf.rclick = setInterval(() => {
                     const block = bot.blockAtCursor(4);
                     bot.swingArm('right');
-                    if (block) {
-                        bot.activateBlock(block).catch(() => {});
-                    }
+                    if (block) bot.activateBlock(block).catch(() => {});
                     bot.activateItem(); 
                 }, ms);
             }
