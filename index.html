@@ -2,23 +2,23 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Generator Bot</title>
+    <title>Bot Panel</title>
     <style>
         * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
         nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
-        nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; }
+        nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; }
         .tab { display: none; flex: 1; flex-direction: column; padding: 10px; overflow-y: auto; }
         .active-tab { display: flex; }
-        /* KONSOL BOYUTU SABİT */
-        #logbox { height: 320px; background: #000; border: 1px solid #30363d; padding: 10px; overflow-y: auto; color: #2ecc71; font-family: monospace; border-radius: 5px; margin-bottom: 10px; flex-shrink: 0; }
-        .card { background: #161b22; padding: 10px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
-        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; width: 100%; margin: 5px 0; border-radius: 4px; }
-        .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
+        /* KONSOL SABİT BOYUT */
+        #logbox { height: 320px; background: #000; border: 1px solid #30363d; padding: 10px; overflow-y: auto; color: #2ecc71; font-family: monospace; border-radius: 5px; margin-bottom: 5px; flex-shrink: 0; }
+        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
+        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; width: 100%; margin: 4px 0; border-radius: 4px; }
+        .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
         .btn-green { background: #238636; }
         .btn-red { background: #da3633; }
-        .footer { display: flex; gap: 5px; background: #161b22; padding: 10px; border-top: 1px solid #30363d; }
+        .footer { display: flex; gap: 5px; background: #161b22; padding: 8px; border-top: 1px solid #30363d; }
     </style>
 </head>
 <body>
@@ -33,7 +33,7 @@
             <input id="h" placeholder="Sunucu IP:Port">
             <input id="u" placeholder="Bot İsmi">
             <input id="v" placeholder="Sürüm (Örn: 1.16.5)">
-            <button class="btn btn-green" style="width:100%" onclick="add()">SİSTEMİ BAŞLAT</button>
+            <button class="btn btn-green" style="width:100%" onclick="add()">BAĞLAN</button>
         </div>
         <div id="list"></div>
     </div>
@@ -41,30 +41,26 @@
     <div id="tab-settings" class="tab">
         <div class="card">
             <h4>Oto Mesaj</h4>
-            <input id="cfg_msg_text" placeholder="Mesaj içeriği...">
+            <input id="cfg_msg_text" placeholder="Mesaj...">
             <input id="cfg_msg_sec" type="number" value="30">
             <button class="btn btn-green" onclick="upd('msg','on')">AÇ</button>
             <button class="btn btn-red" onclick="upd('msg','off')">KAPAT</button>
         </div>
         <div class="card">
-            <h4>Jeneratör & AFK Modu</h4>
-            <div style="margin-bottom:10px;">
-                <p>Anti-AFK (Zıplama/Bakış):</p>
-                <button class="btn btn-green" onclick="upd('afk','on')">AKTİF ET</button>
-                <button class="btn btn-red" onclick="upd('afk','off')">DURDUR</button>
-            </div>
-            <div>
-                <p>Otomatik Kazma:</p>
-                <button class="btn btn-green" onclick="upd('mining','on')">BAŞLAT</button>
-                <button class="btn btn-red" onclick="upd('mining','off')">BİTİR</button>
-            </div>
+            <h4>Sistem Kontrol</h4>
+            <p>Anti-AFK:</p>
+            <button class="btn btn-green" onclick="upd('afk','on')">AÇ</button>
+            <button class="btn btn-red" onclick="upd('afk','off')">KAPAT</button>
+            <p style="margin-top:10px;">Jeneratör Kazma:</p>
+            <button class="btn btn-green" onclick="upd('mining','on')">AÇ</button>
+            <button class="btn btn-red" onclick="upd('mining','off')">KAPAT</button>
         </div>
     </div>
 
     <div id="tab-term" class="tab">
         <div id="logbox"></div>
         <div class="footer">
-            <input id="m" placeholder="Sohbete yaz..." style="margin:0; flex:1;">
+            <input id="m" placeholder="Mesaj..." style="margin:0; flex:1;">
             <button onclick="doSend()" class="btn">GÖNDER</button>
         </div>
     </div>
@@ -95,7 +91,7 @@
         }
 
         async function upd(type, status) {
-            if(!sel) return alert("Önce Bot Seç!");
+            if(!sel) return;
             let val = encodeURIComponent(document.getElementById('cfg_msg_text').value);
             let sec = document.getElementById('cfg_msg_sec').value;
             await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&val=${val}&sec=${sec}`);
