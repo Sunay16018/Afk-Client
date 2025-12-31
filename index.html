@@ -2,8 +2,8 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bot Master v12</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Master v13</title>
     <style>
         * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -12,35 +12,40 @@
         nav button.active { color: #58a6ff; border-bottom: 2px solid #58a6ff; }
         .tab { display: none; flex: 1; flex-direction: column; padding: 10px; overflow-y: auto; }
         .active-tab { display: flex; }
-        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
+        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; position: relative; }
         
-        /* BARLAR */
-        .bar-container { display: flex; gap: 2px; margin: 5px 0; min-height: 20px; }
+        .bar-container { display: flex; gap: 2px; margin: 5px 0; height: 20px; }
         .icon { width: 18px; height: 18px; background-size: cover; image-rendering: pixelated; }
         .heart-full { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/heart/full.png'); }
         .heart-empty { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/heart/container.png'); }
         .food-full { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/food/full.png'); }
         .food-empty { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/food/container.png'); }
 
-        /* ENVANTER */
         .inventory-grid { display: grid; grid-template-columns: repeat(9, 34px); gap: 2px; background: #8b8b8b; padding: 4px; border: 2px solid #373737; width: fit-content; margin: 0 auto; }
         .inv-slot { width: 34px; height: 34px; background: #8b8b8b; border: 2px solid #373737; position: relative; display: flex; align-items: center; justify-content: center; }
-        .item-img { width: 24px; height: 24px; image-rendering: pixelated; }
-        .item-count { position: absolute; bottom: 1px; right: 1px; font-size: 10px; color: white; text-shadow: 1px 1px black; }
+        .item-img { width: 24px; height: 24px; image-rendering: pixelated; cursor: pointer; }
+        .item-count { position: absolute; bottom: 1px; right: 1px; font-size: 10px; color: white; text-shadow: 1px 1px black; pointer-events: none; }
 
         #logbox { height: 300px; background: #000; padding: 10px; overflow-y: auto; color: #3fb950; font-family: monospace; border: 1px solid #30363d; border-radius: 6px; }
         .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #21262d; border: 1px solid #30363d; }
         .btn-green { background: #238636; } .btn-red { background: #da3633; }
-        .bot-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #21262d; border: 1px solid #30363d; margin-top: 5px; border-radius: 6px; }
+        
+        #item-opt { display: none; position: absolute; background: #1c2128; border: 1px solid #58a6ff; border-radius: 4px; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+        #item-opt button { display: block; width: 100%; padding: 8px 12px; background: none; border: none; color: white; text-align: left; cursor: pointer; border-bottom: 1px solid #30363d; }
     </style>
 </head>
-<body>
+<body onclick="hideOpt()">
     <nav>
         <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
         <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
-        <button onclick="tab('stats')" id="btn-stats">İSTATİSTİK</button>
+        <button onclick="tab('stats')" id="id-stats">İSTATİSTİK</button>
         <button onclick="tab('term')" id="btn-term">KONSOL</button>
     </nav>
+
+    <div id="item-opt">
+        <button onclick="invOp('drop')">Eşyayı At</button>
+        <button onclick="invOp('use')">Kullan/Sağ Tık</button>
+    </div>
 
     <div id="tab-bots" class="tab active-tab">
         <div class="card">
@@ -52,16 +57,15 @@
     </div>
 
     <div id="tab-stats" class="tab">
-        <div class="card" style="display:flex; justify-content:space-between;">
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <label>SAĞLIK</label><div id="hp-bar" class="bar-container"></div>
-                <label>AÇLIK</label><div id="food-bar" class="bar-container"></div>
+                <label>AÇLIK</label><div id="fd-bar" class="bar-container"></div>
             </div>
             <button class="btn btn-red" onclick="quitBot(sel)">BAĞLANTIYI KES</button>
         </div>
-        <div class="card">
-            <label>ENVANTER</label>
-            <div id="inv-main" class="inventory-grid" style="margin-bottom:10px;"></div>
+        <div class="card" style="overflow-x:auto;">
+            <div id="inv-main" class="inventory-grid" style="margin-bottom:8px;"></div>
             <div id="inv-hot" class="inventory-grid"></div>
         </div>
     </div>
@@ -69,7 +73,7 @@
     <div id="tab-term" class="tab">
         <div id="logbox"></div>
         <div style="display:flex; margin-top:5px; gap:5px;">
-            <input id="m" placeholder="Mesaj..." onkeydown="if(event.key==='Enter') doSend()" style="flex:1; background:#010409; color:white; border:1px solid #30363d; padding:8px; border-radius:6px;">
+            <input id="m" placeholder="Sohbete yaz..." onkeydown="if(event.key==='Enter') doSend()" style="flex:1; background:#010409; color:white; border:1px solid #30363d; padding:8px; border-radius:6px;">
             <button class="btn" onclick="doSend()">GÖNDER</button>
         </div>
     </div>
@@ -77,43 +81,44 @@
     <script>
         const mySID = localStorage.getItem('sid') || 'sid_'+Math.random().toString(36).substr(2,9);
         localStorage.setItem('sid', mySID);
-        let sel = "";
+        let sel = ""; let curSlot = null;
 
         function tab(t) {
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
             document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
-            document.getElementById('tab-'+t).classList.add('active-tab');
-            document.getElementById('btn-'+t).classList.add('active');
+            document.getElementById('tab-'+t == 'tab-stats' ? 'id-stats' : 'tab-'+t).classList.add('active-tab');
+            document.querySelector(`[onclick="tab('${t}')"]`).classList.add('active');
         }
 
-        // Barları Önceden Çiz (Boş halleri)
-        function initBars() {
+        function initUI() {
             document.getElementById('hp-bar').innerHTML = '<div class="icon heart-empty"></div>'.repeat(10);
-            document.getElementById('food-bar').innerHTML = '<div class="icon food-empty"></div>'.repeat(10);
-            let mainHtml = '', hotHtml = '';
-            for(let i=9; i<36; i++) mainHtml += `<div class="inv-slot" id="slot-${i}"></div>`;
-            for(let i=36; i<45; i++) hotHtml += `<div class="inv-slot" id="slot-${i}"></div>`;
-            document.getElementById('inv-main').innerHTML = mainHtml;
-            document.getElementById('inv-hot').innerHTML = hotHtml;
+            document.getElementById('fd-bar').innerHTML = '<div class="icon food-empty"></div>'.repeat(10);
+            let mH = '', hH = '';
+            for(let i=9; i<36; i++) mH += `<div class="inv-slot" id="s-${i}"></div>`;
+            for(let i=36; i<45; i++) hH += `<div class="inv-slot" id="s-${i}"></div>`;
+            document.getElementById('inv-main').innerHTML = mH;
+            document.getElementById('inv-hot').innerHTML = hH;
         }
-        initBars();
+        initUI();
 
         async function add() {
-            const h = document.getElementById('h').value, u = document.getElementById('u').value;
-            await fetch(`/start?sid=${mySID}&host=${h}&user=${u}`);
-            sel = u; tab('term');
+            await fetch(`/start?sid=${mySID}&host=${document.getElementById('h').value}&user=${document.getElementById('u').value}`);
+            sel = document.getElementById('u').value; tab('term');
         }
 
-        async function quitBot(name) {
-            if(!name) return;
-            await fetch(`/stop?sid=${mySID}&user=${name}`);
-            if(sel === name) sel = "";
+        async function quitBot(n) { await fetch(`/stop?sid=${mySID}&user=${n}`); if(sel==n) sel=""; }
+
+        function showOpt(e, slot) {
+            e.stopPropagation(); curSlot = slot;
+            const m = document.getElementById('item-opt');
+            m.style.display = 'block'; m.style.left = e.pageX + 'px'; m.style.top = e.pageY + 'px';
         }
+        function hideOpt() { document.getElementById('item-opt').style.display = 'none'; }
+        async function invOp(act) { await fetch(`/update?sid=${mySID}&user=${sel}&type=inv_action&slot=${curSlot}&act=${act}`); hideOpt(); }
 
         async function doSend() {
             const i = document.getElementById('m');
-            if(!sel || !i.value) return;
-            await fetch(`/send?sid=${mySID}&user=${encodeURIComponent(sel)}&msg=${encodeURIComponent(i.value)}`);
+            await fetch(`/send?sid=${mySID}&user=${sel}&msg=${encodeURIComponent(i.value)}`);
             i.value = "";
         }
 
@@ -124,35 +129,26 @@
                 
                 document.getElementById('list').innerHTML = d.active.map(n => `
                     <div class="bot-item" style="border-color:${sel==n?'#58a6ff':'#30363d'}" onclick="sel='${n}'">
-                        <span>${n}</span>
-                        <button class="btn btn-red" style="padding:4px 8px; font-size:10px;" onclick="event.stopPropagation(); quitBot('${n}')">KES</button>
+                        <span>${n}</span> <button class="btn btn-red" style="font-size:10px; padding:3px 7px;" onclick="event.stopPropagation(); quitBot('${n}')">KES</button>
                     </div>
                 `).join('');
 
                 if(sel && d.botData[sel]) {
                     const b = d.botData[sel];
-                    
-                    // Can & Açlık Güncelle
-                    let hp = Math.ceil(b.health / 2);
-                    let food = Math.ceil(b.food / 2);
-                    document.getElementById('hp-bar').innerHTML = '<div class="icon heart-full"></div>'.repeat(hp) + '<div class="icon heart-empty"></div>'.repeat(10 - hp);
-                    document.getElementById('food-bar').innerHTML = '<div class="icon food-full"></div>'.repeat(food) + '<div class="icon food-empty"></div>'.repeat(10 - food);
+                    let h = Math.ceil(b.health/2), f = Math.ceil(b.food/2);
+                    document.getElementById('hp-bar').innerHTML = '<div class="icon heart-full"></div>'.repeat(h) + '<div class="icon heart-empty"></div>'.repeat(10-h);
+                    document.getElementById('fd-bar').innerHTML = '<div class="icon food-full"></div>'.repeat(f) + '<div class="icon food-empty"></div>'.repeat(10-f);
 
-                    // Envanter Güncelle
                     document.querySelectorAll('.inv-slot').forEach(s => s.innerHTML = '');
                     b.inventory.forEach(item => {
                         if(item) {
-                            const slotDiv = document.getElementById(`slot-${item.slot}`);
-                            if(slotDiv) {
-                                slotDiv.innerHTML = `<img class="item-img" src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${item.name}.png" onerror="this.src='https://minecraft.wiki/images/Barrier_PC.png'"><span class="item-count">${item.count > 1 ? item.count : ''}</span>`;
-                                slotDiv.onclick = () => fetch(`/update?sid=${mySID}&user=${sel}&type=inv_action&slot=${item.slot}`);
+                            const div = document.getElementById(`s-${item.slot}`);
+                            if(div) {
+                                div.innerHTML = `<img class="item-img" src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${item.name}.png" onclick="showOpt(event, ${item.slot})"><span class="item-count">${item.count > 1 ? item.count : ''}</span>`;
                             }
                         }
                     });
-
-                    const lb = document.getElementById('logbox');
-                    lb.innerHTML = b.logs.join('<br>');
-                    lb.scrollTop = lb.scrollHeight;
+                    document.getElementById('logbox').innerHTML = b.logs.join('<br>');
                 }
             } catch(e) {}
         }, 1500);
