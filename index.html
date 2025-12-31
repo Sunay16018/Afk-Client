@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bot Master v9</title>
+    <title>Bot Master v10</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* NAV BAR */
         nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
         nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
         nav button.active { color: #58a6ff; border-bottom: 2px solid #58a6ff; }
@@ -16,93 +15,78 @@
         .tab { display: none; flex: 1; flex-direction: column; padding: 10px; height: calc(100vh - 45px); overflow-y: auto; }
         .active-tab { display: flex; }
 
-        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
+        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; position: relative; }
         
-        /* SABİT KONSOL DÜZENİ */
-        #term-container { display: flex; flex-direction: column; height: 100%; }
-        #logbox { 
-            height: 350px; /* Sabit Boyut */
-            background: #000; 
-            padding: 10px; 
-            overflow-y: auto; 
-            color: #3fb950; 
-            font-family: 'Consolas', monospace; 
-            border: 1px solid #30363d;
-            border-radius: 6px 6px 0 0;
-            margin: 0;
-        }
-        .msg-input-area { 
-            display: flex; 
-            background: #010409; 
-            padding: 5px; 
-            border: 1px solid #30363d; 
-            border-top: none;
-            border-radius: 0 0 6px 6px;
-        }
+        /* LOGBOX & KONSOL */
+        #logbox { height: 350px; background: #000; padding: 10px; overflow-y: auto; color: #3fb950; font-family: monospace; border: 1px solid #30363d; border-radius: 6px 6px 0 0; }
+        .msg-input-area { display: flex; background: #010409; padding: 5px; border: 1px solid #30363d; border-top: none; border-radius: 0 0 6px 6px; }
         .msg-input-area input { flex: 1; background: transparent; border: none; color: white; padding: 8px; outline: none; }
 
-        /* ENVANTER & BARLAR */
+        /* ENVANTER VE ÖZEL MENÜ */
+        .inventory-grid { display: grid; grid-template-columns: repeat(9, 34px); gap: 2px; background: #8b8b8b; padding: 4px; border: 2px solid #373737; width: fit-content; margin: 0 auto 10px; }
+        .inv-slot { width: 34px; height: 34px; background: #8b8b8b; border: 2px solid #373737; position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .inv-slot:hover { background: #aaa; }
+        .item-img { width: 26px; height: 26px; image-rendering: pixelated; }
+        .item-count { position: absolute; bottom: 1px; right: 1px; font-size: 10px; color: white; text-shadow: 1px 1px black; font-weight: bold; }
+
+        /* TIKLAYINCA AÇILAN EŞYA MENÜSÜ */
+        #item-menu {
+            display: none; position: absolute; background: #1c2128; border: 1px solid #58a6ff; 
+            border-radius: 6px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.5); width: 120px;
+        }
+        #item-menu button {
+            width: 100%; padding: 8px; background: none; border: none; color: white; text-align: left; 
+            cursor: pointer; border-bottom: 1px solid #30363d;
+        }
+        #item-menu button:hover { background: #316dca; }
+        #item-menu button:last-child { border: none; }
+
+        /* BARLAR */
         .bar-container { display: flex; gap: 1px; margin-bottom: 5px; }
         .icon { width: 18px; height: 18px; background-size: contain; background-repeat: no-repeat; }
-        .heart { background-image: url('https://minecraft.wiki/images/Heart_PC32.png'); }
-        .food { background-image: url('https://minecraft.wiki/images/Hunger_PC32.png'); }
-        
-        .inventory-grid { 
-            display: grid; 
-            grid-template-columns: repeat(9, 34px); 
-            gap: 2px; 
-            background: #8b8b8b; 
-            padding: 4px; 
-            border: 2px solid #373737;
-            width: fit-content;
-            margin: 0 auto 10px;
-        }
-        .inv-slot { 
-            width: 34px; height: 34px; 
-            background: #8b8b8b; 
-            border: 2px solid #373737; 
-            position: relative; 
-            display: flex; align-items: center; justify-content: center;
-        }
-        .item-img { width: 24px; height: 24px; pointer-events: none; }
-        .item-count { position: absolute; bottom: 1px; right: 1px; font-size: 10px; color: white; text-shadow: 1px 1px black; }
+        .heart { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/heart/full.png'); }
+        .food { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/food/full.png'); }
 
         .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #21262d; border: 1px solid #30363d; }
-        .btn-green { background: #238636; border-color: #2ea043; }
-        .btn-red { background: #da3633; border-color: #f85149; }
+        .btn-green { background: #238636; } .btn-red { background: #da3633; }
     </style>
 </head>
-<body>
+<body onclick="closeMenu()">
     <nav>
-        <button onclick="tab('bots')" id="btn-bots" class="active">BAĞLANTI</button>
+        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
         <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
         <button onclick="tab('stats')" id="btn-stats">İSTATİSTİK</button>
         <button onclick="tab('term')" id="btn-term">KONSOL</button>
     </nav>
 
+    <div id="item-menu">
+        <button onclick="doAct('drop_all')">Hepsini At</button>
+        <button onclick="doAct('drop_one')">1 Tane At</button>
+        <button onclick="doAct('click_left')">Sol Tık (Seç)</button>
+        <button onclick="doAct('click_right')">Sağ Tık (Kullan)</button>
+    </div>
+
     <div id="tab-bots" class="tab active-tab">
         <div class="card">
-            <input id="h" placeholder="Sunucu IP:Port" style="width:100%; margin-bottom:5px; background:#010409; border:1px solid #30363d; color:white; padding:8px; border-radius:6px;">
-            <input id="u" placeholder="Bot İsmi" style="width:100%; margin-bottom:5px; background:#010409; border:1px solid #30363d; color:white; padding:8px; border-radius:6px;">
-            <button class="btn btn-green" style="width:100%" onclick="add()">BOTU BAŞLAT</button>
+            <input id="h" placeholder="IP:Port"><br>
+            <input id="u" placeholder="Bot İsmi"><br>
+            <button class="btn btn-green" style="width:100%" onclick="add()">BAĞLAT</button>
         </div>
         <div id="list"></div>
     </div>
 
     <div id="tab-settings" class="tab">
         <div class="card">
-            <label>Kazma Hızı (Saniye)</label>
-            <input id="s_mine" type="number" value="1.2" style="width:100%; background:#010409; border:1px solid #30363d; color:white; padding:5px; border-radius:4px; margin:5px 0;">
-            <div style="display:flex; gap:5px;">
-                <button class="btn btn-green" style="flex:1" onclick="upd('mining','on','s_mine')">BAŞLAT</button>
-                <button class="btn btn-red" style="flex:1" onclick="upd('mining','off')">DURDUR</button>
-            </div>
+            <label>Kazma Hızı</label>
+            <input id="s_mine" type="number" value="1.2" step="0.1">
+            <button class="btn btn-green" onclick="upd('mining','on','s_mine')">AÇ</button>
+            <button class="btn btn-red" onclick="upd('mining','off')">KAPAT</button>
         </div>
         <div class="card">
-            <label>Otomatik Mesaj</label>
-            <input id="s_msg_txt" placeholder="Mesaj..." style="width:100%; background:#010409; border:1px solid #30363d; color:white; padding:5px; margin:5px 0;">
-            <input id="s_msg_time" type="number" value="10" style="width:100%; background:#010409; border:1px solid #30363d; color:white; padding:5px; margin-bottom:5px;">
-            <button class="btn btn-green" style="width:100%" onclick="upd_msg('on')">OTO MESAJI AÇ</button>
+            <label>Oto Mesaj</label>
+            <input id="s_msg_txt" placeholder="Mesaj...">
+            <input id="s_msg_time" type="number" value="10">
+            <button class="btn btn-green" onclick="upd_msg('on')">BAŞLAT</button>
         </div>
     </div>
 
@@ -112,19 +96,17 @@
             <label>AÇLIK</label> <div id="food-bar" class="bar-container"></div>
         </div>
         <div class="card" style="overflow-x:auto;">
-            <label>ENVANTER</label>
+            <label>ENVANTER (Eşyaya tıkla)</label>
             <div id="inv-main" class="inventory-grid"></div>
             <div id="inv-hotbar" class="inventory-grid"></div>
         </div>
     </div>
 
     <div id="tab-term" class="tab">
-        <div id="term-container">
-            <div id="logbox"></div>
-            <div class="msg-input-area">
-                <input id="m" placeholder="Sohbete yaz ve Enter'a bas..." onkeydown="if(event.key==='Enter') doSend()">
-                <button class="btn" onclick="doSend()">GÖNDER</button>
-            </div>
+        <div id="logbox"></div>
+        <div class="msg-input-area">
+            <input id="m" placeholder="Mesaj..." onkeydown="if(event.key==='Enter') doSend()">
+            <button class="btn" onclick="doSend()">GÖNDER</button>
         </div>
     </div>
 
@@ -132,22 +114,7 @@
         const mySID = localStorage.getItem('sid') || 'sid_'+Math.random().toString(36).substr(2,9);
         localStorage.setItem('sid', mySID);
         let sel = "";
-        let autoScroll = true;
-
-        // Sayfa ilk açıldığında boş envanter ve full bar çiz
-        window.onload = () => {
-            initVisuals();
-        };
-
-        function initVisuals() {
-            document.getElementById('heart-bar').innerHTML = '<div class="icon heart"></div>'.repeat(10);
-            document.getElementById('food-bar').innerHTML = '<div class="icon food"></div>'.repeat(10);
-            let mainHtml = '', hotHtml = '';
-            for(let i=9; i<=35; i++) mainHtml += `<div class="inv-slot" id="slot-${i}"></div>`;
-            for(let i=36; i<=44; i++) hotHtml += `<div class="inv-slot" id="slot-${i}"></div>`;
-            document.getElementById('inv-main').innerHTML = mainHtml;
-            document.getElementById('inv-hotbar').innerHTML = hotHtml;
-        }
+        let currentSlot = null;
 
         function tab(t) {
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
@@ -162,6 +129,31 @@
             sel = u; tab('term');
         }
 
+        // İKON SİSTEMİ (Resimleri HD ve Kesin Çeker)
+        function getItemIcon(name) {
+            return `https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${name}.png`;
+        }
+
+        // MENÜ KONTROLÜ
+        function openItemMenu(e, slot) {
+            e.stopPropagation();
+            currentSlot = slot;
+            const menu = document.getElementById('item-menu');
+            menu.style.display = 'block';
+            menu.style.left = e.pageX + 'px';
+            menu.style.top = e.pageY + 'px';
+        }
+
+        function closeMenu() {
+            document.getElementById('item-menu').style.display = 'none';
+        }
+
+        async function doAct(act) {
+            if(currentSlot === null) return;
+            await fetch(`/update?sid=${mySID}&user=${sel}&type=inv_action&slot=${currentSlot}&act=${act}`);
+            closeMenu();
+        }
+
         async function doSend() {
             const i = document.getElementById('m');
             if(!sel || !i.value) return;
@@ -170,7 +162,6 @@
         }
 
         async function upd(type, status, inputId) {
-            if(!sel) return;
             let sec = inputId ? document.getElementById(inputId).value : 1;
             await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&sec=${sec}`);
         }
@@ -180,6 +171,11 @@
             const sec = document.getElementById('s_msg_time').value;
             await fetch(`/update?sid=${mySID}&user=${sel}&type=automsg&status=${status}&msg=${encodeURIComponent(txt)}&sec=${sec}`);
         }
+
+        // Başlangıçta boş envanter çiz
+        const invMain = document.getElementById('inv-main'), invHot = document.getElementById('inv-hotbar');
+        for(let i=9; i<36; i++) invMain.innerHTML += `<div class="inv-slot" id="slot-${i}"></div>`;
+        for(let i=36; i<45; i++) invHot.innerHTML += `<div class="inv-slot" id="slot-${i}"></div>`;
 
         setInterval(async () => {
             if(!sel) return;
@@ -193,24 +189,18 @@
 
                 if(d.botData[sel]) {
                     const b = d.botData[sel];
-                    // Konsol
-                    const lb = document.getElementById('logbox');
-                    lb.innerHTML = b.logs.join('<br>');
-                    if(autoScroll) lb.scrollTop = lb.scrollHeight;
-
-                    // Barlar
+                    document.getElementById('logbox').innerHTML = b.logs.join('<br>');
                     document.getElementById('heart-bar').innerHTML = '<div class="icon heart"></div>'.repeat(Math.ceil(b.health/2));
                     document.getElementById('food-bar').innerHTML = '<div class="icon food"></div>'.repeat(Math.ceil(b.food/2));
 
-                    // Envanter Güncelle
+                    // Envanteri Temizle ve Doldur
+                    document.querySelectorAll('.inv-slot').forEach(s => s.innerHTML = '');
                     b.inventory.forEach(item => {
                         if(item) {
                             const slotDiv = document.getElementById(`slot-${item.slot}`);
                             if(slotDiv) {
-                                slotDiv.innerHTML = `<img class="item-img" src="https://minecraft.wiki/images/${item.name.charAt(0).toUpperCase()+item.name.slice(1)}.png" onerror="this.src='https://minecraft.wiki/images/Barrier_PC.png'"><span class="item-count">${item.count > 1 ? item.count : ''}</span>`;
-                                slotDiv.onclick = () => {
-                                    if(confirm(item.name + " atılsın mı?")) fetch(`/update?sid=${mySID}&user=${sel}&type=inv_action&slot=${item.slot}&act=drop_all`);
-                                };
+                                slotDiv.innerHTML = `<img class="item-img" src="${getItemIcon(item.name)}"><span class="item-count">${item.count > 1 ? item.count : ''}</span>`;
+                                slotDiv.onclick = (e) => openItemMenu(e, item.slot);
                             }
                         }
                     });
