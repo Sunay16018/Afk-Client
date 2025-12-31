@@ -14,7 +14,7 @@ function startBot(sid, host, user, ver) {
 
     const key = sid + "_" + user;
     const [ip, port] = host.split(':');
-    logs[key] = ["<b style='color:gray'>[SİSTEM] Başlatılıyor...</b>"];
+    logs[key] = ["<b style='color:gray'>[SİSTEM] Bot hazırlanıyor...</b>"];
 
     const bot = mineflayer.createBot({
         host: ip, port: parseInt(port) || 25565, 
@@ -22,7 +22,7 @@ function startBot(sid, host, user, ver) {
     });
 
     sessions[sid][user] = bot;
-    configs[key] = { mining: null, jump: null, rclick: null };
+    configs[key] = { mining: null, jump: null, rclick: null, automsg: null };
 
     bot.on('login', () => logs[key].push("<b style='color:#2ecc71'>[GİRİŞ] Başarılı!</b>"));
     bot.on('kicked', (r) => logs[key].push("<b style='color:#ff4757'>[ATILDI] " + r + "</b>"));
@@ -48,50 +48,52 @@ http.createServer((req, res) => {
     if (p === '/update' && bot) {
         const key = sid + "_" + q.user;
         const conf = configs[key];
-        const sec = parseInt(q.sec) * 1000 || 2000; // Varsayılan 2 saniye
+        const ms = parseFloat(q.sec) * 1000 || 1000;
 
-        // YÖN KONTROLÜ (90 Derece Kesin Dönüş)
+        // YÖN KONTROLÜ (Kesin Dönüş)
         if (q.type === 'look') {
-            let yaw = bot.entity.yaw;
-            let pitch = bot.entity.pitch;
-            if (q.dir === 'left') yaw += Math.PI / 2;
-            if (q.dir === 'right') yaw -= Math.PI / 2;
-            if (q.dir === 'up') pitch = Math.PI / 2;
-            if (q.dir === 'down') pitch = -Math.PI / 2;
-            if (q.dir === 'front') pitch = 0;
-            bot.look(yaw, pitch, true);
+            if (q.dir === 'left') bot.look(bot.entity.yaw + Math.PI/2, bot.entity.pitch, true);
+            if (q.dir === 'right') bot.look(bot.entity.yaw - Math.PI/2, bot.entity.pitch, true);
+            if (q.dir === 'up') bot.look(bot.entity.yaw, Math.PI/2, true);
+            if (q.dir === 'down') bot.look(bot.entity.yaw, -Math.PI/2, true);
+            if (q.dir === 'front') bot.look(bot.entity.yaw, 0, true);
         }
 
-        // ZAMAN AYARLI KAZMA (Her X saniyede bir resetler)
+        // KAZMA: Paket seviyesinde zorlama
         if (q.type === 'mining') {
             clearInterval(conf.mining);
             if (q.status === 'on') {
                 conf.mining = setInterval(() => {
                     const block = bot.blockAtCursor(4);
                     if (block && block.name !== 'air') {
-                        // Kazma işlemini başlat (Hata alsa bile 2 sn sonra tekrar dener)
-                        bot.dig(block, 'ignore').catch(() => {});
+                        bot.swingArm('right'); 
+                        bot.dig(block, true).catch(() => {}); 
                     }
-                }, sec);
-            } else {
-                bot.stopDigging();
+                }, 100); // 100ms hızıyla sürekli "kazmayı dene" (Vurma efektini korur)
             }
         }
 
-        // SAĞ TIK (Bakışı bozmadan tıklama)
+        // SAĞ TIK: Paket seviyesinde zorlama
         if (q.type === 'rclick') {
             clearInterval(conf.rclick);
             if (q.status === 'on') {
                 conf.rclick = setInterval(() => {
                     const block = bot.blockAtCursor(4);
+                    bot.swingArm('right');
                     if (block) {
-                        // Hem bloğa sağ tıkla hem elindeki eşyayı kullan
                         bot.activateBlock(block).catch(() => {});
-                        bot.activateItem();
-                    } else {
-                        bot.activateItem();
                     }
-                }, sec);
+                    bot.activateItem(); 
+                }, ms);
+            }
+        }
+
+        // OTO MESAJ
+        if (q.type === 'automsg') {
+            clearInterval(conf.automsg);
+            if (q.status === 'on') {
+                const text = decodeURIComponent(q.msg);
+                conf.automsg = setInterval(() => bot.chat(text), ms);
             }
         }
 
@@ -101,8 +103,8 @@ http.createServer((req, res) => {
             if (q.status === 'on') {
                 conf.jump = setInterval(() => {
                     bot.setControlState('jump', true);
-                    setTimeout(() => bot.setControlState('jump', false), 400);
-                }, sec);
+                    setTimeout(() => bot.setControlState('jump', false), 200);
+                }, ms);
             }
         }
 
