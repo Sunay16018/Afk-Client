@@ -3,38 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BotMaster v16 Clean</title>
+    <title>BotMaster v16 Balanced</title>
     <style>
         :root { --bg: #09090b; --panel: #18181b; --border: #27272a; --accent: #8b5cf6; --text: #e4e4e7; --green: #22c55e; --red: #ef4444; }
         * { box-sizing: border-box; outline: none; user-select: none; }
         body { background: var(--bg); color: var(--text); margin: 0; font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
         nav { display: flex; background: var(--panel); height: 55px; border-bottom: 1px solid var(--border); padding: 0 10px; align-items: center; gap: 5px; flex-shrink: 0; }
-        nav button { flex: 1; background: transparent; border: 1px solid transparent; color: #71717a; font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px; border-radius: 6px; transition: 0.2s; }
+        nav button { flex: 1; background: transparent; border: 1px solid transparent; color: #71717a; font-weight: 600; font-size: 13px; cursor: pointer; padding: 8px; border-radius: 6px; }
         nav button.active { background: #27272a; color: white; border-color: #3f3f46; }
         
-        .tab { display: none; height: calc(100vh - 55px); padding: 15px; overflow-y: auto; flex-direction: column; max-width: 800px; margin: 0 auto; width: 100%; }
+        .tab { display: none; height: calc(100vh - 55px); padding: 15px; flex-direction: column; max-width: 800px; margin: 0 auto; width: 100%; }
         .tab.show { display: flex; }
 
-        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .title { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px; display: block; opacity: 0.8; }
-
-        /* [KONSOL - 150PX SABİT] */
+        /* [KONSOL - ORTA BOY %50 AYARI] */
+        #p-console { overflow: hidden; justify-content: flex-start; }
         .console-box { 
             display: flex; flex-direction: column; background: #000; border: 2px solid var(--border); border-radius: 12px; overflow: hidden;
-            height: 150px !important; min-height: 150px !important; max-height: 150px !important;
+            height: 50vh !important; /* EKRANIN TAM YARISI */
+            min-height: 300px; /* ÇOK KÜÇÜK EKRANLARDA EZİLMEMESİ İÇİN */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        #log-output { flex: 1; overflow-y: auto; padding: 12px; font-size: 12px; line-height: 1.5; color: #d4d4d8; font-family: 'Consolas', monospace; }
-        #log-output div { border-bottom: 1px solid #111; padding: 2px 0; word-break: break-all; }
+        #log-output { flex: 1; overflow-y: auto; padding: 15px; font-size: 13px; line-height: 1.5; color: #d4d4d8; font-family: 'Consolas', monospace; background: linear-gradient(to bottom, #000, #050505); }
+        #log-output div { border-bottom: 1px solid #111; padding: 4px 0; word-break: break-word; white-space: pre-wrap; }
 
-        .chat-input-area { display: flex; border-top: 1px solid var(--border); background: #18181b; padding: 8px; }
-        .chat-input-area input { flex: 1; background: #27272a; border: none; color: white; padding: 10px; border-radius: 6px; font-size: 13px; }
-        .chat-input-area button { background: var(--accent); color: white; border: none; padding: 0 20px; margin-left: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .chat-input-area { display: flex; border-top: 1px solid var(--border); background: #111; padding: 10px; gap: 8px; }
+        .chat-input-area input { flex: 1; background: #1d1d20; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; font-size: 14px; }
+        .chat-input-area button { background: var(--accent); color: white; border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
+        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 15px; }
+        .title { color: var(--accent); font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; display: block; opacity: 0.8; }
         input.main-input { width: 100%; padding: 12px; background: #27272a; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 10px; }
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; }
-        .btn-green { background: var(--green); } .btn-red { background: var(--red); }
-
+        .btn-green { background: var(--green); }
+        
         .stat-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 12px; font-weight: bold; }
         .progress-bg { height: 12px; background: #27272a; border-radius: 6px; overflow: hidden; }
         .progress-fill { height: 100%; transition: width 0.3s ease; }
@@ -42,15 +44,14 @@
 
         .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
         .slot { aspect-ratio: 1; background: #27272a; border-radius: 4px; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid transparent; }
-        .slot img { width: 65%; image-rendering: pixelated; }
+        .slot img { width: 70%; image-rendering: pixelated; }
         .count { position: absolute; bottom: 2px; right: 2px; font-size: 10px; font-weight: bold; }
 
         .setting-item { display: flex; justify-content: space-between; align-items: center; background: #27272a; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
         .toggle { padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; border: 1px solid var(--border); background: #18181b; color: #71717a; }
         .toggle.on { background: var(--green); color: white; }
-        .mini-input { width: 50px; background: #18181b; border: 1px solid var(--border); color: white; padding: 5px; border-radius: 4px; text-align: center; }
         #ctx { display: none; position: absolute; background: #18181b; border: 1px solid var(--border); border-radius: 6px; z-index: 1000; width: 140px; }
-        #ctx button { display: block; width: 100%; padding: 12px; background: none; border: none; color: #d4d4d8; text-align: left; cursor: pointer; border-bottom: 1px solid var(--border); }
+        #ctx button { display: block; width: 100%; padding: 12px; background: none; border: none; color: white; text-align: left; cursor: pointer; border-bottom: 1px solid var(--border); }
     </style>
 </head>
 <body onclick="closeCtx()">
@@ -61,11 +62,7 @@
         <button onclick="tab('settings')" id="t-settings">AYARLAR</button>
     </nav>
 
-    <div id="ctx">
-        <button onclick="act('drop')">🗑️ Yere At</button>
-        <button onclick="act('equip')">⚔️ Ele Al</button>
-        <button onclick="act('use')">🍗 Kullan / Ye</button>
-    </div>
+    <div id="ctx"><button onclick="act('drop')">At</button><button onclick="act('equip')">Ele Al</button><button onclick="act('use')">Ye</button></div>
 
     <div id="p-bots" class="tab show">
         <div class="card">
@@ -74,18 +71,16 @@
             <input id="user" class="main-input" placeholder="Kullanıcı Adı">
             <button class="btn btn-green" onclick="startBot()">BAĞLAN</button>
         </div>
-        <div class="card">
-            <span class="title">Aktif Botlar</span>
-            <div id="bot-list"></div>
-        </div>
+        <div id="bot-list"></div>
     </div>
 
     <div id="p-console" class="tab">
+        <span class="title">Sunucu Günlüğü</span>
         <div class="console-box">
             <div id="log-output"></div>
             <div class="chat-input-area">
-                <input id="chat-in" placeholder="Sunucuya mesaj gönder..." onkeydown="if(event.key==='Enter') sendChat()">
-                <button onclick="sendChat()">></button>
+                <input id="chat-in" placeholder="Mesaj yaz veya komut gönder..." onkeydown="if(event.key==='Enter') sendChat()">
+                <button onclick="sendChat()">GÖNDER</button>
             </div>
         </div>
     </div>
@@ -104,21 +99,15 @@
     <div id="p-settings" class="tab">
         <div class="card">
             <span class="title">Otomasyon</span>
-            <div class="setting-item">
-                <div class="setting-info"><h4>Oto-Kazma</h4></div>
-                <div><input type="number" id="val-mine" class="mini-input" value="1.2" step="0.1"><button class="toggle" onclick="toggle('mining', 'val-mine', this)">KAPALI</button></div>
-            </div>
-            <div class="setting-item">
-                <div class="setting-info"><h4>Oto-Vurma</h4></div>
-                <div><input type="number" id="val-click" class="mini-input" value="1.0" step="0.1"><button class="toggle" onclick="toggle('clicker', 'val-click', this)">KAPALI</button></div>
-            </div>
+            <div class="setting-item"><h4>Oto-Kazma</h4><button class="toggle" onclick="toggle('mining', 'val-mine', this)">KAPALI</button></div>
+            <div class="setting-item"><h4>Anti-AFK</h4><button class="toggle" onclick="toggle('afk', null, this)">KAPALI</button></div>
         </div>
     </div>
 
     <script>
         const sid = localStorage.getItem('sid') || 's_'+Math.random().toString(36).substr(2);
         localStorage.setItem('sid', sid);
-        let sel = null; let ctxSlot = null; let autoScroll = true;
+        let sel = null; let autoScroll = true;
 
         function tab(id) {
             document.querySelectorAll('.tab').forEach(e => e.classList.remove('show'));
@@ -127,7 +116,7 @@
             document.getElementById('t-'+id).classList.add('active');
         }
 
-        function openCtx(e, s) { e.stopPropagation(); ctxSlot=s; const m=document.getElementById('ctx'); m.style.display='block'; m.style.left=e.pageX+'px'; m.style.top=e.pageY+'px'; }
+        function openCtx(e, s) { e.stopPropagation(); const m=document.getElementById('ctx'); m.style.display='block'; m.style.left=e.pageX+'px'; m.style.top=e.pageY+'px'; }
         function closeCtx() { document.getElementById('ctx').style.display='none'; }
         document.getElementById('log-output').addEventListener('scroll', function() { autoScroll = (this.scrollTop + this.clientHeight >= this.scrollHeight - 20); });
 
@@ -138,8 +127,6 @@
             sel = u; tab('console');
         }
 
-        async function stopBot(n) { await fetch(`/stop?sid=${sid}&user=${n}`); if(sel==n) sel=null; }
-        
         async function sendChat() {
             const i = document.getElementById('chat-in');
             if(!sel || !i.value) return;
@@ -147,39 +134,32 @@
             i.value = '';
         }
 
-        async function act(type) { await fetch(`/update?sid=${sid}&user=${sel}&type=inv_action&slot=${ctxSlot}&act=${type}`); closeCtx(); }
-
-        async function toggle(type, valId, btn) {
+        async function toggle(t, v, b) {
             if(!sel) return;
-            const status = btn.classList.contains('on') ? 'off' : 'on';
-            const val = valId ? document.getElementById(valId).value : 0;
-            await fetch(`/update?sid=${sid}&user=${sel}&type=${type}&status=${status}&val=${val}`);
-            btn.classList.toggle('on'); btn.innerText = btn.classList.contains('on') ? "AÇIK" : "KAPALI";
+            const s = b.classList.contains('on') ? 'off' : 'on';
+            await fetch(`/update?sid=${sid}&user=${sel}&type=${t}&status=${s}&val=0`);
+            b.classList.toggle('on'); b.innerText = b.classList.contains('on') ? "AÇIK" : "KAPALI";
         }
 
         setInterval(async () => {
             try {
                 const res = await fetch(`/data?sid=${sid}&user=${sel || ''}`);
                 const data = await res.json();
-                
-                const list = document.getElementById('bot-list');
-                list.innerHTML = data.active.map(b => `<div style="display:flex; justify-content:space-between; padding:10px; background:${sel==b?'#27272a':'#18181b'}; border-radius:6px; margin-bottom:5px; border:1px solid ${sel==b?'var(--accent)':'#27272a'};" onclick="sel='${b}'"><span>${b}</span><button onclick="stopBot('${b}')">KAPAT</button></div>`).join('');
+                document.getElementById('bot-list').innerHTML = data.active.map(b => `<div class="card" onclick="sel='${b}'" style="border-color:${sel==b?'var(--accent)':'var(--border)'}">${b}</div>`).join('');
 
                 if(sel && data.botData[sel]) {
                     const b = data.botData[sel];
-                    const logDiv = document.getElementById('log-output');
-                    // Mesajları temizleyip div içinde basıyoruz
-                    logDiv.innerHTML = b.logs.map(l => `<div>${l}</div>`).join('');
-                    if(autoScroll) logDiv.scrollTop = logDiv.scrollHeight;
+                    const lo = document.getElementById('log-output');
+                    // Mesajları temizle ve her veriyi (string, object vb) okunabilir yap
+                    lo.innerHTML = b.logs.map(l => `<div>${typeof l === 'object' ? JSON.stringify(l) : l}</div>`).join('');
+                    if(autoScroll) lo.scrollTop = lo.scrollHeight;
 
                     document.getElementById('bar-hp').style.width = (b.health / 20 * 100) + '%';
                     document.getElementById('bar-fd').style.width = (b.food / 20 * 100) + '%';
-                    
-                    const invDiv = document.getElementById('inv-grid');
-                    invDiv.innerHTML = ''; 
+                    const ig = document.getElementById('inv-grid'); ig.innerHTML = '';
                     for(let i=9; i<45; i++) {
-                        const item = b.inventory.find(x => x && x.slot === i);
-                        invDiv.innerHTML += `<div class="slot" onclick="${item ? `openCtx(event, ${i})` : ''}">${item ? `<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${item.name}.png"><span class="count">${item.count}</span>` : ''}</div>`;
+                        const it = b.inventory.find(x => x && x.slot === i);
+                        ig.innerHTML += `<div class="slot" onclick="${it?'openCtx(event)':''}">${it?`<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png"><span class="count">${it.count}</span>`:''}</div>`;
                     }
                 }
             } catch(e) {}
