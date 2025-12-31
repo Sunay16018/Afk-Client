@@ -3,52 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sabit Bot Panel</title>
+    <title>Sabit Konsol Panel</title>
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; }
-        body { 
-            background: #0d1117; color: #c9d1d9; margin: 0; 
-            display: flex; flex-direction: column; 
-            height: 100vh; overflow: hidden; 
-        }
+        * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
+        body { background: #0d1117; color: #c9d1d9; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
+        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
+        nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; }
 
-        /* ÜST MENÜ: Sabit */
-        nav { 
-            display: flex; background: #161b22; height: 50px; 
-            border-bottom: 1px solid #30363d; flex-shrink: 0;
-        }
-        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; font-size: 13px; }
-        nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; }
-
-        /* ANA İÇERİK: Sabit ve taşmaları engelli */
-        .tab { 
-            display: none; flex: 1; flex-direction: column; 
-            padding: 10px; overflow: hidden; /* Dışa taşmayı engeller */
-        }
+        .tab { display: none; flex: 1; flex-direction: column; padding: 10px; overflow-y: auto; }
         .active-tab { display: flex; }
 
-        /* KONSOL: SABİT BOYUTLU VE ORTADA */
+        /* KONSOL: TAM 150PX SABİT */
         #logbox { 
-            flex: 1; /* Ekranın kalanını doldurur ama dışarı taşmaz */
-            background: #000; border: 1px solid #30363d; padding: 10px; 
-            overflow-y: auto; color: #2ecc71; font-family: monospace; border-radius: 5px; 
-            font-size: 12px; margin-bottom: 5px;
+            height: 150px; /* İstediğin boyut */
+            width: 100%;
+            background: #000; 
+            border: 1px solid #30363d; 
+            padding: 10px; 
+            overflow-y: auto; /* Sadece kendi içinde kayar */
+            color: #2ecc71; 
+            font-family: monospace; 
+            border-radius: 5px; 
+            margin-bottom: 10px;
+            flex-shrink: 0; /* Boyutunun asla değişmemesini sağlar */
         }
-
-        /* AYARLAR: Kendi içinde kayabilir ama menüyü bozmaz */
-        #tab-settings, #tab-bots { overflow-y: auto; }
 
         .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
         input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; width: 100%; margin: 4px 0; border-radius: 6px; }
-        .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
         .btn-green { background: #238636; }
         .btn-red { background: #da3633; }
 
-        /* ALT MESAJ KUTUSU: Sabit ve her zaman en altta */
-        .footer { 
-            display: flex; gap: 5px; background: #161b22; padding: 10px; 
-            border-top: 1px solid #30363d; flex-shrink: 0;
-        }
+        /* ALT KISIM: Mesaj Kutusu */
+        .footer { display: flex; gap: 5px; background: #161b22; padding: 10px; border-top: 1px solid #30363d; flex-shrink: 0; }
     </style>
 </head>
 <body>
@@ -90,7 +79,7 @@
     <div id="tab-term" class="tab">
         <div id="logbox"></div>
         <form onsubmit="doSend(event)" class="footer">
-            <input id="m" placeholder="Mesaj yaz..." autocomplete="off" style="margin:0; flex:1;">
+            <input id="m" placeholder="Sohbete yaz..." autocomplete="off" style="margin:0; flex:1;">
             <button type="submit" class="btn">GÖNDER</button>
         </form>
     </div>
@@ -99,10 +88,8 @@
         if(!localStorage.getItem('sid')) localStorage.setItem('sid', 'sid_'+Math.random().toString(36).substr(2,9));
         const mySID = localStorage.getItem('sid');
         let sel = "";
-        let autoScroll = true;
 
         const lb = document.getElementById('logbox');
-        lb.onscroll = () => { autoScroll = (lb.scrollHeight - lb.scrollTop) <= (lb.clientHeight + 50); };
 
         function tab(t) {
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
@@ -149,7 +136,7 @@
                 `).join('');
                 if(sel && d.logs[sel]) {
                     lb.innerHTML = d.logs[sel].join('<br>');
-                    if(autoScroll) lb.scrollTop = lb.scrollHeight;
+                    lb.scrollTop = lb.scrollHeight; // Otomatik en aşağı kaydır
                 }
             } catch(e) {}
         }, 1000);
