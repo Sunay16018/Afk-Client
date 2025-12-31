@@ -2,28 +2,29 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Bot Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Özel Bot Paneli</title>
     <style>
         * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
         nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
-        nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; }
+        nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; }
         .tab { display: none; flex: 1; flex-direction: column; padding: 10px; overflow-y: auto; }
         .active-tab { display: flex; }
-        /* KONSOL SABİT BOYUT */
         #logbox { height: 320px; background: #000; border: 1px solid #30363d; padding: 10px; overflow-y: auto; color: #2ecc71; font-family: monospace; border-radius: 5px; margin-bottom: 5px; flex-shrink: 0; }
         .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
         input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; width: 100%; margin: 4px 0; border-radius: 4px; }
         .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
         .btn-green { background: #238636; }
         .btn-red { background: #da3633; }
+        .btn-stop { background: #f85149; width: 100%; margin-top: 5px; }
         .footer { display: flex; gap: 5px; background: #161b22; padding: 8px; border-top: 1px solid #30363d; }
     </style>
 </head>
 <body>
     <nav>
-        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
+        <button onclick="tab('bots')" id="btn-bots" class="active">BAĞLANTI</button>
         <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
         <button onclick="tab('term')" id="btn-term">KONSOL</button>
     </nav>
@@ -33,41 +34,40 @@
             <input id="h" placeholder="Sunucu IP:Port">
             <input id="u" placeholder="Bot İsmi">
             <input id="v" placeholder="Sürüm (Örn: 1.16.5)">
-            <button class="btn btn-green" style="width:100%" onclick="add()">BAĞLAN</button>
+            <button class="btn btn-green" style="width:100%" onclick="add()">BOTU BAŞLAT</button>
         </div>
         <div id="list"></div>
     </div>
 
     <div id="tab-settings" class="tab">
-        <div class="card">
-            <h4>Oto Mesaj</h4>
-            <input id="cfg_msg_text" placeholder="Mesaj...">
-            <input id="cfg_msg_sec" type="number" value="30">
-            <button class="btn btn-green" onclick="upd('msg','on')">AÇ</button>
-            <button class="btn btn-red" onclick="upd('msg','off')">KAPAT</button>
+        <div class="card" id="stop-area" style="display:none;">
+            <h4 style="color:#f85149">Botu Yönet</h4>
+            <button class="btn btn-stop" onclick="stopBot()">BAĞLANTIYI KES (OYUNDAN DÜŞÜR)</button>
         </div>
         <div class="card">
-            <h4>Sistem Kontrol</h4>
-            <p>Anti-AFK:</p>
-            <button class="btn btn-green" onclick="upd('afk','on')">AÇ</button>
+            <h4>Modlar</h4>
+            <button class="btn btn-green" onclick="upd('afk','on')">ANTI-AFK AÇ</button>
             <button class="btn btn-red" onclick="upd('afk','off')">KAPAT</button>
-            <p style="margin-top:10px;">Jeneratör Kazma:</p>
-            <button class="btn btn-green" onclick="upd('mining','on')">AÇ</button>
+            <hr style="border:0; border-top:1px solid #30363d; margin:10px 0;">
+            <button class="btn btn-green" onclick="upd('mining','on')">OTO KAZMA AÇ</button>
             <button class="btn btn-red" onclick="upd('mining','off')">KAPAT</button>
         </div>
     </div>
 
     <div id="tab-term" class="tab">
         <div id="logbox"></div>
-        <div class="footer">
-            <input id="m" placeholder="Mesaj..." style="margin:0; flex:1;">
-            <button onclick="doSend()" class="btn">GÖNDER</button>
-        </div>
+        <form onsubmit="doSend(event)" class="footer">
+            <input id="m" placeholder="Mesaj yaz..." autocomplete="off" style="margin:0; flex:1;">
+            <button type="submit" class="btn">GÖNDER</button>
+        </form>
     </div>
 
     <script>
-        const mySID = localStorage.getItem('sid') || Math.random().toString(36).substr(2,5);
-        localStorage.setItem('sid', mySID);
+        // Her tarayıcı için benzersiz bir kimlik oluşturur (LocalStorage)
+        if(!localStorage.getItem('my_unique_sid')){
+            localStorage.setItem('my_unique_sid', 'sid_' + Math.random().toString(36).substr(2, 9));
+        }
+        const mySID = localStorage.getItem('my_unique_sid');
         let sel = "";
 
         function tab(t) {
@@ -75,26 +75,36 @@
             document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
             document.getElementById('tab-'+t).classList.add('active-tab');
             document.getElementById('btn-'+t).classList.add('active');
+            
+            // Ayarlar sekmesinde stop butonu görünürlüğü
+            document.getElementById('stop-area').style.display = sel ? 'block' : 'none';
         }
 
         async function add() {
             const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
+            if(!u) return;
             await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
             sel = u; tab('term');
         }
 
-        async function doSend() {
+        async function stopBot() {
+            if(!sel) return;
+            await fetch(`/stop?sid=${mySID}&user=${sel}`);
+            sel = "";
+            tab('bots');
+        }
+
+        async function doSend(e) {
+            if(e) e.preventDefault();
             const i = document.getElementById('m');
             if(!sel || !i.value) return;
-            await fetch(`/send?sid=${mySID}&user=${encodeURIComponent(sel)}&msg=${encodeURIComponent(i.value)}`);
-            i.value = "";
+            const msg = i.value; i.value = "";
+            await fetch(`/send?sid=${mySID}&user=${encodeURIComponent(sel)}&msg=${encodeURIComponent(msg)}`);
         }
 
         async function upd(type, status) {
-            if(!sel) return;
-            let val = encodeURIComponent(document.getElementById('cfg_msg_text').value);
-            let sec = document.getElementById('cfg_msg_sec').value;
-            await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&val=${val}&sec=${sec}`);
+            if(!sel) return alert("Önce bot seç!");
+            await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}`);
         }
 
         setInterval(async () => {
