@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sabit Konsol Panel</title>
+    <title>Gelişmiş Bot Paneli</title>
     <style>
         * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -15,29 +15,19 @@
         .tab { display: none; flex: 1; flex-direction: column; padding: 10px; overflow-y: auto; }
         .active-tab { display: flex; }
 
-        /* KONSOL: TAM 150PX SABİT */
-        #logbox { 
-            height: 150px; /* İstediğin boyut */
-            width: 100%;
-            background: #000; 
-            border: 1px solid #30363d; 
-            padding: 10px; 
-            overflow-y: auto; /* Sadece kendi içinde kayar */
-            color: #2ecc71; 
-            font-family: monospace; 
-            border-radius: 5px; 
-            margin-bottom: 10px;
-            flex-shrink: 0; /* Boyutunun asla değişmemesini sağlar */
-        }
-
+        #logbox { height: 150px; background: #000; border: 1px solid #30363d; padding: 10px; overflow-y: auto; color: #2ecc71; font-family: monospace; border-radius: 5px; margin-bottom: 5px; flex-shrink: 0; }
+        
         .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
-        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; width: 100%; margin: 4px 0; border-radius: 6px; }
-        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+        
+        .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
         .btn-green { background: #238636; }
         .btn-red { background: #da3633; }
+        .btn-dark { background: #30363d; color: #c9d1d9; }
 
-        /* ALT KISIM: Mesaj Kutusu */
         .footer { display: flex; gap: 5px; background: #161b22; padding: 10px; border-top: 1px solid #30363d; flex-shrink: 0; }
+        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; width: 100%; border-radius: 6px; }
+        h4 { margin: 0 0 8px 0; color: #58a6ff; font-size: 12px; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -49,37 +39,50 @@
 
     <div id="tab-bots" class="tab active-tab">
         <div class="card">
-            <input id="h" placeholder="IP:Port">
-            <input id="u" placeholder="Bot İsmi">
-            <input id="v" placeholder="Sürüm">
-            <button class="btn btn-green" style="width:100%" onclick="add()">BAĞLAN</button>
+            <input id="h" placeholder="Sunucu IP:Port">
+            <input id="u" placeholder="Bot Nick" style="margin-top:5px;">
+            <input id="v" placeholder="Sürüm (1.16.5 vb.)" style="margin-top:5px;">
+            <button class="btn btn-green" style="width:100%; margin-top:10px;" onclick="add()">BAĞLAN</button>
         </div>
         <div id="list"></div>
     </div>
 
     <div id="tab-settings" class="tab">
-        <div class="card"><button class="btn btn-red" style="width:100%" onclick="stopBot()">BAĞLANTIYI KES</button></div>
         <div class="card">
-            <h4>Oto Mesaj</h4>
-            <input id="cfg_msg_text" placeholder="Mesaj...">
-            <input id="cfg_msg_sec" type="number" value="30">
-            <button class="btn btn-green" onclick="upd('msg','on')">AÇ</button>
-            <button class="btn btn-red" onclick="upd('msg','off')">KAPAT</button>
+            <h4>Yön Kontrol (90 Derece)</h4>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                <button class="btn btn-dark" style="width: 80px;" onclick="upd('look','up')">YUKARI</button>
+                <div style="display: flex; gap: 5px;">
+                    <button class="btn btn-dark" style="width: 80px;" onclick="upd('look','left')">SOL</button>
+                    <button class="btn btn-dark" style="width: 80px;" onclick="upd('look','front')">KARŞI</button>
+                    <button class="btn btn-dark" style="width: 80px;" onclick="upd('look','right')">SAĞ</button>
+                </div>
+                <button class="btn btn-dark" style="width: 80px;" onclick="upd('look','down')">AŞAĞI</button>
+            </div>
         </div>
+
         <div class="card">
-            <h4>AFK & Kazma</h4>
-            <button class="btn btn-green" onclick="upd('afk','on')">AFK AÇ</button>
-            <button class="btn btn-red" onclick="upd('afk','off')">KAPAT</button>
-            <hr style="opacity:0.1;margin:10px 0;">
-            <button class="btn btn-green" onclick="upd('mining','on')">KAZMA AÇ</button>
-            <button class="btn btn-red" onclick="upd('mining','off')">KAPAT</button>
+            <h4>Envanter</h4>
+            <button class="btn btn-red" style="width:100%" onclick="upd('drop')">ELDEKİ EŞYAYI AT</button>
+        </div>
+
+        <div class="card">
+            <h4>Gelişmiş Kazma (Maden)</h4>
+            <div class="grid-3" style="grid-template-columns: 1fr 1fr;">
+                <button class="btn btn-green" onclick="upd('mining','on')">KAZMA BAŞLAT</button>
+                <button class="btn btn-red" onclick="upd('mining','off')">DURDUR</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <button class="btn btn-red" style="width:100%; border: 1px dashed white;" onclick="stopBot()">BAĞLANTIYI KES</button>
         </div>
     </div>
 
     <div id="tab-term" class="tab">
         <div id="logbox"></div>
         <form onsubmit="doSend(event)" class="footer">
-            <input id="m" placeholder="Sohbete yaz..." autocomplete="off" style="margin:0; flex:1;">
+            <input id="m" placeholder="Mesaj/Komut..." autocomplete="off" style="flex:1;">
             <button type="submit" class="btn">GÖNDER</button>
         </form>
     </div>
@@ -88,8 +91,6 @@
         if(!localStorage.getItem('sid')) localStorage.setItem('sid', 'sid_'+Math.random().toString(36).substr(2,9));
         const mySID = localStorage.getItem('sid');
         let sel = "";
-
-        const lb = document.getElementById('logbox');
 
         function tab(t) {
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
@@ -119,10 +120,10 @@
         }
 
         async function upd(type, status) {
-            if(!sel) return;
-            let val = encodeURIComponent(document.getElementById('cfg_msg_text').value);
-            let sec = document.getElementById('cfg_msg_sec').value;
-            await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&val=${val}&sec=${sec}`);
+            if(!sel) return alert("Bot seçili değil!");
+            let u = `/update?sid=${mySID}&user=${sel}&type=${type}`;
+            if(status) u += (type === 'look' ? `&dir=${status}` : `&status=${status}`);
+            await fetch(u);
         }
 
         setInterval(async () => {
@@ -135,8 +136,9 @@
                     </div>
                 `).join('');
                 if(sel && d.logs[sel]) {
+                    const lb = document.getElementById('logbox');
                     lb.innerHTML = d.logs[sel].join('<br>');
-                    lb.scrollTop = lb.scrollHeight; // Otomatik en aşağı kaydır
+                    lb.scrollTop = lb.scrollHeight;
                 }
             } catch(e) {}
         }, 1000);
