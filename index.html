@@ -3,96 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bot Panel v22</title>
+    <title>Sabit Bot Panel</title>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        
-        /* SAYFAYI EKRANA SABİTLEME */
+        * { box-sizing: border-box; font-family: sans-serif; }
         body { 
             background: #0d1117; color: #c9d1d9; margin: 0; 
             display: flex; flex-direction: column; 
-            height: 100vh; /* Ekran boyu kadar */
-            width: 100vw; 
-            overflow: hidden; /* Sayfanın kendisi asla kaymaz */
+            height: 100vh; overflow: hidden; 
         }
 
-        /* ÜST MENÜ SABİT */
+        /* ÜST MENÜ: Sabit */
         nav { 
             display: flex; background: #161b22; height: 50px; 
             border-bottom: 1px solid #30363d; flex-shrink: 0;
         }
-        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
+        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; font-size: 13px; }
         nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; }
 
-        /* İÇERİK ALANI - SADECE BURASI KAYAR */
+        /* ANA İÇERİK: Sabit ve taşmaları engelli */
         .tab { 
             display: none; flex: 1; flex-direction: column; 
-            padding: 10px; 
-            overflow-y: auto; /* İçerik taşarsa sadece burası kayar */
+            padding: 10px; overflow: hidden; /* Dışa taşmayı engeller */
         }
         .active-tab { display: flex; }
 
-        /* KONSOL ALANI */
+        /* KONSOL: SABİT BOYUTLU VE ORTADA */
         #logbox { 
-            flex: 1; background: #000; border: 1px solid #30363d; padding: 10px; 
+            flex: 1; /* Ekranın kalanını doldurur ama dışarı taşmaz */
+            background: #000; border: 1px solid #30363d; padding: 10px; 
             overflow-y: auto; color: #2ecc71; font-family: monospace; border-radius: 5px; 
-            font-size: 12px; margin-bottom: 10px; min-height: 200px;
+            font-size: 12px; margin-bottom: 5px;
         }
 
-        .card { background: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
-        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 12px; width: 100%; margin: 5px 0; border-radius: 6px; }
-        
-        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
+        /* AYARLAR: Kendi içinde kayabilir ama menüyü bozmaz */
+        #tab-settings, #tab-bots { overflow-y: auto; }
+
+        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
+        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; width: 100%; margin: 4px 0; border-radius: 6px; }
+        .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
         .btn-green { background: #238636; }
         .btn-red { background: #da3633; }
-        
-        /* ALT MESAJ KUTUSU SABİT */
+
+        /* ALT MESAJ KUTUSU: Sabit ve her zaman en altta */
         .footer { 
             display: flex; gap: 5px; background: #161b22; padding: 10px; 
             border-top: 1px solid #30363d; flex-shrink: 0;
         }
-        
-        h4 { margin: 0 0 10px 0; color: #58a6ff; border-bottom: 1px solid #21262d; }
     </style>
 </head>
 <body>
     <nav>
-        <button onclick="tab('bots')" id="btn-bots" class="active">BAĞLANTI</button>
+        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
         <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
         <button onclick="tab('term')" id="btn-term">KONSOL</button>
     </nav>
 
     <div id="tab-bots" class="tab active-tab">
         <div class="card">
-            <h4>Yeni Bot Girişi</h4>
-            <input id="h" placeholder="Sunucu IP:Port">
+            <input id="h" placeholder="IP:Port">
             <input id="u" placeholder="Bot İsmi">
-            <input id="v" placeholder="Oyun Sürümü">
+            <input id="v" placeholder="Sürüm">
             <button class="btn btn-green" style="width:100%" onclick="add()">BAĞLAN</button>
         </div>
         <div id="list"></div>
     </div>
 
     <div id="tab-settings" class="tab">
+        <div class="card"><button class="btn btn-red" style="width:100%" onclick="stopBot()">BAĞLANTIYI KES</button></div>
         <div class="card">
-            <h4 style="color:#f85149">Botu Kapat</h4>
-            <button class="btn btn-red" style="width:100%" onclick="stopBot()">BAĞLANTIYI KES (ANINDA ÇIKAR)</button>
+            <h4>Oto Mesaj</h4>
+            <input id="cfg_msg_text" placeholder="Mesaj...">
+            <input id="cfg_msg_sec" type="number" value="30">
+            <button class="btn btn-green" onclick="upd('msg','on')">AÇ</button>
+            <button class="btn btn-red" onclick="upd('msg','off')">KAPAT</button>
         </div>
         <div class="card">
-            <h4>Otomatik Mesaj</h4>
-            <input id="cfg_msg_text" placeholder="Gönderilecek mesaj...">
-            <input id="cfg_msg_sec" type="number" value="30" placeholder="Kaç saniyede bir?">
-            <button class="btn btn-green" onclick="upd('msg','on')">BAŞLAT</button>
-            <button class="btn btn-red" onclick="upd('msg','off')">DURDUR</button>
-        </div>
-        <div class="card">
-            <h4>Sistem Modları</h4>
-            <p>Anti-AFK (Zıplama/Bakış):</p>
-            <button class="btn btn-green" onclick="upd('afk','on')">AÇ</button>
+            <h4>AFK & Kazma</h4>
+            <button class="btn btn-green" onclick="upd('afk','on')">AFK AÇ</button>
             <button class="btn btn-red" onclick="upd('afk','off')">KAPAT</button>
-            <hr style="border:0; border-top:1px solid #30363d; margin:15px 0;">
-            <p>Jeneratör Kazma:</p>
-            <button class="btn btn-green" onclick="upd('mining','on')">AÇ</button>
+            <hr style="opacity:0.1;margin:10px 0;">
+            <button class="btn btn-green" onclick="upd('mining','on')">KAZMA AÇ</button>
             <button class="btn btn-red" onclick="upd('mining','off')">KAPAT</button>
         </div>
     </div>
@@ -123,13 +113,12 @@
 
         async function add() {
             const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
-            if(!u) return;
             await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
             sel = u; tab('term');
         }
 
         async function stopBot() {
-            if(!sel) return alert("Bot seçilmedi!");
+            if(!sel) return;
             await fetch(`/stop?sid=${mySID}&user=${sel}`);
             sel = ""; tab('bots');
         }
@@ -143,7 +132,7 @@
         }
 
         async function upd(type, status) {
-            if(!sel) return alert("Bot seçili değil!");
+            if(!sel) return;
             let val = encodeURIComponent(document.getElementById('cfg_msg_text').value);
             let sec = document.getElementById('cfg_msg_sec').value;
             await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&val=${val}&sec=${sec}`);
@@ -154,7 +143,7 @@
                 const r = await fetch(`/data?sid=${mySID}`);
                 const d = await r.json();
                 document.getElementById('list').innerHTML = d.active.map(n => `
-                    <div style="padding:12px; background:#21262d; border:1px solid ${sel==n?'#2ecc71':'#30363d'}; margin-top:5px; border-radius:6px;" onclick="sel='${n}'">
+                    <div style="padding:10px; background:#21262d; border:1px solid ${sel==n?'#2ecc71':'#30363d'}; margin-top:5px; border-radius:6px;" onclick="sel='${n}'">
                         ${n} ${sel==n?'<b>(SEÇİLİ)</b>':''}
                     </div>
                 `).join('');
