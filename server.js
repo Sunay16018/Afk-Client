@@ -21,12 +21,12 @@ function startBot(sid, host, user, ver) {
 
     sessions[sid][user] = bot;
     configs[key] = { mining: null, jump: null, rclick: null, automsg: null };
-    logs[key] = ["<b style='color:gray'>[SİSTEM] Başlatıldı.</b>"];
+    logs[key] = ["<b style='color:gray'>[SİSTEM] Bot başlatıldı.</b>"];
 
     bot.on('login', () => logs[key].push("<b style='color:#2ecc71'>[GİRİŞ] Başarılı!</b>"));
     bot.on('message', (m) => {
         logs[key].push(m.toHTML());
-        if(logs[key].length > 40) logs[key].shift();
+        if(logs[key].length > 50) logs[key].shift();
     });
 }
 
@@ -45,13 +45,6 @@ http.createServer((req, res) => {
         const conf = configs[key];
         const ms = parseFloat(q.sec) * 1000 || 1000;
 
-        if (q.type === 'look') {
-            let yaw = bot.entity.yaw;
-            if (q.dir === 'left') yaw += Math.PI/2;
-            if (q.dir === 'right') yaw -= Math.PI/2;
-            bot.look(yaw, q.dir==='up'?Math.PI/2:q.dir==='down'?-Math.PI/2:0, true);
-        }
-
         if (q.type === 'mining') {
             clearInterval(conf.mining);
             if (q.status === 'on') {
@@ -62,28 +55,21 @@ http.createServer((req, res) => {
                 }, ms);
             }
         }
-
         if (q.type === 'automsg') {
             clearInterval(conf.automsg);
             if (q.status === 'on') {
                 const text = decodeURIComponent(q.msg);
-                // Botun chate yazması için zorlama
                 conf.automsg = setInterval(() => { bot.chat(text); }, ms);
             }
         }
-
-        // ENVANTER ETKİLEŞİMLERİ
         if (q.type === 'inv_action') {
             const slot = parseInt(q.slot);
             const item = bot.inventory.slots[slot];
             if (item) {
                 if (q.act === 'drop_all') bot.tossStack(item);
                 if (q.act === 'drop_one') bot.toss(item.type, null, 1);
-                if (q.act === 'click_left') bot.clickWindow(slot, 0, 0);
-                if (q.act === 'click_right') bot.clickWindow(slot, 1, 0);
             }
         }
-
         return res.end("ok");
     }
 
@@ -93,9 +79,8 @@ http.createServer((req, res) => {
         if (q.user && bot) {
             botData[q.user] = {
                 logs: logs[sid + "_" + q.user] || [],
-                health: bot.health,
-                food: bot.food,
-                pos: bot.entity.position,
+                health: bot.health || 20,
+                food: bot.food || 20,
                 inventory: bot.inventory.slots.map(s => s ? { name: s.name, count: s.count, slot: s.slot } : null)
             };
         }
