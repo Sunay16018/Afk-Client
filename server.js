@@ -14,50 +14,68 @@ function startBot(sid, host, user, ver) {
 
     const key = sid + "_" + user;
     const [ip, port] = host.split(':');
-    
     logs[key] = ["Bağlantı kuruluyor..."];
 
-    try {
-        const bot = mineflayer.createBot({
-            host: ip, 
-            port: parseInt(port) || 25565, 
-            username: user, 
-            version: ver, // Kullanıcının yazdığı sürüm
-            auth: 'offline',
-            checkTimeoutInterval: 60000
-        });
+    const bot = mineflayer.createBot({
+        host: ip, 
+        port: parseInt(port) || 25565, 
+        username: user, 
+        version: ver, 
+        auth: 'offline',
+        checkTimeoutInterval: 60000
+    });
 
-        sessions[sid][user] = bot;
-        configs[key] = { msgT: null };
+    sessions[sid][user] = bot;
+    configs[key] = { msgT: null };
 
-        bot.on('login', () => logs[key].push("<b style='color:#2ecc71'>BAŞARIYLA GİRDİ!</b>"));
+    // --- KRİTİK MESAJ İŞLEYİCİ ---
+    const parseReason = (reason) => {
+        if (!reason) return "Bilinmeyen bir sebeple bağlantı kesildi.";
+        if (typeof reason === 'string') return reason;
         
-        bot.on('kicked', (reason) => {
-            let msg = typeof reason === 'string' ? reason : JSON.stringify(reason);
-            try { if(reason.extra) msg = reason.extra.map(e => e.text).join(""); } catch(e){}
-            logs[key].push("<b style='color:#e74c3c'>SUNUCU ATTI: " + msg + "</b>");
+        // Minecraft'ın JSON formatındaki mesajlarını (extra/text) düz metne çevirir
+        try {
+            if (reason.extra) return reason.extra.map(e => e.text || "").join("");
+            if (reason.text) return reason.text;
+            if (reason.translate) return reason.translate;
+        } catch (e) {
+            return "Hata kodu çözülemedi: " + JSON.stringify(reason);
+        }
+        return JSON.stringify(reason);
+    };
+
+    bot.on('login', () => {
+        logs[key].push("<b style='color:#2ecc71'>[SİSTEM] Sunucuya giriş başarılı!</b>");
+    });
+
+    bot.on('kicked', (reason) => {
+        const cleanMessage = parseReason(reason);
+        logs[key].push("<b style='color:#ff4757'>[ATILDI] " + cleanMessage + "</b>");
+        delete sessions[sid][user];
+    });
+
+    bot.on('error', (err) => {
+        let errorMsg = err.message;
+        if (errorMsg.includes("unsupported minecraft version")) errorMsg = "Sürüm hatalı veya desteklenmiyor!";
+        logs[key].push("<b style='color:#ff4757'>[HATA] " + errorMsg + "</b>");
+        delete sessions[sid][user];
+    });
+
+    bot.on('end', () => {
+        // Eğer bot listeden silinmemişse ama kapandıysa bilgilendir
+        if (sessions[sid]?.[user]) {
+            logs[key].push("<b style='color:#ffa502'>[BİLGİ] Botun sunucuyla bağlantısı kesildi.</b>");
             delete sessions[sid][user];
-        });
+        }
+    });
 
-        bot.on('error', (err) => {
-            let errorMsg = err.message;
-            if (errorMsg.includes("unsupported minecraft version")) {
-                errorMsg = "BU SÜRÜM MEVCUT DEĞİL VEYA DESTEKLENMİYOR!";
-            }
-            logs[key].push("<b style='color:#e74c3c'>HATA: " + errorMsg + "</b>");
-            delete sessions[sid][user];
-        });
-
-        bot.on('message', (m) => {
-            logs[key].push(m.toHTML());
-            if(logs[key].length > 50) logs[key].shift();
-        });
-
-    } catch (e) {
-        logs[key].push("<b style='color:red'>Sistem Hatası: " + e.message + "</b>");
-    }
+    bot.on('message', (m) => {
+        logs[key].push(m.toHTML());
+        if(logs[key].length > 50) logs[key].shift();
+    });
 }
 
+// HTTP API
 http.createServer((req, res) => {
     const q = url.parse(req.url, true).query;
     const p = url.parse(req.url, true).pathname;
@@ -88,3 +106,4 @@ http.createServer((req, res) => {
     let f = path.join(__dirname, p === '/' ? 'index.html' : p);
     fs.readFile(f, (err, data) => res.end(data));
 }).listen(process.env.PORT || 10000);
+    
