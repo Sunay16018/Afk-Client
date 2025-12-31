@@ -3,75 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BotMaster v18</title>
+    <title>BotMaster v19 Pro</title>
     <style>
-        :root { --bg: #09090b; --panel: #111114; --border: #27272a; --accent: #8b5cf6; --text: #fafafa; --green: #10b981; --red: #ef4444; }
+        :root { --bg: #0c0c0e; --panel: #16161a; --border: #2d2d33; --accent: #6366f1; --text: #f4f4f5; --green: #10b981; --red: #f43f5e; }
         * { box-sizing: border-box; outline: none; }
-        body { background: var(--bg); color: var(--text); margin: 0; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        nav { display: flex; background: var(--panel); height: 60px; border-bottom: 1px solid var(--border); padding: 0 10px; align-items: center; gap: 5px; }
-        nav button { flex: 1; background: #27272a; border: none; color: #a1a1aa; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        body { background: var(--bg); color: var(--text); margin: 0; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        nav { display: flex; background: var(--panel); height: 60px; border-bottom: 2px solid var(--border); padding: 0 10px; align-items: center; gap: 8px; flex-shrink: 0; }
+        nav button { flex: 1; background: #232329; border: 1px solid var(--border); color: #a1a1aa; font-weight: bold; font-size: 11px; cursor: pointer; padding: 12px 5px; border-radius: 8px; }
         nav button.active { background: var(--accent); color: white; }
+
         .tab { display: none; height: calc(100vh - 60px); padding: 15px; overflow-y: auto; width: 100%; max-width: 600px; margin: 0 auto; }
         .tab.show { display: flex; flex-direction: column; }
-        .card { background: #18181b; border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        .input-box { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 10px; }
-        .console-box { display: flex; flex-direction: column; background: #000; border: 1px solid var(--border); border-radius: 10px; height: 45vh !important; }
-        #log-output { flex: 1; overflow-y: auto; padding: 10px; font-size: 12px; font-family: monospace; color: #ccc; }
-        .log-line { border-bottom: 1px solid #111; padding: 2px 0; display: block; }
-        .chat-area { display: flex; padding: 10px; gap: 5px; border-top: 1px solid var(--border); }
-        .chat-area input { flex: 1; background: #18181b; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 5px; }
+        
+        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .input-box { width: 100%; padding: 12px; background: #1f1f23; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 10px; }
+
+        .console-box { display: flex; flex-direction: column; background: #000; border: 2px solid var(--border); border-radius: 12px; height: 50vh !important; }
+        #log-output { flex: 1; overflow-y: auto; padding: 12px; font-size: 13px; font-family: 'Consolas', monospace; line-height: 1.5; }
+        /* Minecraft HTML Mesaj Renkleri İçin */
+        #log-output span { display: inline; }
+
+        .chat-bar { display: flex; background: #111; padding: 8px; gap: 5px; border-top: 1px solid var(--border); }
+        .chat-bar input { flex: 1; background: #1f1f23; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; }
+        .chat-bar button { background: var(--accent); color: white; border: none; padding: 0 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        .control-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
+        .btn-ctrl { background: #232329; border: 1px solid var(--border); color: white; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .btn-ctrl:active, .btn-ctrl.on { background: var(--accent); }
+        
         .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
-        .slot { aspect-ratio: 1; background: #000; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; position: relative; }
-        .slot img { width: 80%; image-rendering: pixelated; }
-        .toggle-btn { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--border); background: #27272a; color: white; cursor: pointer; margin-top: 5px; }
-        .toggle-btn.on { background: var(--green); }
-        #ctx { display: none; position: fixed; background: #1c1c1f; border: 1px solid var(--border); z-index: 99; width: 100px; }
-        #ctx button { display: block; width: 100%; padding: 10px; background: none; border: none; color: white; border-bottom: 1px solid #27272a; }
+        .slot { aspect-ratio: 1; background: #1f1f23; border: 1px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative; }
+        .slot img { width: 75%; image-rendering: pixelated; }
     </style>
 </head>
-<body onclick="document.getElementById('ctx').style.display='none'">
+<body>
+
     <nav>
-        <button onclick="tab('bots', this)" class="active">GİRİŞ</button>
+        <button onclick="tab('bots', this)" class="active">BAĞLANTI</button>
         <button onclick="tab('console', this)">KONSOL</button>
         <button onclick="tab('status', this)">DURUM</button>
-        <button onclick="tab('settings', this)">AYARLAR</button>
+        <button onclick="tab('settings', this)">KONTROL</button>
     </nav>
-    <div id="ctx"><button onclick="invAct('drop')">At</button><button onclick="invAct('equip')">Tut</button></div>
+
     <div id="p-bots" class="tab show">
-        <div class="card"><input id="ip" class="input-box" placeholder="IP:Port"><input id="user" class="input-box" placeholder="Kullanıcı"><button onclick="start()" class="toggle-btn" style="background:var(--green)">BAĞLAN</button></div>
-        <div id="blist"></div>
+        <div class="card">
+            <input id="ip" class="input-box" placeholder="Sunucu IP:Port">
+            <input id="user" class="input-box" placeholder="Bot Kullanıcı Adı">
+            <button onclick="start()" class="btn-ctrl" style="width:100%; background:var(--green)">BAĞLAN</button>
+        </div>
+        <div id="bot-list"></div>
     </div>
+
     <div id="p-console" class="tab">
-        <div class="console-box"><div id="log-output"></div><div class="chat-area"><input id="msg" placeholder="Mesaj..."><button onclick="send()">></button></div></div>
+        <div class="console-box">
+            <div id="log-output"></div>
+            <div class="chat-bar">
+                <input id="chat-in" placeholder="Mesaj veya komut..." onkeydown="if(event.key==='Enter') sendChat()">
+                <button onclick="sendChat()">GÖNDER</button>
+            </div>
+        </div>
     </div>
+
     <div id="p-status" class="tab">
-        <div class="card">Can: <span id="hp">0</span>/20<br>Açlık: <span id="fd">0</span>/20</div>
-        <div class="card"><div id="inv" class="inv-grid"></div></div>
+        <div class="card">
+            Can: <span id="hp">20</span> | Açlık: <span id="fd">20</span>
+        </div>
+        <div class="card"><div id="inv-render" class="inv-grid"></div></div>
     </div>
+
     <div id="p-settings" class="tab">
-        <div class="card">Oto Mesaj: <input id="atxt" class="input-box" placeholder="Mesaj..."><input id="asec" type="number" class="input-box" value="30"><button id="s-msg" class="toggle-btn" onclick="tgl('auto_msg', this, ['atxt', 'asec'])">KAPALI</button></div>
-        <div class="card"><button class="toggle-btn" onclick="act('look', 'left')">SOLA DÖN</button><button class="toggle-btn" onclick="act('look', 'right')">SAĞA DÖN</button><button id="s-move" class="toggle-btn" onclick="tgl('move', this)">OTO YÜRÜ</button></div>
+        <div class="card">
+            <div class="control-grid">
+                <div></div><button class="btn-ctrl" onmousedown="move('forward','on')" onmouseup="move('forward','off')">İLERİ</button><div></div>
+                <button class="btn-ctrl" onmousedown="move('left','on')" onmouseup="move('left','off')">SOL</button>
+                <button class="btn-ctrl" onmousedown="move('back','on')" onmouseup="move('back','off')">GERİ</button>
+                <button class="btn-ctrl" onmousedown="move('right','on')" onmouseup="move('right','off')">SAĞ</button>
+                <div></div><button class="btn-ctrl" onclick="move('jump','on')">ZIPLA</button><div></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="control-grid">
+                <div></div><button class="btn-ctrl" onclick="look('up')">YUKARI</button><div></div>
+                <button class="btn-ctrl" onclick="look('left')">SOLA BAK</button>
+                <div></div>
+                <button class="btn-ctrl" onclick="look('right')">SAĞA BAK</button>
+                <div></div><button class="btn-ctrl" onclick="look('down')">AŞAĞI</button><div></div>
+            </div>
+        </div>
     </div>
+
     <script>
-        let sel = null; let logs = {}; const sid = 'S'+Math.random().toString(36).substr(2,4);
-        function tab(id, b) { document.querySelectorAll('.tab').forEach(t=>t.classList.remove('show')); document.querySelectorAll('nav button').forEach(n=>n.classList.remove('active')); document.getElementById('p-'+id).classList.add('show'); b.classList.add('active'); if(id==='console') rlog(); }
-        function rlog() { const o = document.getElementById('log-output'); o.innerHTML = (logs[sel]||[]).map(l=>`<span class="log-line">${l}</span>`).join(''); }
-        async function start() { const i=document.getElementById('ip').value, u=document.getElementById('user').value; await fetch(`/start?sid=${sid}&host=${i}&user=${u}`); sel=u; if(!logs[u]) logs[u]=[]; tab('console', document.querySelectorAll('nav button')[1]); }
-        async function send() { const m=document.getElementById('msg'); if(!sel||!m.value) return; await fetch(`/send?sid=${sid}&user=${sel}&msg=${encodeURIComponent(m.value)}`); m.value=''; }
-        async function tgl(t, b, ids=[]) { if(!sel) return; const ison=b.classList.toggle('on'); const v=ids.map(i=>document.getElementById(i).value).join('|'); await fetch(`/update?sid=${sid}&user=${sel}&type=${t}&status=${ison?'on':'off'}&val=${v}`); b.innerText=ison?'AÇIK':'KAPALI'; }
-        async function act(t, v) { await fetch(`/update?sid=${sid}&user=${sel}&type=${t}&val=${v}`); }
-        let cS = 0; function openInv(e, s) { e.stopPropagation(); cS=s; const m=document.getElementById('ctx'); m.style.display='block'; m.style.left=e.pageX+'px'; m.style.top=e.pageY+'px'; }
-        async function invAct(a) { await fetch(`/update?sid=${sid}&user=${sel}&type=inv_action&slot=${cS}&status=${a}`); }
+        let sel = null; let botLogs = {};
+        function tab(id, b) {
+            document.querySelectorAll('.tab').forEach(t=>t.classList.remove('show'));
+            document.querySelectorAll('nav button').forEach(n=>n.classList.remove('active'));
+            document.getElementById('p-'+id).classList.add('show');
+            b.classList.add('active');
+        }
+
+        async function start() {
+            const host = document.getElementById('ip').value;
+            const user = document.getElementById('user').value;
+            if(!host || !user) return;
+            await fetch(`/start?host=${host}&user=${user}`);
+            sel = user; botLogs[user] = [];
+            tab('console', document.querySelectorAll('nav button')[1]);
+        }
+
+        async function sendChat() {
+            const ci = document.getElementById('chat-in');
+            if(!sel || !ci.value) return;
+            await fetch(`/send?user=${sel}&msg=${encodeURIComponent(ci.value)}`);
+            ci.value = '';
+        }
+
+        async function move(val, status) {
+            if(!sel) return;
+            await fetch(`/update?user=${sel}&type=move&val=${val}&status=${status}`);
+        }
+
+        async function look(val) {
+            if(!sel) return;
+            await fetch(`/update?user=${sel}&type=look&val=${val}`);
+        }
+
         setInterval(async () => {
-            const r = await fetch(`/data?sid=${sid}&user=${sel||''}`); const d = await r.json();
-            document.getElementById('blist').innerHTML = d.active.map(b=>`<div class="card" onclick="sel='${b}';rlog()">${b}</div>`).join('');
-            if(sel && d.botData[sel]) {
-                const b = d.botData[sel]; if(b.logs.length>0) { if(!logs[sel]) logs[sel]=[]; logs[sel].push(...b.logs); rlog(); }
-                document.getElementById('hp').innerText=Math.round(b.health); document.getElementById('fd').innerText=Math.round(b.food);
-                const iG = document.getElementById('inv'); iG.innerHTML = '';
-                for(let i=9; i<45; i++) { const it=b.inventory.find(x=>x.slot===i); iG.innerHTML += `<div class="slot" onclick="openInv(event, ${i})">${it?`<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png">`:''}</div>`; }
-            }
-        }, 1500);
+            if(!sel) return;
+            try {
+                const res = await fetch(`/data?user=${sel}`);
+                const data = await res.json();
+                
+                const logOut = document.getElementById('log-output');
+                if(data.botData[sel] && data.botData[sel].logs.length > 0) {
+                    data.botData[sel].logs.forEach(l => {
+                        const div = document.createElement('div');
+                        div.innerHTML = l;
+                        logOut.appendChild(div);
+                    });
+                    logOut.scrollTop = logOut.scrollHeight;
+                }
+
+                if(data.botData[sel]) {
+                    document.getElementById('hp').innerText = Math.round(data.botData[sel].health);
+                    document.getElementById('fd').innerText = Math.round(data.botData[sel].food);
+                }
+            } catch(e) {}
+        }, 1000);
     </script>
 </body>
 </html>
