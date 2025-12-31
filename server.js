@@ -14,7 +14,7 @@ function startBot(sid, host, user, ver) {
 
     const key = sid + "_" + user;
     const [ip, port] = host.split(':');
-    logs[key] = ["<b style='color:gray'>[SİSTEM] Başlatılıyor...</b>"];
+    logs[key] = ["<b style='color:gray'>[SİSTEM] Bot başlatılıyor...</b>"];
 
     const bot = mineflayer.createBot({
         host: ip, port: parseInt(port) || 25565, 
@@ -22,7 +22,7 @@ function startBot(sid, host, user, ver) {
     });
 
     sessions[sid][user] = bot;
-    configs[key] = { mining: null, jump: null, rclick: null };
+    configs[key] = { mining: false, jump: null, rclick: null };
 
     bot.on('login', () => logs[key].push("<b style='color:#2ecc71'>[GİRİŞ] Başarılı!</b>"));
     bot.on('kicked', (r) => logs[key].push("<b style='color:#ff4757'>[ATILDI] " + r + "</b>"));
@@ -50,7 +50,7 @@ http.createServer((req, res) => {
         const conf = configs[key];
         const sec = parseInt(q.sec) * 1000 || 1000;
 
-        // 90 DERECE DÖNÜŞ
+        // BAKIŞ KONTROLÜ
         if (q.type === 'look') {
             let yaw = bot.entity.yaw;
             let pitch = bot.entity.pitch;
@@ -62,19 +62,34 @@ http.createServer((req, res) => {
             bot.look(yaw, pitch, true);
         }
 
-        // KAZMA (TAM KARŞIYA ODAKLANMALI)
+        // AKILLI KAZMA SİSTEMİ (RESETLENMEZ)
         if (q.type === 'mining') {
-            clearInterval(conf.mining);
             if (q.status === 'on') {
-                conf.mining = setInterval(async () => {
-                    const block = bot.blockAtCursor(4);
-                    if (block && block.name !== 'air') {
-                        try {
-                            await bot.lookAt(block.position.offset(0.5, 0.5, 0.5));
-                            await bot.dig(block);
-                        } catch (e) {}
+                if (conf.mining) return res.end("already_on");
+                conf.mining = true;
+                const doMine = async () => {
+                    while (conf.mining && sessions[sid]?.[q.user]) {
+                        const block = bot.blockAtCursor(4);
+                        if (block && block.name !== 'air') {
+                            try {
+                                // Önce bloğa kilitlen
+                                await bot.lookAt(block.position.offset(0.5, 0.5, 0.5));
+                                // Blok kırılana kadar BEKLE (Wait until finished)
+                                await bot.dig(block); 
+                            } catch (e) {
+                                // Blok kırılamazsa (mesafe vb) kısa bekle
+                                await new Promise(r => setTimeout(r, 500));
+                            }
+                        } else {
+                            // Önünde blok yoksa bekle
+                            await new Promise(r => setTimeout(r, 200));
+                        }
                     }
-                }, 250);
+                };
+                doMine();
+            } else {
+                conf.mining = false;
+                bot.stopDigging();
             }
         }
 
@@ -82,7 +97,7 @@ http.createServer((req, res) => {
         if (q.type === 'jump') {
             clearInterval(conf.jump);
             if (q.status === 'on') {
-                conf.jump = setInterval(() => { bot.setControlState('jump', true); setTimeout(() => bot.setControlState('jump', false), 500); }, sec);
+                conf.jump = setInterval(() => { bot.setControlState('jump', true); setTimeout(() => bot.setControlState('jump', false), 400); }, sec);
             }
         }
 
@@ -90,7 +105,7 @@ http.createServer((req, res) => {
         if (q.type === 'rclick') {
             clearInterval(conf.rclick);
             if (q.status === 'on') {
-                conf.rclick = setInterval(() => { bot.activateItem(); bot.activateBlock(bot.blockAtCursor(4) || bot.blockAt(bot.entity.position.offset(0,-1,0))); }, sec);
+                conf.rclick = setInterval(() => { bot.activateItem(); }, sec);
             }
         }
 
