@@ -2,8 +2,8 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bot Panel v23</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bot Panel v24</title>
     <style>
         * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -23,22 +23,22 @@
 </head>
 <body>
     <nav>
-        <button onclick="tab('bots')" id="btn-bots" class="active">BAĞLANTI</button>
+        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
         <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
         <button onclick="tab('term')" id="btn-term">KONSOL</button>
     </nav>
 
     <div id="tab-bots" class="tab active-tab">
         <div class="card">
-            <input id="h" placeholder="IP:Port"><input id="u" placeholder="Bot Nick"><input id="v" placeholder="Sürüm">
-            <button class="btn btn-green" style="width:100%" onclick="add()">GİRİŞ YAP</button>
+            <input id="h" placeholder="Sunucu IP:Port"><input id="u" placeholder="Bot Nick"><input id="v" placeholder="Sürüm">
+            <button class="btn btn-green" style="width:100%" onclick="add()">SİSTEME GİRİŞ</button>
         </div>
         <div id="list"></div>
     </div>
 
     <div id="tab-settings" class="tab">
         <div class="card" style="text-align:center;">
-            <h4>Yön Kontrol (90°)</h4>
+            <h4>Bakış Kontrolü</h4>
             <button class="btn btn-gray" onclick="upd('look','up')">YUKARI</button><br>
             <button class="btn btn-gray" onclick="upd('look','left')">SOL</button>
             <button class="btn btn-gray" onclick="upd('look','front')">KARŞI</button>
@@ -47,25 +47,25 @@
         </div>
         
         <div class="card">
-            <h4>Süre Ayarı (Saniye)</h4>
-            <input id="timer_sec" type="number" value="1" placeholder="Saniye...">
+            <h4>Eylem Süresi (Saniye)</h4>
+            <input id="timer_sec" type="number" value="1">
         </div>
 
         <div class="card">
-            <h4>Otomatik Eylemler</h4>
+            <h4>Bot Fonksiyonları</h4>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                <button class="btn btn-green" onclick="upd('mining','on')">KAZMA AÇ</button>
+                <button class="btn btn-red" onclick="upd('mining','off')">KAPAT</button>
                 <button class="btn btn-green" onclick="upd('jump','on')">ZIPLAMA AÇ</button>
                 <button class="btn btn-red" onclick="upd('jump','off')">KAPAT</button>
                 <button class="btn btn-green" onclick="upd('rclick','on')">SAĞ TIK AÇ</button>
                 <button class="btn btn-red" onclick="upd('rclick','off')">KAPAT</button>
-                <button class="btn btn-green" onclick="upd('mining','on')">KAZMA AÇ</button>
-                <button class="btn btn-red" onclick="upd('mining','off')">KAPAT</button>
             </div>
         </div>
 
         <div class="card">
-            <button class="btn btn-gray" style="width:100%" onclick="upd('drop')">EŞYAYI AT (DROP)</button>
-            <button class="btn btn-red" style="width:100%; margin-top:5px;" onclick="stopBot()">BOTU ÇIKAR</button>
+            <button class="btn btn-gray" style="width:100%" onclick="upd('drop')">ELDEKİ EŞYAYI AT</button>
+            <button class="btn btn-red" style="width:100%; margin-top:5px;" onclick="stopBot()">BAĞLANTIYI KES</button>
         </div>
     </div>
 
@@ -110,7 +110,7 @@
         }
 
         async function upd(type, status) {
-            if(!sel) return alert("Bot seç!");
+            if(!sel) return alert("Bot seçilmedi!");
             const sec = document.getElementById('timer_sec').value;
             let url = `/update?sid=${mySID}&user=${sel}&type=${type}&status=${status}&sec=${sec}`;
             if(type === 'look') url += `&dir=${status}`;
