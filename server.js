@@ -7,13 +7,10 @@ const PORT = process.env.PORT || 10000;
 const bots = {};
 const botData = {};
 
-// index.html dosyasını ana dizinden oku
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.get('/start', (req, res) => {
-    const { sid, host, user } = req.query;
+    const { host, user } = req.query;
     if (!host || !user) return res.send({ status: 'error' });
 
     const [ip, port] = host.split(':');
@@ -22,20 +19,20 @@ app.get('/start', (req, res) => {
     const bot = mineflayer.createBot({
         host: ip,
         port: parseInt(port) || 25565,
-        username: user,
-        checkTimeoutInterval: 60000
+        username: user
     });
 
     botData[user] = {
-        logs: [`[Sistem] ${user} oturumu hazır.`],
-        health: 20, food: 20, inventory: [], intervals: {}
+        logs: [], // Artık ham JSON mesajları da tutacak
+        health: 20, food: 20, inventory: []
     };
 
+    // Mesajları renkli HTML olarak işle
     bot.on('message', (jsonMsg) => {
-        const msg = jsonMsg.toString().trim();
-        if (msg && botData[user]) {
-            botData[user].logs.push(msg);
-            if (botData[user].logs.length > 50) botData[user].logs.shift();
+        if (botData[user]) {
+            const htmlMsg = jsonMsg.toHTML(); // Minecraft renk kodlarını HTML'e çevirir
+            botData[user].logs.push(htmlMsg);
+            if (botData[user].logs.length > 100) botData[user].logs.shift();
         }
     });
 
@@ -46,39 +43,42 @@ app.get('/start', (req, res) => {
         }
     });
 
-    bot.on('spawn', () => botData[user].logs.push(">> Giriş yapıldı!"));
-    bot.on('error', (err) => botData[user].logs.push("!! Hata: " + err.message));
-    bot.on('kicked', (reason) => botData[user].logs.push("!! Atıldı: " + reason));
+    bot.on('spawn', () => botData[user].logs.push('<span style="color:#55ff55">>> Sunucuya bağlandı!</span>'));
+    bot.on('kicked', (reason) => botData[user].logs.push(`<span style="color:#ff5555">!! Atıldı: ${reason}</span>`));
+    bot.on('error', (err) => botData[user].logs.push(`<span style="color:#ff5555">!! Hata: ${err.message}</span>`));
 
     bots[user] = bot;
     res.send({ status: 'ok' });
 });
 
+app.get('/send', (req, res) => {
+    const { user, msg } = req.query;
+    if (bots[user]) {
+        bots[user].chat(msg);
+        res.send({ status: 'ok' });
+    } else res.send({ status: 'error' });
+});
+
 app.get('/update', (req, res) => {
-    const { user, type, status, val } = req.query;
+    const { user, type, val, status } = req.query;
     const bot = bots[user];
-    const data = botData[user];
-    if (!bot || !data) return res.send({ status: 'error' });
+    if (!bot) return res.send({ status: 'error' });
 
     switch (type) {
-        case 'auto_msg':
-            clearInterval(data.intervals.spam);
-            if (status === 'on') {
-                const [text, sec] = val.split('|');
-                const ms = (parseInt(sec) || 30) * 1000;
-                bot.chat(text); 
-                data.intervals.spam = setInterval(() => bot.chat(text), ms);
-            }
+        case 'move': // forward, back, left, right
+            bot.setControlState(val, status === 'on');
             break;
-        case 'look':
-            const yaw = bot.entity.yaw;
-            if (val === 'left') bot.look(yaw + 1.57, 0);
-            if (val === 'right') bot.look(yaw - 1.57, 0);
-            if (val === 'back') bot.look(yaw + 3.14, 0);
+        case 'jump':
+            bot.setControlState('jump', status === 'on');
             break;
-        case 'move': bot.setControlState('forward', status === 'on'); break;
-        case 'jump': bot.setControlState('jump', status === 'on'); break;
-        case 'action': if (val === 'swing') bot.swingArm(); break;
+        case 'look': // right, left, up, down
+            const p = bot.entity.pitch;
+            const y = bot.entity.yaw;
+            if (val === 'right') bot.look(y - 0.5, p);
+            if (val === 'left') bot.look(y + 0.5, p);
+            if (val === 'up') bot.look(y, p + 0.3);
+            if (val === 'down') bot.look(y, p - 0.3);
+            break;
         case 'inv_action':
             const item = bot.inventory.slots[val];
             if (item) {
@@ -95,29 +95,16 @@ app.get('/data', (req, res) => {
     const response = { active: Object.keys(bots), botData: {} };
     if (user && bots[user] && botData[user]) {
         response.botData[user] = {
-            logs: [...botData[user].logs],
-            health: bots[user].health || 20,
-            food: bots[user].food || 20,
+            logs: botData[user].logs,
+            health: bots[user].health,
+            food: bots[user].food,
             inventory: bots[user].inventory.items().map(i => ({
                 name: i.name, count: i.count, slot: i.slot
             }))
         };
-        botData[user].logs = [];
+        botData[user].logs = []; // Çekilen logları temizle
     }
     res.json(response);
 });
 
-app.get('/stop', (req, res) => {
-    const { user } = req.query;
-    if (bots[user]) {
-        clearInterval(botData[user].intervals.spam);
-        bots[user].quit();
-        delete bots[user];
-        delete botData[user];
-    }
-    res.send({ status: 'ok' });
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Sunucu ${PORT} üzerinde aktif.`);
-});
+app.listen(PORT, '0.0.0.0', () => console.log(`Sistem ${PORT} portunda aktif.`));
