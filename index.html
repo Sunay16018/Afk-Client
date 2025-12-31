@@ -1,157 +1,304 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bot Master v13</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BotMaster v15 Ultimate</title>
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
-        body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        nav { display: flex; background: #161b22; height: 45px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
-        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
-        nav button.active { color: #58a6ff; border-bottom: 2px solid #58a6ff; }
-        .tab { display: none; flex: 1; flex-direction: column; padding: 10px; overflow-y: auto; }
-        .active-tab { display: flex; }
-        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; position: relative; }
-        
-        .bar-container { display: flex; gap: 2px; margin: 5px 0; height: 20px; }
-        .icon { width: 18px; height: 18px; background-size: cover; image-rendering: pixelated; }
-        .heart-full { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/heart/full.png'); }
-        .heart-empty { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/heart/container.png'); }
-        .food-full { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/food/full.png'); }
-        .food-empty { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/food/container.png'); }
+        /* [GENEL AYARLAR] */
+        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --accent: #58a6ff; --text: #c9d1d9; }
+        * { box-sizing: border-box; outline: none; }
+        body { 
+            background: var(--bg); color: var(--text); margin: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 13px;
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
 
-        .inventory-grid { display: grid; grid-template-columns: repeat(9, 34px); gap: 2px; background: #8b8b8b; padding: 4px; border: 2px solid #373737; width: fit-content; margin: 0 auto; }
-        .inv-slot { width: 34px; height: 34px; background: #8b8b8b; border: 2px solid #373737; position: relative; display: flex; align-items: center; justify-content: center; }
-        .item-img { width: 24px; height: 24px; image-rendering: pixelated; cursor: pointer; }
-        .item-count { position: absolute; bottom: 1px; right: 1px; font-size: 10px; color: white; text-shadow: 1px 1px black; pointer-events: none; }
+        /* [NAVIGASYON] - Üst Menü */
+        nav { 
+            display: flex; background: var(--card); height: 48px; border-bottom: 1px solid var(--border); flex-shrink: 0; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        nav button { 
+            flex: 1; border: none; background: transparent; color: #8b949e; 
+            font-weight: 600; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent;
+        }
+        nav button:hover { background: #1c2129; color: white; }
+        nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        #logbox { height: 300px; background: #000; padding: 10px; overflow-y: auto; color: #3fb950; font-family: monospace; border: 1px solid #30363d; border-radius: 6px; }
-        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #21262d; border: 1px solid #30363d; }
-        .btn-green { background: #238636; } .btn-red { background: #da3633; }
+        /* [SEKMELER] - İçerik Alanı */
+        .tab-content { 
+            display: none; flex: 1; flex-direction: column; padding: 15px; 
+            overflow-y: auto; overflow-x: hidden;
+        }
+        .tab-content.active-tab { display: flex; }
+
+        /* [KART YAPISI] */
+        .card { 
+            background: var(--card); padding: 15px; border-radius: 8px; 
+            border: 1px solid var(--border); margin-bottom: 15px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .card-header { font-weight: bold; margin-bottom: 10px; color: var(--accent); display: flex; justify-content: space-between; }
+
+        /* [INPUT & BUTONLAR] */
+        input { 
+            background: #010409; border: 1px solid var(--border); color: white; 
+            padding: 10px; border-radius: 6px; width: 100%; margin-bottom: 10px;
+        }
+        input:focus { border-color: var(--accent); }
+        .btn { 
+            padding: 10px; border: none; border-radius: 6px; cursor: pointer; 
+            font-weight: bold; color: white; text-align: center; transition: 0.2s;
+        }
+        .btn-green { background: #238636; } .btn-green:hover { background: #2ea043; }
+        .btn-red { background: #da3633; } .btn-red:hover { background: #f85149; }
+        .btn-blue { background: #1f6feb; } .btn-blue:hover { background: #388bfd; }
+
+        /* [KONSOL] - Matrix Tarzı */
+        #log-window { 
+            flex: 1; min-height: 200px; background: #010409; 
+            border: 1px solid var(--border); border-radius: 6px; 
+            padding: 10px; overflow-y: scroll; font-family: 'Consolas', 'Courier New', monospace; 
+            font-size: 12px; line-height: 1.5; color: #eee;
+        }
+        /* Konsol Scrollbar */
+        #log-window::-webkit-scrollbar { width: 8px; }
+        #log-window::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+
+        /* [MINECRAFT HUD] */
+        .hud-row { display: flex; align-items: center; margin-bottom: 5px; }
+        .hud-label { width: 60px; font-weight: bold; font-size: 11px; }
+        .bar-wrap { display: flex; gap: 2px; }
+        .icon { width: 20px; height: 20px; image-rendering: pixelated; background-size: contain; background-repeat: no-repeat; }
         
-        #item-opt { display: none; position: absolute; background: #1c2128; border: 1px solid #58a6ff; border-radius: 4px; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
-        #item-opt button { display: block; width: 100%; padding: 8px 12px; background: none; border: none; color: white; text-align: left; cursor: pointer; border-bottom: 1px solid #30363d; }
+        .hp-full { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/heart/full.png'); }
+        .hp-empty { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/heart/container.png'); }
+        .fd-full { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/food/full.png'); }
+        .fd-empty { background-image: url('https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/gui/food/container.png'); }
+
+        /* [ENVANTER IZGARASI] */
+        .inv-container { display: flex; justify-content: center; background: #c6c6c6; padding: 5px; border-radius: 4px; border: 2px solid #555; width: fit-content; margin: 0 auto; }
+        .inv-grid { display: grid; grid-template-columns: repeat(9, 36px); gap: 2px; }
+        .slot { 
+            width: 36px; height: 36px; background: #8b8b8b; border: 2px solid #373737; border-left-color: #fff; border-top-color: #fff; 
+            position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .slot:hover { background: #a0a0a0; }
+        .item-img { width: 28px; height: 28px; image-rendering: pixelated; }
+        .item-count { position: absolute; bottom: 1px; right: 2px; font-size: 12px; color: white; text-shadow: 2px 2px 0 #000; font-weight: bold; pointer-events: none; }
+
+        /* [CONTEXT MENU] - Eşya Seçenekleri */
+        #ctx-menu { 
+            display: none; position: absolute; background: #1c2128; border: 1px solid var(--accent); 
+            border-radius: 6px; z-index: 999; box-shadow: 0 5px 15px rgba(0,0,0,0.5); min-width: 120px;
+        }
+        #ctx-menu div { padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border); color: white; }
+        #ctx-menu div:hover { background: var(--accent); }
+        #ctx-menu div:last-child { border: none; }
+
+        /* [BOT LİSTESİ] */
+        .bot-row { display: flex; justify-content: space-between; align-items: center; background: #21262d; padding: 10px; border-radius: 6px; margin-top: 5px; border-left: 4px solid transparent; cursor: pointer; }
+        .bot-row.selected { border-left-color: var(--accent); background: #2a313c; }
     </style>
 </head>
-<body onclick="hideOpt()">
+<body onclick="closeCtx()">
+
     <nav>
-        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
-        <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
-        <button onclick="tab('stats')" id="id-stats">İSTATİSTİK</button>
-        <button onclick="tab('term')" id="btn-term">KONSOL</button>
+        <button onclick="uiTab('bots')" id="btn-bots" class="active">BAĞLANTI</button>
+        <button onclick="uiTab('stats')" id="btn-stats">İSTATİSTİK</button>
+        <button onclick="uiTab('term')" id="btn-term">KONSOL</button>
     </nav>
 
-    <div id="item-opt">
-        <button onclick="invOp('drop')">Eşyayı At</button>
-        <button onclick="invOp('use')">Kullan/Sağ Tık</button>
+    <div id="ctx-menu">
+        <div onclick="doInv('drop')">Yere At (Drop)</div>
+        <div onclick="doInv('use')">Kullan (Use)</div>
+        <div onclick="doInv('equip')">Ele Al (Equip)</div>
     </div>
 
-    <div id="tab-bots" class="tab active-tab">
+    <div id="tab-bots" class="tab-content active-tab">
         <div class="card">
-            <input id="h" placeholder="IP:Port" style="width:100%; padding:8px; margin-bottom:5px; background:#010409; color:white; border:1px solid #30363d; border-radius:6px;">
-            <input id="u" placeholder="Nick" style="width:100%; padding:8px; margin-bottom:5px; background:#010409; color:white; border:1px solid #30363d; border-radius:6px;">
-            <button class="btn btn-green" style="width:100%" onclick="add()">BAĞLAT</button>
+            <div class="card-header">YENİ BOT EKLE</div>
+            <input id="h" placeholder="Sunucu IP:Port (Örn: play.server.com)">
+            <input id="u" placeholder="Bot Kullanıcı Adı">
+            <button class="btn btn-green" style="width:100%" onclick="reqStart()">BAĞLAN</button>
         </div>
-        <div id="list"></div>
+        <div class="card">
+            <div class="card-header">AKTİF BOTLAR</div>
+            <div id="bot-list">Bot yok.</div>
+        </div>
     </div>
 
-    <div id="tab-stats" class="tab">
-        <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <label>SAĞLIK</label><div id="hp-bar" class="bar-container"></div>
-                <label>AÇLIK</label><div id="fd-bar" class="bar-container"></div>
+    <div id="tab-stats" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <span>DURUM</span>
+                <button class="btn btn-red" style="padding: 5px 10px; font-size:11px;" onclick="reqStop(sel)">BAĞLANTIYI KES</button>
             </div>
-            <button class="btn btn-red" onclick="quitBot(sel)">BAĞLANTIYI KES</button>
+            
+            <div class="hud-row">
+                <div class="hud-label">CAN</div>
+                <div id="bar-hp" class="bar-wrap"></div>
+            </div>
+            <div class="hud-row">
+                <div class="hud-label">AÇLIK</div>
+                <div id="bar-fd" class="bar-wrap"></div>
+            </div>
         </div>
-        <div class="card" style="overflow-x:auto;">
-            <div id="inv-main" class="inventory-grid" style="margin-bottom:8px;"></div>
-            <div id="inv-hot" class="inventory-grid"></div>
+
+        <div class="card" style="overflow-x: auto;">
+            <div class="card-header">ENVANTER (Yönetmek için tıkla)</div>
+            <div class="inv-container">
+                <div>
+                    <div id="inv-main" class="inv-grid" style="margin-bottom: 5px;"></div> <div id="inv-hot" class="inv-grid"></div>  </div>
+            </div>
         </div>
     </div>
 
-    <div id="tab-term" class="tab">
-        <div id="logbox"></div>
-        <div style="display:flex; margin-top:5px; gap:5px;">
-            <input id="m" placeholder="Sohbete yaz..." onkeydown="if(event.key==='Enter') doSend()" style="flex:1; background:#010409; color:white; border:1px solid #30363d; padding:8px; border-radius:6px;">
-            <button class="btn" onclick="doSend()">GÖNDER</button>
+    <div id="tab-term" class="tab-content">
+        <div id="log-window"></div>
+        <div style="display:flex; gap:5px; margin-top:10px;">
+            <input id="msg-in" placeholder="Komut veya mesaj yaz..." onkeydown="if(event.key==='Enter') reqChat()" style="margin-bottom:0;">
+            <button class="btn btn-blue" onclick="reqChat()">GÖNDER</button>
         </div>
     </div>
 
     <script>
-        const mySID = localStorage.getItem('sid') || 'sid_'+Math.random().toString(36).substr(2,9);
-        localStorage.setItem('sid', mySID);
-        let sel = ""; let curSlot = null;
+        // --- AYARLAR ---
+        const sid = localStorage.getItem('sid') || 's_' + Math.random().toString(36).substr(2);
+        localStorage.setItem('sid', sid);
+        
+        let sel = null; // Seçili bot ismi
+        let ctxSlot = null; // İşlem yapılacak slot
+        let autoScroll = true;
 
-        function tab(t) {
-            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
-            document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
-            document.getElementById('tab-'+t == 'tab-stats' ? 'id-stats' : 'tab-'+t).classList.add('active-tab');
-            document.querySelector(`[onclick="tab('${t}')"]`).classList.add('active');
+        // UI Hazırlık
+        window.onload = () => {
+            initBars(); // Boş barları çiz
+            // Konsolda kullanıcı yukarı kaydırırsa otoscroll'u durdur
+            const lw = document.getElementById('log-window');
+            lw.addEventListener('scroll', () => {
+                autoScroll = (lw.scrollTop + lw.clientHeight >= lw.scrollHeight - 20);
+            });
+        };
+
+        // --- SEKME SİSTEMİ ---
+        function uiTab(id) {
+            document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active-tab'));
+            document.querySelectorAll('nav button').forEach(e => e.classList.remove('active'));
+            document.getElementById('tab-' + id).classList.add('active-tab');
+            document.getElementById('btn-' + id).classList.add('active');
         }
 
-        function initUI() {
-            document.getElementById('hp-bar').innerHTML = '<div class="icon heart-empty"></div>'.repeat(10);
-            document.getElementById('fd-bar').innerHTML = '<div class="icon food-empty"></div>'.repeat(10);
-            let mH = '', hH = '';
-            for(let i=9; i<36; i++) mH += `<div class="inv-slot" id="s-${i}"></div>`;
-            for(let i=36; i<45; i++) hH += `<div class="inv-slot" id="s-${i}"></div>`;
-            document.getElementById('inv-main').innerHTML = mH;
-            document.getElementById('inv-hot').innerHTML = hH;
-        }
-        initUI();
-
-        async function add() {
-            await fetch(`/start?sid=${mySID}&host=${document.getElementById('h').value}&user=${document.getElementById('u').value}`);
-            sel = document.getElementById('u').value; tab('term');
+        // --- GÖRSEL ÇİZİM FONKSİYONLARI ---
+        function initBars() {
+            // Boş kalp ve yemekleri başta çiz ki arayüz bozuk durmasın
+            document.getElementById('bar-hp').innerHTML = '<div class="icon hp-empty"></div>'.repeat(10);
+            document.getElementById('bar-fd').innerHTML = '<div class="icon fd-empty"></div>'.repeat(10);
+            
+            let mh = '', hh = '';
+            for(let i=9; i<36; i++) mh += `<div class="slot" id="s-${i}"></div>`; // Çanta
+            for(let i=36; i<45; i++) hh += `<div class="slot" id="s-${i}"></div>`; // Hotbar
+            document.getElementById('inv-main').innerHTML = mh;
+            document.getElementById('inv-hot').innerHTML = hh;
         }
 
-        async function quitBot(n) { await fetch(`/stop?sid=${mySID}&user=${n}`); if(sel==n) sel=""; }
-
-        function showOpt(e, slot) {
-            e.stopPropagation(); curSlot = slot;
-            const m = document.getElementById('item-opt');
-            m.style.display = 'block'; m.style.left = e.pageX + 'px'; m.style.top = e.pageY + 'px';
+        function openCtx(e, slotId) {
+            e.stopPropagation();
+            ctxSlot = slotId;
+            const m = document.getElementById('ctx-menu');
+            m.style.display = 'block';
+            m.style.left = e.pageX + 'px';
+            m.style.top = e.pageY + 'px';
         }
-        function hideOpt() { document.getElementById('item-opt').style.display = 'none'; }
-        async function invOp(act) { await fetch(`/update?sid=${mySID}&user=${sel}&type=inv_action&slot=${curSlot}&act=${act}`); hideOpt(); }
+        function closeCtx() { document.getElementById('ctx-menu').style.display = 'none'; }
 
-        async function doSend() {
-            const i = document.getElementById('m');
-            await fetch(`/send?sid=${mySID}&user=${sel}&msg=${encodeURIComponent(i.value)}`);
-            i.value = "";
+        // --- İSTEKLER (FETCH) ---
+        async function reqStart() {
+            const h = document.getElementById('h').value;
+            const u = document.getElementById('u').value;
+            if(!h || !u) return alert("Bilgileri doldur!");
+            await fetch(`/start?sid=${sid}&host=${h}&user=${u}`);
+            sel = u; uiTab('term'); // Konsola atla
         }
 
+        async function reqStop(name) {
+            if(!name) return;
+            await fetch(`/stop?sid=${sid}&user=${name}`);
+            if(sel === name) sel = null;
+        }
+
+        async function reqChat() {
+            const inp = document.getElementById('msg-in');
+            if(!sel || !inp.value) return;
+            await fetch(`/send?sid=${sid}&user=${sel}&msg=${encodeURIComponent(inp.value)}`);
+            inp.value = "";
+        }
+
+        async function doInv(act) {
+            await fetch(`/update?sid=${sid}&user=${sel}&type=inv_action&slot=${ctxSlot}&act=${act}`);
+        }
+
+        // --- ANA DÖNGÜ (VERİ GÜNCELLEME) ---
         setInterval(async () => {
             try {
-                const r = await fetch(`/data?sid=${mySID}&user=${sel}`);
-                const d = await r.json();
-                
-                document.getElementById('list').innerHTML = d.active.map(n => `
-                    <div class="bot-item" style="border-color:${sel==n?'#58a6ff':'#30363d'}" onclick="sel='${n}'">
-                        <span>${n}</span> <button class="btn btn-red" style="font-size:10px; padding:3px 7px;" onclick="event.stopPropagation(); quitBot('${n}')">KES</button>
-                    </div>
-                `).join('');
+                // 1. Veriyi Çek
+                const res = await fetch(`/data?sid=${sid}&user=${sel || ''}`);
+                const data = await res.json();
 
-                if(sel && d.botData[sel]) {
-                    const b = d.botData[sel];
-                    let h = Math.ceil(b.health/2), f = Math.ceil(b.food/2);
-                    document.getElementById('hp-bar').innerHTML = '<div class="icon heart-full"></div>'.repeat(h) + '<div class="icon heart-empty"></div>'.repeat(10-h);
-                    document.getElementById('fd-bar').innerHTML = '<div class="icon food-full"></div>'.repeat(f) + '<div class="icon food-empty"></div>'.repeat(10-f);
+                // 2. Bot Listesini Güncelle
+                const listEl = document.getElementById('bot-list');
+                if(data.active.length === 0) listEl.innerHTML = "<div style='color:gray; padding:10px'>Aktif bot yok.</div>";
+                else {
+                    listEl.innerHTML = data.active.map(b => `
+                        <div class="bot-row ${sel===b ? 'selected' : ''}" onclick="sel='${b}'">
+                            <span style="font-weight:bold; color:white;">${b}</span>
+                            <button class="btn btn-red" style="padding:4px 8px; font-size:10px" onclick="event.stopPropagation(); reqStop('${b}')">KES</button>
+                        </div>
+                    `).join('');
+                }
 
-                    document.querySelectorAll('.inv-slot').forEach(s => s.innerHTML = '');
+                // 3. Eğer bot seçiliyse detayları güncelle
+                if(sel && data.botData[sel]) {
+                    const b = data.botData[sel];
+
+                    // LOGLAR
+                    const logWin = document.getElementById('log-window');
+                    // Sadece yeni log varsa güncelleme yapılabilir ama şimdilik innerHTML en temizi
+                    logWin.innerHTML = b.logs.join('<br>'); 
+                    if(autoScroll) logWin.scrollTop = logWin.scrollHeight;
+
+                    // CAN & AÇLIK
+                    const hp = Math.ceil(b.health / 2);
+                    const fd = Math.ceil(b.food / 2);
+                    document.getElementById('bar-hp').innerHTML = '<div class="icon hp-full"></div>'.repeat(hp) + '<div class="icon hp-empty"></div>'.repeat(10-hp);
+                    document.getElementById('bar-fd').innerHTML = '<div class="icon fd-full"></div>'.repeat(fd) + '<div class="icon fd-empty"></div>'.repeat(10-fd);
+
+                    // ENVANTER
+                    // Her slotu temizle
+                    document.querySelectorAll('.slot').forEach(el => el.innerHTML = '');
+                    
+                    // Dolu slotları çiz
                     b.inventory.forEach(item => {
                         if(item) {
-                            const div = document.getElementById(`s-${item.slot}`);
-                            if(div) {
-                                div.innerHTML = `<img class="item-img" src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${item.name}.png" onclick="showOpt(event, ${item.slot})"><span class="item-count">${item.count > 1 ? item.count : ''}</span>`;
+                            const el = document.getElementById(`s-${item.slot}`);
+                            if(el) {
+                                // Resmi PrismarineJS'den çekiyoruz (1.16.1 assets)
+                                const imgSrc = `https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${item.name}.png`;
+                                el.innerHTML = `
+                                    <img class="item-img" src="${imgSrc}" onerror="this.src='https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/barrier.png'">
+                                    ${item.count > 1 ? `<span class="item-count">${item.count}</span>` : ''}
+                                `;
+                                // Tıklama olayını güncelle (Sağ tık menüsü açmak için)
+                                el.onclick = (e) => openCtx(e, item.slot);
                             }
                         }
                     });
-                    document.getElementById('logbox').innerHTML = b.logs.join('<br>');
                 }
-            } catch(e) {}
-        }, 1500);
+            } catch(e) {
+                console.error("Veri çekme hatası:", e);
+            }
+        }, 1000); // 1 Saniyede bir güncelle
     </script>
 </body>
 </html>
