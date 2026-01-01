@@ -3,74 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BotMaster v24</title>
+    <title>BotMaster v25 - Full Edition</title>
     <style>
         :root { --bg: #0c0c0e; --p: #16161a; --b: #2d2d33; --a: #6366f1; --t: #f4f4f5; --r: #f43f5e; --g: #10b981; }
         * { box-sizing: border-box; outline: none; }
         body { background: var(--bg); color: var(--t); margin: 0; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; }
         
-        nav { display: flex; background: var(--p); height: 45px; width: 100%; max-width: 450px; border-bottom: 2px solid var(--b); gap: 4px; padding: 4px; }
-        nav button { flex: 1; background: #232329; border: none; color: #888; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 10px; }
+        nav { display: flex; background: var(--p); height: 50px; width: 100%; max-width: 480px; border-bottom: 2px solid var(--b); gap: 4px; padding: 5px; flex-shrink: 0; }
+        nav button { flex: 1; background: #232329; border: none; color: #888; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 11px; }
         nav button.active { background: var(--a); color: white; }
 
-        .tab { display: none; padding: 10px; width: 100%; max-width: 450px; flex: 1; overflow-y: auto; }
+        .tab { display: none; padding: 10px; width: 100%; max-width: 480px; flex: 1; overflow-y: auto; }
         .tab.show { display: flex; flex-direction: column; }
 
-        .bot-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #111; border: 1px solid var(--b); border-radius: 8px; margin-bottom: 5px; cursor: pointer; }
-        .bot-row.active { border-color: var(--a); background: #1a1a20; }
+        .card { background: var(--p); border: 1px solid var(--b); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+        .input-box { width: 100%; padding: 10px; background: #000; border: 1px solid var(--b); color: #fff !important; border-radius: 6px; margin-bottom: 8px; font-size: 14px; }
         
-        .con-box { width: 100%; border: 2px solid var(--b); border-radius: 10px; overflow: hidden; background: #000; display: flex; flex-direction: column; }
-        #logs { height: 280px; overflow-y: auto; padding: 10px; font-family: monospace; font-size: 11px; line-height: 1.4; }
-        .log-row { border-bottom: 1px solid #111; padding: 2px 0; white-space: pre-wrap; }
+        .bot-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #111; border: 1px solid var(--b); border-radius: 8px; margin-bottom: 6px; cursor: pointer; }
+        .bot-row.active { border-color: var(--a); background: #1a1a22; }
 
-        .chat-bar { display: flex; padding: 8px; gap: 5px; background: #1a1a1e; border-top: 1px solid var(--b); }
-        .chat-bar input { flex: 1; background: #000; border: 1px solid var(--b); color: #fff; padding: 8px; border-radius: 5px; }
+        .con-wrapper { width: 100%; border: 2px solid var(--b); border-radius: 12px; overflow: hidden; background: #000; display: flex; flex-direction: column; }
+        #logs { height: 260px; overflow-y: auto; padding: 10px; font-family: monospace; font-size: 12px; line-height: 1.4; color: #eee; }
+        .log-row { border-bottom: 1px solid #111; padding: 3px 0; white-space: pre-wrap; word-break: break-all; }
 
-        .inv-gui { background: #8b8b8b; padding: 8px; border: 3px solid #373737; display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; margin: 0 auto; }
-        .slot { width: 32px; height: 32px; background: #8b8b8b; border: 2px solid #373737; display: flex; align-items: center; justify-content: center; }
-        .slot img { width: 26px; image-rendering: pixelated; }
+        .chat-bar { display: flex; padding: 8px; gap: 6px; background: #1a1a1e; border-top: 2px solid var(--b); }
+        .chat-bar input { flex: 1; background: #000; border: 1px solid var(--b); color: #fff; padding: 10px; border-radius: 6px; }
 
-        .btn { background: var(--a); color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 5px; }
-        .btn-red { background: var(--r); padding: 5px 10px; font-size: 10px; }
-        .input-box { width: 100%; padding: 10px; background: #000; border: 1px solid var(--b); color: #fff !important; border-radius: 5px; margin-bottom: 8px; }
+        .inv-gui { background: #8b8b8b; padding: 8px; border: 3px solid #373737; display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; width: fit-content; margin: 0 auto; }
+        .slot { width: 34px; height: 34px; background: #8b8b8b; border: 2px solid #373737; display: flex; align-items: center; justify-content: center; position: relative; }
+        .slot img { width: 28px; image-rendering: pixelated; }
+
+        .btn { background: var(--a); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn-red { background: var(--r); padding: 6px 12px; font-size: 11px; width: auto; }
+        
+        .ctrl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
     </style>
 </head>
-<body>
+<body onclick="hideCtx()">
 
     <nav>
         <button onclick="tab('bots', this)" class="active">BOTLAR</button>
-        <button onclick="tab('console', this)">SOHBET</button>
+        <button onclick="tab('console', this)">KONSOL</button>
         <button onclick="tab('status', this)">DURUM</button>
+        <button onclick="tab('settings', this)">AYARLAR</button>
     </nav>
 
     <div id="p-bots" class="tab show">
-        <div style="background:var(--p); padding:12px; border-radius:10px; border:1px solid var(--b); margin-bottom:10px;">
+        <div class="card">
             <input id="ip" class="input-box" placeholder="server:port">
-            <input id="usr" class="input-box" placeholder="Kullanıcı Adı">
-            <button onclick="connect()" class="btn" style="background:var(--g); width:100%">BAĞLAN</button>
+            <input id="usr" class="input-box" placeholder="Bot İsmi">
+            <button onclick="connect()" class="btn" style="background:var(--g)">OYUNA SOK</button>
         </div>
         <div id="blist"></div>
     </div>
 
     <div id="p-console" class="tab">
-        <div id="cur-bot-name" style="font-size:12px; margin-bottom:5px; color:var(--a); font-weight:bold;">Seçili Bot: Yok</div>
-        <div class="con-box">
+        <div id="cur-bot-name" style="font-size:12px; margin-bottom:6px; color:var(--a); font-weight:bold; text-align:center;">Seçili: Yok</div>
+        <div class="con-wrapper">
             <div id="logs"></div>
             <div class="chat-bar">
-                <input id="msg" placeholder="Mesaj..." onkeydown="if(event.key==='Enter') send()">
-                <button onclick="send()" class="btn" style="margin:0; padding:0 15px;">></button>
+                <input id="msg" placeholder="Mesaj gönder..." onkeydown="if(event.key==='Enter') send()">
+                <button onclick="send()" class="btn" style="width:auto; padding:0 20px;">></button>
             </div>
         </div>
     </div>
 
     <div id="p-status" class="tab">
-        <div style="text-align:center; margin-bottom:10px;">❤️ <span id="hp">0</span> | 🍖 <span id="fd">0</span></div>
+        <div class="card" style="text-align:center; font-weight:bold;">❤️ <span id="hp">0</span> | 🍖 <span id="fd">0</span></div>
         <div class="inv-gui" id="inv"></div>
+    </div>
+
+    <div id="p-settings" class="tab">
+        <div class="card">
+            <b style="display:block; margin-bottom:8px;">Otomatik Mesaj (Spam)</b>
+            <input id="mtxt" class="input-box" placeholder="Mesaj metni...">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <input id="msec" type="number" class="input-box" value="10" style="width:80px; margin:0;"> <span>Saniye</span>
+            </div>
+            <button id="mbtn" class="btn" onclick="toggleSpam()" style="margin-top:10px;">SPAM BAŞLAT</button>
+        </div>
+
+        <div class="card">
+            <b>Hareket Kontrolü</b>
+            <div class="ctrl-grid">
+                <button class="btn" onmousedown="mv('forward','on')" onmouseup="mv('forward','off')" ontouchstart="mv('forward','on')" ontouchend="mv('forward','off')">İLERİ</button>
+                <button class="btn" onmousedown="mv('back','on')" onmouseup="mv('back','off')" ontouchstart="mv('back','on')" ontouchend="mv('back','off')">GERİ</button>
+                <button class="btn" style="background:var(--b)" onclick="lk('left')">SOLA BAK</button>
+                <button class="btn" style="background:var(--b)" onclick="lk('right')">SAĞA BAK</button>
+            </div>
+        </div>
     </div>
 
     <script>
         let sel = null;
-        let botLogs = {}; // ANAHTAR NOKTA: { "Ahmet": ["mesaj1", "mesaj2"], "Mehmet": [] }
+        let botLogs = {};
+        let spamOn = false;
 
         function tab(t, b) {
             document.querySelectorAll('.tab').forEach(x=>x.classList.remove('show'));
@@ -89,9 +116,8 @@
 
         function switchBot(u) {
             sel = u;
-            if(!botLogs[u]) botLogs[u] = []; // Eğer bu botun geçmişi yoksa oluştur
-            document.getElementById('cur-bot-name').innerText = "Seçili Bot: " + u;
-            // Ekrandaki eski mesajları temizle ve seçilen botun geçmişini yükle
+            if(!botLogs[u]) botLogs[u] = [];
+            document.getElementById('cur-bot-name').innerText = "SEÇİLİ BOT: " + u;
             document.getElementById('logs').innerHTML = botLogs[u].join('');
             document.getElementById('logs').scrollTop = document.getElementById('logs').scrollHeight;
         }
@@ -100,7 +126,7 @@
             e.stopPropagation();
             await fetch(`/stop?user=${u}`);
             delete botLogs[u];
-            if(sel === u) { sel = null; document.getElementById('logs').innerHTML = ''; }
+            if(sel === u) { sel = null; document.getElementById('logs').innerHTML = ''; document.getElementById('cur-bot-name').innerText = "Seçili: Yok"; }
         }
 
         async function send() {
@@ -110,28 +136,34 @@
             m.value = '';
         }
 
+        function mv(v, s) { if(sel) fetch(`/update?user=${sel}&type=move&val=${v}&status=${s}`); }
+        function lk(v) { if(sel) fetch(`/update?user=${sel}&type=look&val=${v}`); }
+
+        function toggleSpam() {
+            if(!sel) return;
+            spamOn = !spamOn;
+            const b=document.getElementById('mbtn'), t=document.getElementById('mtxt').value, s=document.getElementById('msec').value;
+            b.innerText = spamOn ? 'SPAM DURDUR' : 'SPAM BAŞLAT';
+            b.style.background = spamOn ? 'var(--r)' : 'var(--a)';
+            fetch(`/update?user=${sel}&type=auto_msg&status=${spamOn?'on':'off'}&val=${t}|${s}`);
+        }
+
         setInterval(async () => {
             const r = await fetch(`/data?user=${sel||''}`);
             const d = await r.json();
 
-            // Bot Listesini Güncelle
             document.getElementById('blist').innerHTML = d.active.map(b => `
                 <div class="bot-row ${sel===b?'active':''}" onclick="switchBot('${b}')">
-                    <span>${b}</span>
-                    <button class="btn-red" onclick="disconnect('${b}', event)">KES</button>
+                    <span style="font-weight:bold;">${b}</span>
+                    <button class="btn-red" onclick="disconnect('${b}', event)">BAĞLANTIYI KES</button>
                 </div>
             `).join('');
 
-            // Sadece seçili botun verilerini işle
             if(sel && d.botData[sel]) {
                 const b = d.botData[sel];
-                
-                // Gelen yeni mesajları sadece o botun hafızasına ekle
                 if(b.logs.length > 0) {
                     botLogs[sel].push(...b.logs);
-                    if(botLogs[sel].length > 150) botLogs[sel].shift();
-                    
-                    // Eğer şu an o botu izliyorsak ekrana yansıt
+                    if(botLogs[sel].length > 200) botLogs[sel].shift();
                     const lb = document.getElementById('logs');
                     b.logs.forEach(msg => {
                         const div = document.createElement('div');
@@ -141,10 +173,8 @@
                     });
                     lb.scrollTop = lb.scrollHeight;
                 }
-
                 document.getElementById('hp').innerText = Math.round(b.health) || 0;
                 document.getElementById('fd').innerText = Math.round(b.food) || 0;
-                
                 const iG = document.getElementById('inv'); iG.innerHTML = '';
                 for(let i=9; i<45; i++) {
                     const it = b.inventory.find(x=>x.slot===i);
