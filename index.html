@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BotMaster Lite</title>
+    <title>BotMaster v23 Pro</title>
     <style>
-        :root { --bg: #0c0c0e; --p: #16161a; --b: #2d2d33; --a: #6366f1; --t: #f4f4f5; --g: #10b981; }
+        :root { --bg: #0c0c0e; --p: #16161a; --b: #2d2d33; --a: #6366f1; --t: #f4f4f5; --r: #f43f5e; --g: #10b981; }
         * { box-sizing: border-box; outline: none; }
         body { background: var(--bg); color: var(--t); margin: 0; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; }
         
@@ -16,51 +16,54 @@
         .tab { display: none; padding: 10px; width: 100%; max-width: 450px; flex: 1; overflow-y: auto; }
         .tab.show { display: flex; flex-direction: column; }
 
-        .card { background: var(--p); border: 1px solid var(--b); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-        .card input { width: 100%; padding: 10px; background: #000; border: 1px solid var(--b); color: #fff !important; border-radius: 5px; margin-top: 5px; font-size: 13px; }
+        .card { background: var(--p); border: 1px solid var(--b); border-radius: 8px; padding: 12px; margin-bottom: 10px; position: relative; }
+        .bot-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #000; border-radius: 6px; margin-bottom: 5px; border: 1px solid var(--b); }
         
-        /* ORTA BOYUTLU TERMINAL DÜZENİ */
-        .console-wrapper {
-            display: flex; flex-direction: column;
-            width: 100%; border: 2px solid var(--b); border-radius: 10px; overflow: hidden;
-            background: #000;
+        /* ENVANTER GUI GÖRSELİ */
+        .inv-gui { 
+            background: #8b8b8b; padding: 10px; border: 3px solid #373737; border-radius: 2px;
+            display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; width: fit-content; margin: 0 auto;
         }
-        #logs { 
-            height: 250px; /* BOYUT KÜÇÜLTÜLDÜ (ORTA BOYUT) */
-            overflow-y: auto; padding: 10px; font-family: monospace; 
-            font-size: 12px; line-height: 1.4; background: #000;
-        }
+        .slot { width: 34px; height: 34px; background: #8b8b8b; border: 2px solid #373737; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+        .slot:hover { background: #c6c6c6; }
+        .slot img { width: 28px; image-rendering: pixelated; }
+
+        .console-wrapper { width: 100%; border: 2px solid var(--b); border-radius: 10px; overflow: hidden; background: #000; }
+        #logs { height: 250px; overflow-y: auto; padding: 10px; font-family: monospace; font-size: 11px; line-height: 1.4; }
         .log-row { margin-bottom: 2px; white-space: pre-wrap; word-break: break-all; border-bottom: 1px solid #111; }
 
-        .chat-bar { 
-            display: flex; background: #1a1a1e; padding: 6px; gap: 5px; border-top: 1px solid var(--b);
-        }
-        .chat-bar input { 
-            flex: 1; background: #000; border: 1px solid var(--b); 
-            color: #fff; padding: 8px; border-radius: 4px; font-size: 13px;
-        }
-        .chat-bar button { background: var(--a); color: white; border: none; padding: 0 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .chat-bar { display: flex; background: #1a1a1e; padding: 6px; gap: 5px; border-top: 1px solid var(--b); }
+        .chat-bar input { flex: 1; background: #000; border: 1px solid var(--b); color: #fff; padding: 8px; border-radius: 4px; font-size: 13px; }
 
-        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; }
-        .slot { aspect-ratio: 1; background: #111; border: 1px solid var(--b); display: flex; align-items: center; justify-content: center; }
-        .slot img { width: 80%; image-rendering: pixelated; }
+        /* 4 SEÇENEKLİ CONTEXT MENU */
+        #ctx { display: none; position: fixed; background: #1c1c1f; border: 1px solid var(--b); z-index: 1000; width: 120px; border-radius: 5px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        #ctx button { display: block; width: 100%; padding: 10px; background: none; border: none; color: white; border-bottom: 1px solid var(--b); font-size: 11px; cursor: pointer; text-align: left; }
+        #ctx button:hover { background: var(--a); }
 
-        .btn { background: var(--a); color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; font-size: 12px; }
+        .btn-red { background: var(--r); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold; }
+        .input-box { width: 100%; padding: 10px; background: #000; border: 1px solid var(--b); color: #fff !important; border-radius: 5px; margin-top: 5px; }
     </style>
 </head>
-<body>
+<body onclick="hideCtx()">
     <nav>
-        <button onclick="tab('bots', this)" class="active">GİRİŞ</button>
+        <button onclick="tab('bots', this)" class="active">BOTLAR</button>
         <button onclick="tab('console', this)">KONSOL</button>
         <button onclick="tab('status', this)">DURUM</button>
         <button onclick="tab('settings', this)">AYARLAR</button>
     </nav>
 
+    <div id="ctx">
+        <button onclick="invAct('equip')">Elinde Tut</button>
+        <button onclick="invAct('use')">Kullan / Ye</button>
+        <button onclick="invAct('toss')">1 Tane At</button>
+        <button onclick="invAct('drop')">Hepsini At</button>
+    </div>
+
     <div id="p-bots" class="tab show">
         <div class="card">
-            <input id="ip" placeholder="ip:port">
-            <input id="usr" placeholder="Bot İsmi">
-            <button onclick="connect()" class="btn" style="background:var(--g)">BAĞLAN</button>
+            <input id="ip" class="input-box" placeholder="ip:port">
+            <input id="usr" class="input-box" placeholder="Bot İsmi">
+            <button onclick="connect()" class="btn-red" style="background:var(--g); width:100%; margin-top:10px; height:40px;">BAĞLAN</button>
         </div>
         <div id="blist"></div>
     </div>
@@ -70,60 +73,80 @@
             <div id="logs"></div>
             <div class="chat-bar">
                 <input id="msg" placeholder="Mesaj..." onkeydown="if(event.key==='Enter') send()">
-                <button onclick="send()">></button>
+                <button onclick="send()" style="background:var(--a); color:white; border:none; border-radius:4px; padding:0 10px;">></button>
             </div>
         </div>
     </div>
 
     <div id="p-status" class="tab">
-        <div class="card">Can: <span id="hp">20</span> | Açlık: <span id="fd">20</span></div>
-        <div class="inv-grid" id="inv"></div>
+        <div class="card" style="text-align:center;">
+            <b>❤️ <span id="hp">20</span> | 🍖 <span id="fd">20</span></b>
+        </div>
+        <div class="inv-gui" id="inv"></div>
     </div>
 
     <div id="p-settings" class="tab">
         <div class="card">
-            <b>Oto Mesaj</b>
-            <input id="mtxt" placeholder="Metin...">
-            <input id="msec" type="number" value="10" style="width:60px"> sn
-            <button id="mbtn" class="btn" onclick="toggleSpam()">SPAM BAŞLAT</button>
+            <b>Otomatik Mesaj</b>
+            <input id="mtxt" class="input-box" placeholder="Metin...">
+            <input id="msec" type="number" class="input-box" value="10" style="width:70px"> sn
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-            <button class="btn" onmousedown="mv('forward','on')" onmouseup="mv('forward','off')">İLERİ</button>
-            <button class="btn" onmousedown="mv('back','on')" onmouseup="mv('back','off')">GERİ</button>
-            <button class="btn" onclick="lk('left')">SOLA BAK</button>
-            <button class="btn" onclick="lk('right')">SAĞA BAK</button>
+            <button class="btn-red" style="background:var(--a); padding:15px;" onmousedown="mv('forward','on')" onmouseup="mv('forward','off')">İLERİ</button>
+            <button class="btn-red" style="background:var(--a); padding:15px;" onmousedown="mv('back','on')" onmouseup="mv('back','off')">GERİ</button>
+            <button class="btn-red" style="background:var(--b); padding:15px;" onclick="lk('left')">SOLA BAK</button>
+            <button class="btn-red" style="background:var(--b); padding:15px;" onclick="lk('right')">SAĞA BAK</button>
         </div>
     </div>
 
     <script>
-        let sel = null; let botLogs = {}; let spamOn = false;
+        let sel = null; let botLogs = {}; let cSlot = 0;
         function tab(id, b) {
             document.querySelectorAll('.tab').forEach(t=>t.classList.remove('show'));
             document.querySelectorAll('nav button').forEach(n=>n.classList.remove('active'));
             document.getElementById('p-'+id).classList.add('show');
             b.classList.add('active');
         }
+
         async function connect() {
             const h=document.getElementById('ip').value, u=document.getElementById('usr').value;
             if(!h||!u) return; await fetch(`/start?host=${h}&user=${u}`);
             sel=u; botLogs[u]=[]; tab('console', document.querySelectorAll('nav button')[1]);
         }
+
+        async function disconnect(user) {
+            await fetch(`/stop?user=${user}`);
+            if(sel === user) sel = null;
+        }
+
         async function send() {
             const m=document.getElementById('msg'); if(!sel||!m.value) return;
             fetch(`/send?user=${sel}&msg=${encodeURIComponent(m.value)}`); m.value='';
         }
+
         function mv(v, s) { if(sel) fetch(`/update?user=${sel}&type=move&val=${v}&status=${s}`); }
         function lk(v) { if(sel) fetch(`/update?user=${sel}&type=look&val=${v}`); }
-        function toggleSpam() {
-            if(!sel) return; spamOn = !spamOn;
-            const b=document.getElementById('mbtn'), t=document.getElementById('mtxt').value, s=document.getElementById('msec').value;
-            b.innerText = spamOn ? 'DURDUR' : 'SPAM BAŞLAT';
-            b.style.background = spamOn ? '#ef4444' : '#6366f1';
-            fetch(`/update?user=${sel}&type=auto_msg&status=${spamOn?'on':'off'}&val=${t}|${s}`);
+
+        function showCtx(e, slot) {
+            e.preventDefault(); e.stopPropagation();
+            cSlot = slot;
+            const menu = document.getElementById('ctx');
+            menu.style.display = 'block';
+            menu.style.left = e.pageX + 'px';
+            menu.style.top = e.pageY + 'px';
         }
+        function hideCtx() { document.getElementById('ctx').style.display = 'none'; }
+        async function invAct(act) { if(sel) fetch(`/update?user=${sel}&type=inv&val=${cSlot}&status=${act}`); hideCtx(); }
+
         setInterval(async () => {
             const r=await fetch(`/data?user=${sel||''}`); const d=await r.json();
-            document.getElementById('blist').innerHTML = d.active.map(b=>`<div class="card" style="padding:8px; cursor:pointer; border-color:${sel===b?'var(--a)':'var(--b)'}" onclick="sel='${b}'">${b}</div>`).join('');
+            document.getElementById('blist').innerHTML = d.active.map(b=>`
+                <div class="bot-row" style="border-color:${sel===b?'var(--a)':'var(--b)'}">
+                    <span onclick="sel='${b}'" style="cursor:pointer; flex:1;">${b}</span>
+                    <button class="btn-red" onclick="disconnect('${b}')">KES</button>
+                </div>
+            `).join('');
+
             if(sel && d.botData[sel]) {
                 const b = d.botData[sel];
                 if(b.logs.length > 0) {
@@ -131,12 +154,14 @@
                     b.logs.forEach(msg => { const div = document.createElement('div'); div.className = 'log-row'; div.innerHTML = msg; lb.appendChild(div); });
                     lb.scrollTop = lb.scrollHeight;
                 }
-                document.getElementById('hp').innerText = Math.round(b.health);
-                document.getElementById('fd').innerText = Math.round(b.food);
+                // NaN Hatası Çözümü: Veri yoksa 0 yaz
+                document.getElementById('hp').innerText = Math.round(b.health) || 0;
+                document.getElementById('fd').innerText = Math.round(b.food) || 0;
+                
                 const iG = document.getElementById('inv'); iG.innerHTML = '';
                 for(let i=9; i<45; i++) {
                     const it = b.inventory.find(x=>x.slot===i);
-                    iG.innerHTML += `<div class="slot">${it?`<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png">`:''}</div>`;
+                    iG.innerHTML += `<div class="slot" onclick="showCtx(event, ${i})">${it?`<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png">`:''}</div>`;
                 }
             }
         }, 1000);
