@@ -19,59 +19,94 @@ app.get('/start', (req, res) => {
     const bot = mineflayer.createBot({ host: ip, port: parseInt(port) || 25565, username: user });
 
     botData[user] = {
-        logs: [`<div style="color:#8b5cf6; padding:5px;">--- ${user} Sohbeti Başladı ---</div>`],
-        health: 20, food: 20, inventory: []
+        logs: [],
+        health: 20, food: 20,
+        spamActive: false,
+        spamInterval: null
     };
 
     bot.on('message', (jsonMsg) => {
         if (botData[user]) {
             botData[user].logs.push(`<div class="log-row">${jsonMsg.toHTML()}</div>`);
-            if (botData[user].logs.length > 150) botData[user].logs.shift();
+            if (botData[user].logs.length > 100) botData[user].logs.shift();
         }
     });
 
-    bot.on('end', () => { delete bots[user]; delete botData[user]; });
-    bot.on('kicked', (reason) => { if(botData[user]) botData[user].logs.push(`<div style="color:red">[!] ATILDI: ${reason}</div>`); });
+    bot.on('end', () => { 
+        if(botData[user]?.spamInterval) clearInterval(botData[user].spamInterval);
+        delete bots[user]; delete botData[user]; 
+    });
 
     bots[user] = bot;
-    res.send({ status: 'ok' });
-});
-
-app.get('/data', (req, res) => {
-    const { user } = req.query;
-    const response = { active: Object.keys(bots), botData: {} };
-    if (user && botData[user]) {
-        response.botData[user] = {
-            logs: [...botData[user].logs], // Logları kopyala
-            health: bots[user]?.health || 0,
-            food: bots[user]?.food || 0,
-            inventory: bots[user]?.inventory.items().map(i => ({ name: i.name, count: i.count, slot: i.slot })) || []
-        };
-        botData[user].logs = []; // Çekilen logları temizle
-    }
-    res.json(response);
-});
-
-app.get('/send', (req, res) => {
-    const { user, msg } = req.query;
-    if (bots[user]) { bots[user].chat(msg); res.send({ status: 'ok' }); }
-});
-
-app.get('/stop', (req, res) => {
-    const { user } = req.query;
-    if (bots[user]) { bots[user].quit(); delete bots[user]; delete botData[user]; }
     res.send({ status: 'ok' });
 });
 
 app.get('/update', (req, res) => {
     const { user, type, val, status } = req.query;
     const bot = bots[user];
-    if (bot && type === 'move') bot.setControlState(val, status === 'on');
-    if (bot && type === 'look') {
-        const p = bot.entity.pitch, y = bot.entity.yaw;
-        if (val === 'right') bot.look(y - 0.7, p);
-        if (val === 'left') bot.look(y + 0.7, p);
+    const data = botData[user];
+    if (!bot || !data) return res.send({ status: 'error' });
+
+    if (type === 'move') bot.setControlState(val, status === 'on');
+    
+    // OTO MESAJ SİSTEMİ - HER BOTA ÖZEL
+    if (type === 'auto_msg') {
+        clearInterval(data.spamInterval);
+        if (status === 'on') {
+            const [msg, sec] = val.split('|');
+            data.spamActive = true;
+            data.spamInterval = setInterval(() => {
+                if (bots[user]) bots[user].chat(msg);
+            }, (parseInt(sec) || 10) * 1000);
+        } else {
+            data.spamActive = false;
+        }
     }
+
+    if (type === 'inv') {
+        const item = bot.inventory.slots[val];
+        if (item) {
+            if (status === 'drop') bot.tossStack(item);
+            if (status === 'equip') bot.equip(item, 'hand');
+            if (status === 'use') bot.activateItem();
+            if (status === 'toss') bot.toss(item.type, null, 1);
+        }
+    }
+    res.send({ status: 'ok' });
+});
+
+app.get('/data', (req, res) => {
+    const { user } = req.query;
+    const response = { active: Object.keys(bots), botData: {} };
+    if (user && bots[user] && botData[user]) {
+        response.botData[user] = {
+            logs: botData[user].logs,
+            health: bots[user].health || 0,
+            food: bots[user].food || 0,
+            spamActive: botData[user].spamActive,
+            // Envanter verisine NBT/Açıklama ekledik
+            inventory: bots[user].inventory.slots.map((i, idx) => i ? {
+                name: i.name, 
+                count: i.count, 
+                slot: idx,
+                displayName: i.displayName,
+                nbt: i.nbt || {}
+            } : null).filter(i => i !== null)
+        };
+        botData[user].logs = []; 
+    }
+    res.json(response);
+});
+
+app.get('/send', (req, res) => {
+    const { user, msg } = req.query;
+    if (bots[user]) bots[user].chat(msg);
+    res.send({ status: 'ok' });
+});
+
+app.get('/stop', (req, res) => {
+    const { user } = req.query;
+    if (bots[user]) bots[user].quit();
     res.send({ status: 'ok' });
 });
 
