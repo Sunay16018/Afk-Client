@@ -13,7 +13,9 @@ app.get('/start', (req, res) => {
     const { host, user } = req.query;
     if (!host || !user) return res.send({ status: 'error' });
     const [ip, port] = host.split(':');
+    
     if (bots[user]) { try { bots[user].quit(); } catch(e) {} }
+    
     const bot = mineflayer.createBot({ host: ip, port: parseInt(port) || 25565, username: user });
 
     botData[user] = {
@@ -29,8 +31,14 @@ app.get('/start', (req, res) => {
     });
 
     bot.on('health', () => {
-        if (botData[user]) { botData[user].health = bot.health; botData[user].food = bot.food; }
+        if (botData[user]) { 
+            botData[user].health = bot.health || 0; 
+            botData[user].food = bot.food || 0; 
+        }
     });
+
+    // Bot bir sebeple çıkarsa listeden temizle
+    bot.on('end', () => { delete bots[user]; delete botData[user]; });
 
     bots[user] = bot;
     res.send({ status: 'ok' });
@@ -39,7 +47,8 @@ app.get('/start', (req, res) => {
 app.get('/update', (req, res) => {
     const { user, type, val, status } = req.query;
     const bot = bots[user];
-    if (!bot || !botData[user]) return res.send({ status: 'error' });
+    if (!bot) return res.send({ status: 'error' });
+
     if (type === 'move') bot.setControlState(val, status === 'on');
     if (type === 'jump') bot.setControlState('jump', status === 'on');
     if (type === 'look') {
@@ -47,19 +56,26 @@ app.get('/update', (req, res) => {
         if (val === 'right') bot.look(y - 0.7, p);
         if (val === 'left') bot.look(y + 0.7, p);
     }
-    if (type === 'auto_msg') {
-        clearInterval(botData[user].intervals.spam);
-        if (status === 'on') {
-            const [msg, sec] = val.split('|');
-            botData[user].intervals.spam = setInterval(() => bot.chat(msg), (parseInt(sec) || 10) * 1000);
+    if (type === 'inv') {
+        const item = bot.inventory.slots[val];
+        if (item) {
+            if (status === 'drop') bot.tossStack(item);
+            if (status === 'equip') bot.equip(item, 'hand');
+            if (status === 'use') bot.activateItem();
+            if (status === 'toss') bot.toss(item.type, null, 1);
         }
     }
     res.send({ status: 'ok' });
 });
 
-app.get('/send', (req, res) => {
-    const { user, msg } = req.query;
-    if (bots[user]) { bots[user].chat(msg); res.send({ status: 'ok' }); }
+app.get('/stop', (req, res) => {
+    const { user } = req.query;
+    if (bots[user]) {
+        bots[user].quit();
+        delete bots[user];
+        delete botData[user];
+        res.send({ status: 'ok' });
+    } else res.send({ status: 'not_found' });
 });
 
 app.get('/data', (req, res) => {
@@ -68,13 +84,18 @@ app.get('/data', (req, res) => {
     if (user && bots[user] && botData[user]) {
         response.botData[user] = {
             logs: botData[user].logs,
-            health: bots[user].health,
-            food: bots[user].food,
+            health: bots[user].health || 0,
+            food: bots[user].food || 0,
             inventory: bots[user].inventory.items().map(i => ({ name: i.name, count: i.count, slot: i.slot }))
         };
         botData[user].logs = []; 
     }
     res.json(response);
+});
+
+app.get('/send', (req, res) => {
+    const { user, msg } = req.query;
+    if (bots[user]) { bots[user].chat(msg); res.send({ status: 'ok' }); }
 });
 
 app.listen(PORT, '0.0.0.0');
