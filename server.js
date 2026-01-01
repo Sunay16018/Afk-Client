@@ -4,7 +4,6 @@ const url = require('url');
 const fs = require('fs');
 const path = require('path');
 
-// HER ŞEYİ SID BAZLI AYIRIYORUZ (Kişiye Özel)
 let userSessions = {}; 
 
 function getSession(sid) {
@@ -25,7 +24,7 @@ function startBot(sid, host, user, ver) {
     });
 
     s.bots[user] = bot;
-    s.configs[user] = { msgT: null, afkT: null, mining: false };
+    s.configs[user] = { msgT: null, afkT: null };
 
     bot.on('login', () => s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " oyuna girdi!</b>"));
     
@@ -34,9 +33,15 @@ function startBot(sid, host, user, ver) {
         if(s.logs[user].length > 100) s.logs[user].shift();
     });
 
-    bot.on('kicked', (r) => { 
-        s.logs[user].push("<b style='color:#ff4757'>[ATILDI] Oturum kapandı.</b>");
-        delete s.bots[user]; 
+    // BOT DÜŞÜNCE TEMİZLİK VE UYARI
+    bot.on('end', () => {
+        if(s.logs[user]) s.logs[user].push("<b style='color:#ff4757'>[BAĞLANTI] Bağlantı kesildi.</b>");
+        delete s.bots[user];
+    });
+
+    bot.on('kicked', (reason) => {
+        s.logs[user].push("<b style='color:#ff4757'>[ATILDI] Sunucu bağlantıyı kesti.</b>");
+        delete s.bots[user];
     });
 
     bot.on('error', (e) => { 
@@ -58,27 +63,14 @@ http.createServer((req, res) => {
     if (p === '/stop' && bot) { bot.quit(); delete s.bots[q.user]; return res.end("ok"); }
     if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
     
-    // Gelişmiş Envanter ve Kontrol API
     if (p === '/update' && bot) {
         const conf = s.configs[q.user];
-        if (q.type === 'inv') {
-            const item = bot.inventory.slots[q.val]; // Slot numarasına göre kesin seçim
-            if (item) {
-                if (q.status === 'drop') bot.tossStack(item);
-                if (q.status === 'toss') bot.toss(item.type, null, 1);
-                if (q.status === 'equip') bot.equip(item, 'hand');
-            }
+        if (q.type === 'inv' && q.status === 'drop') {
+            const item = bot.inventory.slots[q.val];
+            if (item) bot.tossStack(item);
         } else if (q.type === 'msg') {
             clearInterval(conf.msgT);
             if (q.status === 'on') conf.msgT = setInterval(() => bot.chat(decodeURIComponent(q.val)), q.sec * 1000);
-        } else if (q.type === 'afk') {
-            clearInterval(conf.afkT);
-            if (q.status === 'on') {
-                conf.afkT = setInterval(() => {
-                    bot.setControlState('jump', true);
-                    setTimeout(() => bot.setControlState('jump', false), 400);
-                }, 8000);
-            }
         }
         return res.end("ok");
     }
@@ -89,11 +81,11 @@ http.createServer((req, res) => {
         if (q.user && s.bots[q.user]) {
             const b = s.bots[q.user];
             botData[q.user] = {
-                hp: b.health,
-                food: b.food,
+                hp: b.health || 0,
+                food: b.food || 0,
                 inv: b.inventory.slots.map((i, idx) => i ? {
                     name: i.name, count: i.count, slot: idx, 
-                    display: i.displayName, nbt: i.nbt
+                    display: i.displayName
                 } : null).filter(x => x !== null)
             };
         }
