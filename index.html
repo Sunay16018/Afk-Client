@@ -3,165 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BotMaster v23 Pro</title>
+    <title>BotMaster v24</title>
     <style>
         :root { --bg: #0c0c0e; --p: #16161a; --b: #2d2d33; --a: #6366f1; --t: #f4f4f5; --r: #f43f5e; --g: #10b981; }
         * { box-sizing: border-box; outline: none; }
-        body { background: var(--bg); color: var(--t); margin: 0; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        body { background: var(--bg); color: var(--t); margin: 0; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; }
         
-        nav { display: flex; background: var(--p); height: 45px; border-bottom: 2px solid var(--b); gap: 4px; padding: 4px; width: 100%; max-width: 450px; }
+        nav { display: flex; background: var(--p); height: 45px; width: 100%; max-width: 450px; border-bottom: 2px solid var(--b); gap: 4px; padding: 4px; }
         nav button { flex: 1; background: #232329; border: none; color: #888; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 10px; }
         nav button.active { background: var(--a); color: white; }
 
         .tab { display: none; padding: 10px; width: 100%; max-width: 450px; flex: 1; overflow-y: auto; }
         .tab.show { display: flex; flex-direction: column; }
 
-        .card { background: var(--p); border: 1px solid var(--b); border-radius: 8px; padding: 12px; margin-bottom: 10px; position: relative; }
-        .bot-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #000; border-radius: 6px; margin-bottom: 5px; border: 1px solid var(--b); }
+        .bot-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #111; border: 1px solid var(--b); border-radius: 8px; margin-bottom: 5px; cursor: pointer; }
+        .bot-row.active { border-color: var(--a); background: #1a1a20; }
         
-        /* ENVANTER GUI GÖRSELİ */
-        .inv-gui { 
-            background: #8b8b8b; padding: 10px; border: 3px solid #373737; border-radius: 2px;
-            display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; width: fit-content; margin: 0 auto;
-        }
-        .slot { width: 34px; height: 34px; background: #8b8b8b; border: 2px solid #373737; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
-        .slot:hover { background: #c6c6c6; }
-        .slot img { width: 28px; image-rendering: pixelated; }
+        .con-box { width: 100%; border: 2px solid var(--b); border-radius: 10px; overflow: hidden; background: #000; display: flex; flex-direction: column; }
+        #logs { height: 280px; overflow-y: auto; padding: 10px; font-family: monospace; font-size: 11px; line-height: 1.4; }
+        .log-row { border-bottom: 1px solid #111; padding: 2px 0; white-space: pre-wrap; }
 
-        .console-wrapper { width: 100%; border: 2px solid var(--b); border-radius: 10px; overflow: hidden; background: #000; }
-        #logs { height: 250px; overflow-y: auto; padding: 10px; font-family: monospace; font-size: 11px; line-height: 1.4; }
-        .log-row { margin-bottom: 2px; white-space: pre-wrap; word-break: break-all; border-bottom: 1px solid #111; }
+        .chat-bar { display: flex; padding: 8px; gap: 5px; background: #1a1a1e; border-top: 1px solid var(--b); }
+        .chat-bar input { flex: 1; background: #000; border: 1px solid var(--b); color: #fff; padding: 8px; border-radius: 5px; }
 
-        .chat-bar { display: flex; background: #1a1a1e; padding: 6px; gap: 5px; border-top: 1px solid var(--b); }
-        .chat-bar input { flex: 1; background: #000; border: 1px solid var(--b); color: #fff; padding: 8px; border-radius: 4px; font-size: 13px; }
+        .inv-gui { background: #8b8b8b; padding: 8px; border: 3px solid #373737; display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; margin: 0 auto; }
+        .slot { width: 32px; height: 32px; background: #8b8b8b; border: 2px solid #373737; display: flex; align-items: center; justify-content: center; }
+        .slot img { width: 26px; image-rendering: pixelated; }
 
-        /* 4 SEÇENEKLİ CONTEXT MENU */
-        #ctx { display: none; position: fixed; background: #1c1c1f; border: 1px solid var(--b); z-index: 1000; width: 120px; border-radius: 5px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        #ctx button { display: block; width: 100%; padding: 10px; background: none; border: none; color: white; border-bottom: 1px solid var(--b); font-size: 11px; cursor: pointer; text-align: left; }
-        #ctx button:hover { background: var(--a); }
-
-        .btn-red { background: var(--r); color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold; }
-        .input-box { width: 100%; padding: 10px; background: #000; border: 1px solid var(--b); color: #fff !important; border-radius: 5px; margin-top: 5px; }
+        .btn { background: var(--a); color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .btn-red { background: var(--r); padding: 5px 10px; font-size: 10px; }
+        .input-box { width: 100%; padding: 10px; background: #000; border: 1px solid var(--b); color: #fff !important; border-radius: 5px; margin-bottom: 8px; }
     </style>
 </head>
-<body onclick="hideCtx()">
+<body>
+
     <nav>
         <button onclick="tab('bots', this)" class="active">BOTLAR</button>
-        <button onclick="tab('console', this)">KONSOL</button>
+        <button onclick="tab('console', this)">SOHBET</button>
         <button onclick="tab('status', this)">DURUM</button>
-        <button onclick="tab('settings', this)">AYARLAR</button>
     </nav>
 
-    <div id="ctx">
-        <button onclick="invAct('equip')">Elinde Tut</button>
-        <button onclick="invAct('use')">Kullan / Ye</button>
-        <button onclick="invAct('toss')">1 Tane At</button>
-        <button onclick="invAct('drop')">Hepsini At</button>
-    </div>
-
     <div id="p-bots" class="tab show">
-        <div class="card">
-            <input id="ip" class="input-box" placeholder="ip:port">
-            <input id="usr" class="input-box" placeholder="Bot İsmi">
-            <button onclick="connect()" class="btn-red" style="background:var(--g); width:100%; margin-top:10px; height:40px;">BAĞLAN</button>
+        <div style="background:var(--p); padding:12px; border-radius:10px; border:1px solid var(--b); margin-bottom:10px;">
+            <input id="ip" class="input-box" placeholder="server:port">
+            <input id="usr" class="input-box" placeholder="Kullanıcı Adı">
+            <button onclick="connect()" class="btn" style="background:var(--g); width:100%">BAĞLAN</button>
         </div>
         <div id="blist"></div>
     </div>
 
     <div id="p-console" class="tab">
-        <div class="console-wrapper">
+        <div id="cur-bot-name" style="font-size:12px; margin-bottom:5px; color:var(--a); font-weight:bold;">Seçili Bot: Yok</div>
+        <div class="con-box">
             <div id="logs"></div>
             <div class="chat-bar">
                 <input id="msg" placeholder="Mesaj..." onkeydown="if(event.key==='Enter') send()">
-                <button onclick="send()" style="background:var(--a); color:white; border:none; border-radius:4px; padding:0 10px;">></button>
+                <button onclick="send()" class="btn" style="margin:0; padding:0 15px;">></button>
             </div>
         </div>
     </div>
 
     <div id="p-status" class="tab">
-        <div class="card" style="text-align:center;">
-            <b>❤️ <span id="hp">20</span> | 🍖 <span id="fd">20</span></b>
-        </div>
+        <div style="text-align:center; margin-bottom:10px;">❤️ <span id="hp">0</span> | 🍖 <span id="fd">0</span></div>
         <div class="inv-gui" id="inv"></div>
     </div>
 
-    <div id="p-settings" class="tab">
-        <div class="card">
-            <b>Otomatik Mesaj</b>
-            <input id="mtxt" class="input-box" placeholder="Metin...">
-            <input id="msec" type="number" class="input-box" value="10" style="width:70px"> sn
-        </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-            <button class="btn-red" style="background:var(--a); padding:15px;" onmousedown="mv('forward','on')" onmouseup="mv('forward','off')">İLERİ</button>
-            <button class="btn-red" style="background:var(--a); padding:15px;" onmousedown="mv('back','on')" onmouseup="mv('back','off')">GERİ</button>
-            <button class="btn-red" style="background:var(--b); padding:15px;" onclick="lk('left')">SOLA BAK</button>
-            <button class="btn-red" style="background:var(--b); padding:15px;" onclick="lk('right')">SAĞA BAK</button>
-        </div>
-    </div>
-
     <script>
-        let sel = null; let botLogs = {}; let cSlot = 0;
-        function tab(id, b) {
-            document.querySelectorAll('.tab').forEach(t=>t.classList.remove('show'));
-            document.querySelectorAll('nav button').forEach(n=>n.classList.remove('active'));
-            document.getElementById('p-'+id).classList.add('show');
+        let sel = null;
+        let botLogs = {}; // ANAHTAR NOKTA: { "Ahmet": ["mesaj1", "mesaj2"], "Mehmet": [] }
+
+        function tab(t, b) {
+            document.querySelectorAll('.tab').forEach(x=>x.classList.remove('show'));
+            document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+            document.getElementById('p-'+t).classList.add('show');
             b.classList.add('active');
         }
 
         async function connect() {
-            const h=document.getElementById('ip').value, u=document.getElementById('usr').value;
-            if(!h||!u) return; await fetch(`/start?host=${h}&user=${u}`);
-            sel=u; botLogs[u]=[]; tab('console', document.querySelectorAll('nav button')[1]);
+            const h = document.getElementById('ip').value, u = document.getElementById('usr').value;
+            if(!h || !u) return;
+            await fetch(`/start?host=${h}&user=${u}`);
+            switchBot(u);
+            tab('console', document.querySelectorAll('nav button')[1]);
         }
 
-        async function disconnect(user) {
-            await fetch(`/stop?user=${user}`);
-            if(sel === user) sel = null;
+        function switchBot(u) {
+            sel = u;
+            if(!botLogs[u]) botLogs[u] = []; // Eğer bu botun geçmişi yoksa oluştur
+            document.getElementById('cur-bot-name').innerText = "Seçili Bot: " + u;
+            // Ekrandaki eski mesajları temizle ve seçilen botun geçmişini yükle
+            document.getElementById('logs').innerHTML = botLogs[u].join('');
+            document.getElementById('logs').scrollTop = document.getElementById('logs').scrollHeight;
+        }
+
+        async function disconnect(u, e) {
+            e.stopPropagation();
+            await fetch(`/stop?user=${u}`);
+            delete botLogs[u];
+            if(sel === u) { sel = null; document.getElementById('logs').innerHTML = ''; }
         }
 
         async function send() {
-            const m=document.getElementById('msg'); if(!sel||!m.value) return;
-            fetch(`/send?user=${sel}&msg=${encodeURIComponent(m.value)}`); m.value='';
+            const m = document.getElementById('msg');
+            if(!sel || !m.value) return;
+            fetch(`/send?user=${sel}&msg=${encodeURIComponent(m.value)}`);
+            m.value = '';
         }
-
-        function mv(v, s) { if(sel) fetch(`/update?user=${sel}&type=move&val=${v}&status=${s}`); }
-        function lk(v) { if(sel) fetch(`/update?user=${sel}&type=look&val=${v}`); }
-
-        function showCtx(e, slot) {
-            e.preventDefault(); e.stopPropagation();
-            cSlot = slot;
-            const menu = document.getElementById('ctx');
-            menu.style.display = 'block';
-            menu.style.left = e.pageX + 'px';
-            menu.style.top = e.pageY + 'px';
-        }
-        function hideCtx() { document.getElementById('ctx').style.display = 'none'; }
-        async function invAct(act) { if(sel) fetch(`/update?user=${sel}&type=inv&val=${cSlot}&status=${act}`); hideCtx(); }
 
         setInterval(async () => {
-            const r=await fetch(`/data?user=${sel||''}`); const d=await r.json();
-            document.getElementById('blist').innerHTML = d.active.map(b=>`
-                <div class="bot-row" style="border-color:${sel===b?'var(--a)':'var(--b)'}">
-                    <span onclick="sel='${b}'" style="cursor:pointer; flex:1;">${b}</span>
-                    <button class="btn-red" onclick="disconnect('${b}')">KES</button>
+            const r = await fetch(`/data?user=${sel||''}`);
+            const d = await r.json();
+
+            // Bot Listesini Güncelle
+            document.getElementById('blist').innerHTML = d.active.map(b => `
+                <div class="bot-row ${sel===b?'active':''}" onclick="switchBot('${b}')">
+                    <span>${b}</span>
+                    <button class="btn-red" onclick="disconnect('${b}', event)">KES</button>
                 </div>
             `).join('');
 
+            // Sadece seçili botun verilerini işle
             if(sel && d.botData[sel]) {
                 const b = d.botData[sel];
+                
+                // Gelen yeni mesajları sadece o botun hafızasına ekle
                 if(b.logs.length > 0) {
+                    botLogs[sel].push(...b.logs);
+                    if(botLogs[sel].length > 150) botLogs[sel].shift();
+                    
+                    // Eğer şu an o botu izliyorsak ekrana yansıt
                     const lb = document.getElementById('logs');
-                    b.logs.forEach(msg => { const div = document.createElement('div'); div.className = 'log-row'; div.innerHTML = msg; lb.appendChild(div); });
+                    b.logs.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.className = 'log-row';
+                        div.innerHTML = msg;
+                        lb.appendChild(div);
+                    });
                     lb.scrollTop = lb.scrollHeight;
                 }
-                // NaN Hatası Çözümü: Veri yoksa 0 yaz
+
                 document.getElementById('hp').innerText = Math.round(b.health) || 0;
                 document.getElementById('fd').innerText = Math.round(b.food) || 0;
                 
                 const iG = document.getElementById('inv'); iG.innerHTML = '';
                 for(let i=9; i<45; i++) {
                     const it = b.inventory.find(x=>x.slot===i);
-                    iG.innerHTML += `<div class="slot" onclick="showCtx(event, ${i})">${it?`<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png">`:''}</div>`;
+                    iG.innerHTML += `<div class="slot">${it?`<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png">`:''}</div>`;
                 }
             }
         }, 1000);
