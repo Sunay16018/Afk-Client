@@ -1,113 +1,106 @@
 const mineflayer = require('mineflayer');
-const express = require('express');
+const http = require('http');
+const url = require('url');
+const fs = require('fs');
 const path = require('path');
-const app = express();
 
-const PORT = process.env.PORT || 10000;
-const bots = {};
-const botData = {};
+// HER ŞEYİ SID BAZLI AYIRIYORUZ (Kişiye Özel)
+let userSessions = {}; 
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+function getSession(sid) {
+    if (!userSessions[sid]) userSessions[sid] = { bots: {}, logs: {}, configs: {} };
+    return userSessions[sid];
+}
 
-app.get('/start', (req, res) => {
-    const { host, user } = req.query;
-    if (!host || !user) return res.send({ status: 'error' });
+function startBot(sid, host, user, ver) {
+    const s = getSession(sid);
+    if (s.bots[user]) return;
+
     const [ip, port] = host.split(':');
-    
-    if (bots[user]) return res.send({ status: 'already_running' });
-    
-    const bot = mineflayer.createBot({ host: ip, port: parseInt(port) || 25565, username: user });
+    s.logs[user] = ["<b style='color:gray'>[SİSTEM] Başlatılıyor...</b>"];
 
-    botData[user] = {
-        logs: [],
-        health: 20, food: 20,
-        spamActive: false,
-        spamInterval: null
-    };
-
-    bot.on('message', (jsonMsg) => {
-        if (botData[user]) {
-            botData[user].logs.push(`<div class="log-row">${jsonMsg.toHTML()}</div>`);
-            if (botData[user].logs.length > 100) botData[user].logs.shift();
-        }
+    const bot = mineflayer.createBot({
+        host: ip, port: parseInt(port) || 25565, 
+        username: user, version: ver, auth: 'offline'
     });
 
-    bot.on('end', () => { 
-        if(botData[user]?.spamInterval) clearInterval(botData[user].spamInterval);
-        delete bots[user]; delete botData[user]; 
+    s.bots[user] = bot;
+    s.configs[user] = { msgT: null, afkT: null, mining: false };
+
+    bot.on('login', () => s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " oyuna girdi!</b>"));
+    
+    bot.on('message', (m) => {
+        s.logs[user].push(m.toHTML());
+        if(s.logs[user].length > 100) s.logs[user].shift();
     });
 
-    bots[user] = bot;
-    res.send({ status: 'ok' });
-});
+    bot.on('kicked', (r) => { 
+        s.logs[user].push("<b style='color:#ff4757'>[ATILDI] Oturum kapandı.</b>");
+        delete s.bots[user]; 
+    });
 
-app.get('/update', (req, res) => {
-    const { user, type, val, status } = req.query;
-    const bot = bots[user];
-    const data = botData[user];
-    if (!bot || !data) return res.send({ status: 'error' });
+    bot.on('error', (e) => { 
+        s.logs[user].push("<b style='color:#ff4757'>[HATA] " + e.message + "</b>"); 
+        delete s.bots[user]; 
+    });
+}
 
-    if (type === 'move') bot.setControlState(val, status === 'on');
+http.createServer((req, res) => {
+    const q = url.parse(req.url, true).query;
+    const p = url.parse(req.url, true).pathname;
+    const sid = q.sid;
+    if (!sid && p !== '/') return res.end("No SID");
+
+    const s = getSession(sid);
+    const bot = s.bots[q.user];
+
+    if (p === '/start') { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
+    if (p === '/stop' && bot) { bot.quit(); delete s.bots[q.user]; return res.end("ok"); }
+    if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
     
-    // OTO MESAJ SİSTEMİ - HER BOTA ÖZEL
-    if (type === 'auto_msg') {
-        clearInterval(data.spamInterval);
-        if (status === 'on') {
-            const [msg, sec] = val.split('|');
-            data.spamActive = true;
-            data.spamInterval = setInterval(() => {
-                if (bots[user]) bots[user].chat(msg);
-            }, (parseInt(sec) || 10) * 1000);
-        } else {
-            data.spamActive = false;
+    // Gelişmiş Envanter ve Kontrol API
+    if (p === '/update' && bot) {
+        const conf = s.configs[q.user];
+        if (q.type === 'inv') {
+            const item = bot.inventory.slots[q.val]; // Slot numarasına göre kesin seçim
+            if (item) {
+                if (q.status === 'drop') bot.tossStack(item);
+                if (q.status === 'toss') bot.toss(item.type, null, 1);
+                if (q.status === 'equip') bot.equip(item, 'hand');
+            }
+        } else if (q.type === 'msg') {
+            clearInterval(conf.msgT);
+            if (q.status === 'on') conf.msgT = setInterval(() => bot.chat(decodeURIComponent(q.val)), q.sec * 1000);
+        } else if (q.type === 'afk') {
+            clearInterval(conf.afkT);
+            if (q.status === 'on') {
+                conf.afkT = setInterval(() => {
+                    bot.setControlState('jump', true);
+                    setTimeout(() => bot.setControlState('jump', false), 400);
+                }, 8000);
+            }
         }
+        return res.end("ok");
     }
 
-    if (type === 'inv') {
-        const item = bot.inventory.slots[val];
-        if (item) {
-            if (status === 'drop') bot.tossStack(item);
-            if (status === 'equip') bot.equip(item, 'hand');
-            if (status === 'use') bot.activateItem();
-            if (status === 'toss') bot.toss(item.type, null, 1);
+    if (p === '/data' && sid) {
+        const active = Object.keys(s.bots);
+        const botData = {};
+        if (q.user && s.bots[q.user]) {
+            const b = s.bots[q.user];
+            botData[q.user] = {
+                hp: b.health,
+                food: b.food,
+                inv: b.inventory.slots.map((i, idx) => i ? {
+                    name: i.name, count: i.count, slot: idx, 
+                    display: i.displayName, nbt: i.nbt
+                } : null).filter(x => x !== null)
+            };
         }
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({ active, logs: s.logs, botData }));
     }
-    res.send({ status: 'ok' });
-});
 
-app.get('/data', (req, res) => {
-    const { user } = req.query;
-    const response = { active: Object.keys(bots), botData: {} };
-    if (user && bots[user] && botData[user]) {
-        response.botData[user] = {
-            logs: botData[user].logs,
-            health: bots[user].health || 0,
-            food: bots[user].food || 0,
-            spamActive: botData[user].spamActive,
-            // Envanter verisine NBT/Açıklama ekledik
-            inventory: bots[user].inventory.slots.map((i, idx) => i ? {
-                name: i.name, 
-                count: i.count, 
-                slot: idx,
-                displayName: i.displayName,
-                nbt: i.nbt || {}
-            } : null).filter(i => i !== null)
-        };
-        botData[user].logs = []; 
-    }
-    res.json(response);
-});
-
-app.get('/send', (req, res) => {
-    const { user, msg } = req.query;
-    if (bots[user]) bots[user].chat(msg);
-    res.send({ status: 'ok' });
-});
-
-app.get('/stop', (req, res) => {
-    const { user } = req.query;
-    if (bots[user]) bots[user].quit();
-    res.send({ status: 'ok' });
-});
-
-app.listen(PORT, '0.0.0.0');
+    let f = path.join(__dirname, p === '/' ? 'index.html' : p);
+    fs.readFile(f, (err, data) => res.end(data || "404"));
+}).listen(process.env.PORT || 10000);
