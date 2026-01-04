@@ -5,25 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AFK Client Pro</title>
     <link rel="stylesheet" href="style.css">
-    <!-- SOCKET.IO CLIENT (YEREL) -->
     <script src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- NAVIGASYON -->
     <nav>
-        <button id="btn-bots" class="active">
-            <i class="fas fa-robot"></i> BOTLAR
-        </button>
-        <button id="btn-term">
-            <i class="fas fa-terminal"></i> KONSOL
-        </button>
-        <button id="btn-inv">
-            <i class="fas fa-backpack"></i> ENVANTER
-        </button>
-        <div class="connection-status">
-            <span id="connection-status-text">🔴 Bağlanılıyor...</span>
-        </div>
+        <button id="btn-bots" class="active"><i class="fas fa-robot"></i> BOTLAR</button>
+        <button id="btn-term"><i class="fas fa-terminal"></i> KONSOL</button>
+        <button id="btn-inv"><i class="fas fa-backpack"></i> ENVANTER</button>
+        <div class="connection-status"><span id="connection-status-text">🔴 Bağlanılıyor...</span></div>
     </nav>
 
     <!-- BOTLAR SEKMESİ -->
@@ -34,31 +24,23 @@
                 <label for="host-input"><i class="fas fa-server"></i> Sunucu IP:Port</label>
                 <input type="text" id="host-input" placeholder="play.hypixel.net:25565" value="localhost:25565">
             </div>
-            
             <div class="input-group">
                 <label for="username-input"><i class="fas fa-user"></i> Bot İsmi</label>
                 <input type="text" id="username-input" placeholder="AFKBot_123">
             </div>
-            
             <div class="input-group">
                 <label for="version-input"><i class="fas fa-code-branch"></i> Sürüm</label>
                 <input type="text" id="version-input" placeholder="1.16.5" value="1.16.5">
             </div>
-            
-            <button id="connect-btn" class="btn btn-primary">
-                <i class="fas fa-plug"></i> BAĞLAN
-            </button>
+            <button id="connect-btn" class="btn btn-primary"><i class="fas fa-plug"></i> BAĞLAN</button>
         </div>
         
         <div class="section-header">
             <h3><i class="fas fa-list"></i> Aktif Botlar</h3>
-            <button id="refresh-bots" class="btn btn-small">
-                <i class="fas fa-sync-alt"></i> Yenile
-            </button>
+            <button id="refresh-bots" class="btn btn-small"><i class="fas fa-sync-alt"></i> Yenile</button>
         </div>
         
         <div id="bot-list" class="bot-list">
-            <!-- Botlar buraya yüklenecek -->
             <div class="empty-state">
                 <i class="fas fa-robot fa-3x"></i>
                 <p>Aktif bot bulunmuyor</p>
@@ -67,17 +49,19 @@
         </div>
     </div>
 
-    <!-- KONSOL SEKMESİ -->
+    <!-- KONSOL SEKMESİ (SABİT ORTA BOY) -->
     <div id="tab-term" class="tab">
         <div class="terminal-container">
             <div class="terminal-header">
                 <h3><i class="fas fa-terminal"></i> Konsol - <span id="selected-bot-name">Bot Seçilmedi</span></h3>
-                <button id="clear-logs" class="btn btn-small">
-                    <i class="fas fa-trash"></i> Temizle
-                </button>
+                <div class="terminal-controls">
+                    <button id="clear-logs" class="btn btn-small"><i class="fas fa-trash"></i> Temizle</button>
+                    <button id="toggle-timestamp" class="btn btn-small"><i class="fas fa-clock"></i> Zaman</button>
+                </div>
             </div>
             
-            <div class="log-container">
+            <!-- SABİT ORTA BOY KONSOL -->
+            <div class="log-container-fixed">
                 <div id="logbox">
                     <div class="welcome-message">
                         <i class="fas fa-info-circle"></i> AFK Client Pro Konsolu<br>
@@ -87,20 +71,17 @@
             </div>
             
             <form id="send-form" class="chat-form">
-                <input type="text" id="chat-input" placeholder="Mesaj yazın... (Ctrl+Enter)" autocomplete="off">
-                <button type="submit" class="btn btn-secondary">
-                    <i class="fas fa-paper-plane"></i> GÖNDER
-                </button>
+                <input type="text" id="chat-input" placeholder="Mesaj yazın... (Enter ile gönder)" autocomplete="off">
+                <button type="submit" class="btn btn-secondary"><i class="fas fa-paper-plane"></i> GÖNDER</button>
             </form>
         </div>
     </div>
 
-    <!-- ENVANTER SEKMESİ -->
+    <!-- ENVANTER SEKMESİ (HAREKET KONTROLLERİ EKLENDİ) -->
     <div id="tab-inv" class="tab">
         <div class="inventory-container">
             <div class="stats-header">
-                <h3><i class="fas fa-chart-line"></i> Bot İstatistikleri</h3>
-                <span id="bot-name-display">Bot Seçilmedi</span>
+                <h3><i class="fas fa-chart-line"></i> Bot İstatistikleri - <span id="bot-name-display">Bot Seçilmedi</span></h3>
             </div>
             
             <div id="bot-stats" class="bot-stats">
@@ -120,20 +101,77 @@
                     <span id="pos-value" class="stat-value">-</span>
                 </div>
             </div>
-            
+
+            <!-- HAREKET KONTROLLERİ -->
+            <div class="movement-controls">
+                <h4><i class="fas fa-gamepad"></i> Hareket Kontrolleri</h4>
+                <div class="movement-grid">
+                    <div class="movement-row">
+                        <button class="btn-movement" data-direction="forward" data-action="start">
+                            <i class="fas fa-arrow-up"></i><br>İleri (W)
+                        </button>
+                    </div>
+                    <div class="movement-row">
+                        <button class="btn-movement" data-direction="left" data-action="start">
+                            <i class="fas fa-arrow-left"></i><br>Sol (A)
+                        </button>
+                        <button class="btn-movement" data-direction="back" data-action="start">
+                            <i class="fas fa-arrow-down"></i><br>Geri (S)
+                        </button>
+                        <button class="btn-movement" data-direction="right" data-action="start">
+                            <i class="fas fa-arrow-right"></i><br>Sağ (D)
+                        </button>
+                    </div>
+                    <div class="movement-row">
+                        <button class="btn-movement jump" data-direction="jump" data-action="start">
+                            <i class="fas fa-arrow-circle-up"></i><br>Zıpla (Space)
+                        </button>
+                        <button class="btn-movement sneak" data-direction="sneak" data-action="toggle">
+                            <i class="fas fa-user-secret"></i><br>Eğil (Shift)
+                        </button>
+                    </div>
+                    <div class="movement-row">
+                        <button class="btn-movement stop" id="stop-all-movement">
+                            <i class="fas fa-stop-circle"></i><br>Tümünü Durdur
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="inventory-header">
                 <h3><i class="fas fa-boxes"></i> Envanter</h3>
-                <small>Eşyaya tıklayarak atabilirsiniz</small>
+                <small>Eşyaya tıklayınca menü açılır</small>
             </div>
             
             <div class="inv-grid" id="inv-box">
-                <!-- Envanter buraya yüklenecek -->
                 <div class="empty-inventory">
                     <i class="fas fa-box-open fa-2x"></i>
                     <p>Envanter yükleniyor...</p>
                 </div>
             </div>
             
+            <!-- EŞYA MENÜSÜ (GİZLİ) -->
+            <div id="item-menu" class="item-menu hidden">
+                <div class="item-menu-header">
+                    <span id="item-menu-name">Eşya</span>
+                    <button class="close-menu"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="item-menu-content">
+                    <button class="item-action" data-action="drop_all">
+                        <i class="fas fa-trash"></i> Tümünü At
+                    </button>
+                    <button class="item-action" data-action="eat">
+                        <i class="fas fa-utensils"></i> Ye/İç
+                    </button>
+                    <button class="item-action" data-action="right_click">
+                        <i class="fas fa-mouse-pointer"></i> Sağ Tık
+                    </button>
+                    <button class="item-action" data-action="left_click">
+                        <i class="fas fa-hand-point-left"></i> Sol Tık
+                    </button>
+                </div>
+            </div>
+
             <div class="action-buttons">
                 <button id="settings-btn" class="btn btn-secondary">
                     <i class="fas fa-cog"></i> AYARLAR
@@ -145,9 +183,81 @@
         </div>
     </div>
 
+    <!-- AYARLAR MODALI -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-cogs"></i> Bot Ayarları</h3>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4><i class="fas fa-comment-alt"></i> Otomatik Mesaj</h4>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="auto-message-toggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="setting-label">Otomatik Mesaj Aktif</span>
+                    </div>
+                    
+                    <div id="auto-message-fields" class="settings-fields">
+                        <div class="input-group">
+                            <label for="auto-message-text">Mesaj İçeriği</label>
+                            <input type="text" id="auto-message-text" placeholder="Merhaba! AFK Client Pro kullanıyorum">
+                        </div>
+                        <div class="input-group">
+                            <label for="auto-message-interval">Saniye (Aralık)</label>
+                            <input type="number" id="auto-message-interval" min="1" max="300" value="10">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4><i class="fas fa-hammer"></i> Otomatik Kazma</h4>
+                    <div class="setting-item">
+                        <label class="switch">
+                            <input type="checkbox" id="auto-mine-toggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span class="setting-label">Otomatik Kazma Aktif</span>
+                    </div>
+                    
+                    <div id="auto-mine-fields" class="settings-fields">
+                        <div class="input-group">
+                            <label for="auto-mine-block">Hedef Blok</label>
+                            <select id="auto-mine-block">
+                                <option value="diamond_ore">Elmas Cevheri</option>
+                                <option value="iron_ore">Demir Cevheri</option>
+                                <option value="gold_ore">Altın Cevheri</option>
+                                <option value="coal_ore">Kömür Cevheri</option>
+                                <option value="stone">Taş</option>
+                                <option value="dirt">Toprak</option>
+                            </select>
+                        </div>
+                        <div class="hint">
+                            <i class="fas fa-info-circle"></i>
+                            Bot önündeki bloğu algılar ve kırılana kadar kazar
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button id="save-settings" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Ayarları Kaydet
+                </button>
+                <button class="btn btn-secondary close-modal">
+                    <i class="fas fa-times"></i> İptal
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- NOTIFICATION CONTAINER -->
     <div id="notification-container"></div>
 
     <script src="script.js"></script>
 </body>
-</html>
+                            </html>
