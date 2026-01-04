@@ -5,52 +5,149 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AFK Client Pro</title>
     <link rel="stylesheet" href="style.css">
-    <!-- ✅ Load Socket.IO client from YOUR server, not a CDN -->
+    <!-- SOCKET.IO CLIENT (YEREL) -->
     <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- NAVIGASYON -->
     <nav>
-        <button id="btn-bots" class="active">🤖 BOTLAR</button>
-        <button id="btn-term">📟 KONSOL</button>
-        <button id="btn-inv">🎒 ENVANTER</button>
-        <div style="margin-left: auto; padding-right: 15px;">
-            <span id="connection-status">🔴 Bağlanılıyor...</span>
+        <button id="btn-bots" class="active">
+            <i class="fas fa-robot"></i> BOTLAR
+        </button>
+        <button id="btn-term">
+            <i class="fas fa-terminal"></i> KONSOL
+        </button>
+        <button id="btn-inv">
+            <i class="fas fa-backpack"></i> ENVANTER
+        </button>
+        <div class="connection-status">
+            <span id="connection-status-text">🔴 Bağlanılıyor...</span>
         </div>
     </nav>
 
+    <!-- BOTLAR SEKMESİ -->
     <div id="tab-bots" class="tab active-tab">
         <div class="connection-form">
-            <input type="text" id="host-input" placeholder="play.hypixel.net:25565">
-            <input type="text" id="username-input" placeholder="Botİsmi123">
-            <input type="text" id="version-input" placeholder="1.16.5" value="1.16.5">
-            <button id="connect-btn" class="btn btn-primary">📡 BAĞLAN</button>
+            <h3><i class="fas fa-plus-circle"></i> Yeni Bot Bağla</h3>
+            <div class="input-group">
+                <label for="host-input"><i class="fas fa-server"></i> Sunucu IP:Port</label>
+                <input type="text" id="host-input" placeholder="play.hypixel.net:25565" value="localhost:25565">
+            </div>
+            
+            <div class="input-group">
+                <label for="username-input"><i class="fas fa-user"></i> Bot İsmi</label>
+                <input type="text" id="username-input" placeholder="AFKBot_123">
+            </div>
+            
+            <div class="input-group">
+                <label for="version-input"><i class="fas fa-code-branch"></i> Sürüm</label>
+                <input type="text" id="version-input" placeholder="1.16.5" value="1.16.5">
+            </div>
+            
+            <button id="connect-btn" class="btn btn-primary">
+                <i class="fas fa-plug"></i> BAĞLAN
+            </button>
         </div>
-        <h3>Aktif Botlar</h3>
-        <div id="bot-list" class="bot-list"></div> <!-- Bot listesi burada oluşturulacak -->
+        
+        <div class="section-header">
+            <h3><i class="fas fa-list"></i> Aktif Botlar</h3>
+            <button id="refresh-bots" class="btn btn-small">
+                <i class="fas fa-sync-alt"></i> Yenile
+            </button>
+        </div>
+        
+        <div id="bot-list" class="bot-list">
+            <!-- Botlar buraya yüklenecek -->
+            <div class="empty-state">
+                <i class="fas fa-robot fa-3x"></i>
+                <p>Aktif bot bulunmuyor</p>
+                <small>Yukarıdan yeni bot bağlatabilirsiniz</small>
+            </div>
+        </div>
     </div>
 
+    <!-- KONSOL SEKMESİ -->
     <div id="tab-term" class="tab">
         <div class="terminal-container">
-            <div class="log-container">
-                <div id="logbox"></div> <!-- Log mesajları burada görünecek -->
+            <div class="terminal-header">
+                <h3><i class="fas fa-terminal"></i> Konsol - <span id="selected-bot-name">Bot Seçilmedi</span></h3>
+                <button id="clear-logs" class="btn btn-small">
+                    <i class="fas fa-trash"></i> Temizle
+                </button>
             </div>
+            
+            <div class="log-container">
+                <div id="logbox">
+                    <div class="welcome-message">
+                        <i class="fas fa-info-circle"></i> AFK Client Pro Konsolu<br>
+                        <small>Bir bot seçin veya yeni bot bağlatın</small>
+                    </div>
+                </div>
+            </div>
+            
             <form id="send-form" class="chat-form">
-                <input type="text" id="chat-input" placeholder="Mesaj yazın...">
-                <button type="submit" class="btn btn-secondary">📨 GÖNDER</button>
+                <input type="text" id="chat-input" placeholder="Mesaj yazın... (Ctrl+Enter)" autocomplete="off">
+                <button type="submit" class="btn btn-secondary">
+                    <i class="fas fa-paper-plane"></i> GÖNDER
+                </button>
             </form>
         </div>
     </div>
 
+    <!-- ENVANTER SEKMESİ -->
     <div id="tab-inv" class="tab">
         <div class="inventory-container">
-            <div id="bot-stats" class="bot-stats">
-                <div class="stat-item">❤️ <span id="hp-value">-</span></div>
-                <div class="stat-item">🍖 <span id="food-value">-</span></div>
+            <div class="stats-header">
+                <h3><i class="fas fa-chart-line"></i> Bot İstatistikleri</h3>
+                <span id="bot-name-display">Bot Seçilmedi</span>
             </div>
-            <div class="inv-grid" id="inv-box"></div> <!-- Envanter burada oluşturulacak -->
-            <button id="settings-btn" class="btn btn-secondary" style="margin-top: 20px;">⚙️ AYARLAR</button>
+            
+            <div id="bot-stats" class="bot-stats">
+                <div class="stat-item health">
+                    <span class="stat-icon">❤️</span>
+                    <span class="stat-label">Can:</span>
+                    <span id="hp-value" class="stat-value">-</span>
+                </div>
+                <div class="stat-item food">
+                    <span class="stat-icon">🍖</span>
+                    <span class="stat-label">Açlık:</span>
+                    <span id="food-value" class="stat-value">-</span>
+                </div>
+                <div class="stat-item position">
+                    <span class="stat-icon">📍</span>
+                    <span class="stat-label">Konum:</span>
+                    <span id="pos-value" class="stat-value">-</span>
+                </div>
+            </div>
+            
+            <div class="inventory-header">
+                <h3><i class="fas fa-boxes"></i> Envanter</h3>
+                <small>Eşyaya tıklayarak atabilirsiniz</small>
+            </div>
+            
+            <div class="inv-grid" id="inv-box">
+                <!-- Envanter buraya yüklenecek -->
+                <div class="empty-inventory">
+                    <i class="fas fa-box-open fa-2x"></i>
+                    <p>Envanter yükleniyor...</p>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="settings-btn" class="btn btn-secondary">
+                    <i class="fas fa-cog"></i> AYARLAR
+                </button>
+                <button id="update-inv" class="btn btn-small">
+                    <i class="fas fa-sync"></i> Yenile
+                </button>
+            </div>
         </div>
     </div>
+
+    <!-- NOTIFICATION CONTAINER -->
+    <div id="notification-container"></div>
+
     <script src="script.js"></script>
 </body>
 </html>
