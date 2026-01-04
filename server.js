@@ -6,7 +6,12 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
 const PORT = process.env.PORT || 10000;
 
@@ -30,11 +35,43 @@ class BotSession {
             autoMine: { enabled: false, targetBlock: 'diamond_ore' }
         });
         this.autoTasks.set(username, { messageInterval: null, mineInterval: null });
+        
+        // İlk logu ekle
+        this.addLog(username, '[SİSTEM] Bot oluşturuldu ve başlatılıyor...', 'info');
+    }
+
+    addLog(username, message, type = 'info') {
+        if (!this.logs.has(username)) {
+            this.logs.set(username, []);
+        }
+        
+        const logs = this.logs.get(username);
+        logs.push({
+            message,
+            type,
+            timestamp: new Date().toLocaleTimeString('tr-TR')
+        });
+        
+        if (logs.length > 200) logs.shift();
+        
+        // Socket'e gönder
+        const socket = io.sockets.sockets.get(this.socketId);
+        if (socket && socket.connected) {
+            socket.emit('new_log', { 
+                username, 
+                log: logs[logs.length - 1] 
+            });
+        }
     }
 
     removeBot(username) {
         const bot = this.bots.get(username);
-        if (bot) bot.end();
+        if (bot) {
+            try {
+                bot.quit();
+                this.addLog(username, '[SİSTEM] Bot durduruldu', 'warning');
+            } catch (e) {}
+        }
         
         const tasks = this.autoTasks.get(username);
         if (tasks) {
@@ -47,6 +84,44 @@ class BotSession {
         this.configs.delete(username);
         this.autoTasks.delete(username);
     }
+
+    getBotData(username) {
+        const bot = this.bots.get(username);
+        if (!bot) return null;
+
+        try {
+            // Envanter verilerini al
+            const inventory = [];
+            if (bot.inventory && bot.inventory.slots) {
+                bot.inventory.slots.forEach((item, index) => {
+                    if (item && item.name) {
+                        inventory.push({
+                            name: item.name,
+                            count: item.count || 1,
+                            slot: index,
+                            displayName: item.displayName || item.name
+                        });
+                    }
+                });
+            }
+
+            return {
+                hp: bot.health || 0,
+                food: bot.food || 20,
+                foodSaturation: bot.foodSaturation || 0,
+                inventory: inventory,
+                position: bot.entity ? {
+                    x: Math.round(bot.entity.position.x * 100) / 100,
+                    y: Math.round(bot.entity.position.y * 100) / 100,
+                    z: Math.round(bot.entity.position.z * 100) / 100
+                } : { x: 0, y: 0, z: 0 },
+                config: this.configs.get(username) || {}
+            };
+        } catch (error) {
+            console.error('Bot verisi alınırken hata:', error);
+            return null;
+        }
+    }
 }
 
 // Socket.IO bağlantıları
@@ -56,23 +131,39 @@ io.on('connection', (socket) => {
     const session = new BotSession(socket.id);
     sessions.set(socket.id, session);
 
+    // Aktif botları gönder
+    socket.emit('init', { 
+        message: 'AFK Client Pro\'ya hoş geldiniz!',
+        timestamp: new Date().toISOString()
+    });
+
     socket.on('start_bot', (data) => {
-        const { host, username, version } = data;
-        startBot(socket, host, username, version);
+        console.log('Bot başlatma isteği:', data);
+        startBot(socket, data.host, data.username, data.version);
     });
 
     socket.on('stop_bot', (username) => {
+        console.log('Bot durdurma isteği:', username);
         const session = sessions.get(socket.id);
         if (session) {
             session.removeBot(username);
             socket.emit('bot_stopped', { username });
+            
+            // Bot listesini güncelle
+            updateBotList(socket);
         }
     });
 
     socket.on('send_chat', (data) => {
         const session = sessions.get(socket.id);
         if (session && session.bots.has(data.username)) {
-            session.bots.get(data.username).chat(data.message);
+            const bot = session.bots.get(data.username);
+            try {
+                bot.chat(data.message);
+                session.addLog(data.username, `[KONUŞMA] ${data.message}`, 'chat');
+            } catch (e) {
+                session.addLog(data.username, `[HATA] Mesaj gönderilemedi: ${e.message}`, 'error');
+            }
         }
     });
 
@@ -80,8 +171,28 @@ io.on('connection', (socket) => {
         const session = sessions.get(socket.id);
         if (session && session.bots.has(data.username)) {
             const bot = session.bots.get(data.username);
-            const item = bot.inventory.slots[data.slot];
-            if (item) bot.tossStack(item);
+            try {
+                const item = bot.inventory.slots[data.slot];
+                if (item) {
+                    bot.tossStack(item);
+                    session.addLog(data.username, `[ENVANTER] ${item.displayName || item.name} atıldı`, 'info');
+                }
+            } catch (e) {
+                session.addLog(data.username, `[HATA] Eşya atılamadı: ${e.message}`, 'error');
+            }
+        }
+    });
+
+    socket.on('request_bot_data', (data) => {
+        const session = sessions.get(socket.id);
+        if (session && data.username) {
+            const botData = session.getBotData(data.username);
+            if (botData) {
+                socket.emit('bot_data', {
+                    username: data.username,
+                    data: botData
+                });
+            }
         }
     });
 
@@ -97,20 +208,27 @@ io.on('connection', (socket) => {
                 config.autoMine = data.config;
                 updateAutoMine(socket, data.username, data.config);
             }
+            
+            // Config güncellendiğinde verileri tekrar gönder
+            const botData = session.getBotData(data.username);
+            if (botData) {
+                socket.emit('bot_data', {
+                    username: data.username,
+                    data: botData
+                });
+            }
         }
     });
 
-    socket.on('shift_right_click', (data) => {
-        const session = sessions.get(socket.id);
-        if (session && session.bots.has(data.username)) {
-            const bot = session.bots.get(data.username);
-            performShiftRightClick(bot, data.position);
-        }
+    socket.on('get_bot_list', () => {
+        updateBotList(socket);
     });
 
     socket.on('disconnect', () => {
+        console.log('Kullanıcı ayrıldı:', socket.id);
         const session = sessions.get(socket.id);
         if (session) {
+            // Tüm botları durdur
             for (const [username] of session.bots) {
                 session.removeBot(username);
             }
@@ -120,141 +238,166 @@ io.on('connection', (socket) => {
 });
 
 function startBot(socket, host, username, version) {
-    const [ip, port] = host.split(':');
+    const [ip, portStr] = host.includes(':') ? host.split(':') : [host, '25565'];
+    const port = parseInt(portStr) || 25565;
+    
     const session = sessions.get(socket.id);
     
     if (session.bots.has(username)) {
-        socket.emit('log', { 
-            username, 
-            message: "[HATA] Bu isimle zaten bir bot aktif!" 
-        });
+        session.addLog(username, '[HATA] Bu isimle zaten bir bot aktif!', 'error');
         return;
     }
 
-    session.logs.set(username, []);
-    session.logs.get(username).push("[SİSTEM] Bot başlatılıyor...");
+    session.addLog(username, `[SİSTEM] ${ip}:${port} adresine bağlanılıyor...`, 'info');
 
-    const bot = mineflayer.createBot({
-        host: ip,
-        port: parseInt(port) || 25565,
-        username: username,
-        version: version || '1.16.5',
-        auth: 'offline'
-    });
+    try {
+        const bot = mineflayer.createBot({
+            host: ip,
+            port: port,
+            username: username,
+            version: version || '1.16.5',
+            auth: 'offline',
+            hideErrors: false
+        });
 
-    session.addBot(username, bot);
+        session.addBot(username, bot);
 
-    // Giriş başarılı
-    bot.on('login', () => {
-        addLog(socket, username, "[BAŞARI] Oyuna giriş yapıldı!", "success");
-    });
+        // Giriş başarılı
+        bot.on('login', () => {
+            session.addLog(username, '[BAŞARI] Oyuna giriş yapıldı!', 'success');
+            updateBotList(socket);
+            
+            // Hemen verileri gönder
+            setTimeout(() => {
+                const botData = session.getBotData(username);
+                if (botData) {
+                    socket.emit('bot_data', {
+                        username: username,
+                        data: botData
+                    });
+                }
+            }, 1000);
+        });
 
-    // Mesajları yakala
-    bot.on('message', (jsonMsg) => {
-        const message = jsonMsg.toString();
-        addLog(socket, username, message, "chat");
-    });
+        // Chat mesajları
+        bot.on('message', (jsonMsg) => {
+            try {
+                const message = jsonMsg.toString();
+                session.addLog(username, message, 'chat');
+            } catch (e) {
+                console.error('Mesaj parse hatası:', e);
+            }
+        });
 
-    // Action Bar
-    bot.on('actionBar', (text) => {
-        addLog(socket, username, `[ACTION] ${text.toString()}`, "action");
-    });
+        // Sunucu mesajları
+        bot.on('whisper', (username, message) => {
+            session.addLog(username, `[FISILTI] ${username}: ${message}`, 'chat');
+        });
 
-    // Title
-    bot.on('title', (text) => {
-        if (text) addLog(socket, username, `[TITLE] ${text.toString()}`, "title");
-    });
+        // Action Bar
+        bot.on('actionBar', (text) => {
+            if (text && text.toString().trim()) {
+                session.addLog(username, `[ACTION] ${text.toString()}`, 'action');
+            }
+        });
 
-    // Boss Bar
-    bot.on('bossBarUpdate', (bossBar) => {
-        addLog(socket, username, `[BOSS] ${bossBar.title}: ${bossBar.health}/${bossBar.maxHealth}`, "boss");
-    });
+        // Title
+        bot.on('title', (text) => {
+            if (text && text.toString().trim()) {
+                session.addLog(username, `[TITLE] ${text.toString()}`, 'title');
+            }
+        });
 
-    // Envanter güncellemesi
-    bot.on('windowUpdate', () => {
-        sendBotData(socket, username);
-    });
+        // Envanter güncellemesi
+        bot.on('windowUpdate', () => {
+            const botData = session.getBotData(username);
+            if (botData) {
+                socket.emit('bot_data', {
+                    username: username,
+                    data: botData
+                });
+            }
+        });
 
-    // Sağlık ve açlık güncellemesi
-    bot.on('health', () => {
-        sendBotData(socket, username);
-    });
+        // Sağlık güncellemesi
+        bot.on('health', () => {
+            const botData = session.getBotData(username);
+            if (botData) {
+                socket.emit('bot_data', {
+                    username: username,
+                    data: botData
+                });
+            }
+        });
 
-    // Can ve yemek değişimi
-    bot.on('food', () => {
-        sendBotData(socket, username);
-    });
+        // Açlık güncellemesi
+        bot.on('food', () => {
+            const botData = session.getBotData(username);
+            if (botData) {
+                socket.emit('bot_data', {
+                    username: username,
+                    data: botData
+                });
+            }
+        });
 
-    // Hata yönetimi
-    bot.on('error', (err) => {
-        addLog(socket, username, `[HATA] ${err.message}`, "error");
-        session.removeBot(username);
-    });
+        // Hata yönetimi
+        bot.on('error', (err) => {
+            console.error(`Bot ${username} hatası:`, err);
+            session.addLog(username, `[HATA] ${err.message}`, 'error');
+            session.removeBot(username);
+            updateBotList(socket);
+        });
 
-    bot.on('kicked', (reason) => {
-        addLog(socket, username, `[ATILDI] ${reason}`, "error");
-        session.removeBot(username);
-    });
+        bot.on('kicked', (reason) => {
+            console.log(`Bot ${username} atıldı:`, reason);
+            session.addLog(username, `[ATILDI] ${reason}`, 'error');
+            session.removeBot(username);
+            updateBotList(socket);
+        });
 
-    bot.on('end', () => {
-        addLog(socket, username, "[BAĞLANTI] Bağlantı kesildi", "warning");
-        session.removeBot(username);
-    });
+        bot.on('end', () => {
+            console.log(`Bot ${username} bağlantısı kesildi`);
+            session.addLog(username, "[BAĞLANTI] Bağlantı kesildi", 'warning');
+            session.removeBot(username);
+            updateBotList(socket);
+        });
 
-    // Periyodik veri gönderimi
-    const dataInterval = setInterval(() => {
-        if (!session.bots.has(username)) {
-            clearInterval(dataInterval);
-            return;
-        }
-        sendBotData(socket, username);
-    }, 500);
+        // Periyodik veri gönderimi
+        const dataInterval = setInterval(() => {
+            if (!session.bots.has(username)) {
+                clearInterval(dataInterval);
+                return;
+            }
+            
+            const botData = session.getBotData(username);
+            if (botData) {
+                socket.emit('bot_data', {
+                    username: username,
+                    data: botData
+                });
+            }
+        }, 1000);
 
-    bot.on('end', () => clearInterval(dataInterval));
+        bot.on('end', () => clearInterval(dataInterval));
+
+    } catch (error) {
+        console.error('Bot oluşturma hatası:', error);
+        session.addLog(username, `[HATA] Bot oluşturulamadı: ${error.message}`, 'error');
+    }
 }
 
-function addLog(socket, username, message, type = "info") {
+function updateBotList(socket) {
     const session = sessions.get(socket.id);
-    if (!session || !session.logs.has(username)) return;
+    if (!session) return;
 
-    const logs = session.logs.get(username);
-    logs.push({
-        message,
-        type,
-        timestamp: new Date().toLocaleTimeString('tr-TR')
-    });
-
-    if (logs.length > 200) logs.shift();
-
-    socket.emit('new_log', { username, log: logs[logs.length - 1] });
-}
-
-function sendBotData(socket, username) {
-    const session = sessions.get(socket.id);
-    if (!session || !session.bots.has(username)) return;
-
-    const bot = session.bots.get(username);
-    const config = session.configs.get(username);
-    
-    const inventory = bot.inventory.slots.map((item, index) => {
-        if (!item) return null;
-        return {
-            name: item.name,
-            count: item.count,
-            slot: index,
-            displayName: item.displayName
-        };
-    }).filter(item => item !== null);
-
-    socket.emit('bot_data', {
-        username,
-        data: {
-            hp: bot.health,
-            food: bot.food,
-            inventory,
-            position: bot.entity.position,
-            config: config || {}
-        }
+    const activeBots = Array.from(session.bots.keys());
+    socket.emit('bot_list', { 
+        bots: activeBots.map(username => ({
+            name: username,
+            online: true,
+            data: session.getBotData(username)
+        }))
     });
 }
 
@@ -265,16 +408,22 @@ function updateAutoMessage(socket, username, config) {
     const tasks = session.autoTasks.get(username);
     const bot = session.bots.get(username);
 
-    if (tasks.messageInterval) {
+    if (tasks && tasks.messageInterval) {
         clearInterval(tasks.messageInterval);
         tasks.messageInterval = null;
     }
 
     if (config.enabled && bot && config.message && config.interval > 0) {
+        if (!tasks) return;
+        
         tasks.messageInterval = setInterval(() => {
-            if (bot) {
-                bot.chat(config.message);
-                addLog(socket, username, `[OTOMESAJ] Gönderildi: ${config.message}`, "info");
+            if (bot && session.bots.has(username)) {
+                try {
+                    bot.chat(config.message);
+                    session.addLog(username, `[OTOMESAJ] Gönderildi: ${config.message}`, 'info');
+                } catch (e) {
+                    session.addLog(username, `[OTOMESAJ] Hata: ${e.message}`, 'error');
+                }
             }
         }, config.interval * 1000);
     }
@@ -287,45 +436,38 @@ function updateAutoMine(socket, username, config) {
     const tasks = session.autoTasks.get(username);
     const bot = session.bots.get(username);
 
-    if (tasks.mineInterval) {
+    if (tasks && tasks.mineInterval) {
         clearInterval(tasks.mineInterval);
         tasks.mineInterval = null;
     }
 
     if (config.enabled && bot) {
+        if (!tasks) return;
+        
         tasks.mineInterval = setInterval(async () => {
-            if (!bot) return;
+            if (!bot || !session.bots.has(username)) return;
 
             try {
                 const block = bot.findBlock({
-                    matching: (block) => block.name === config.targetBlock,
-                    maxDistance: 16
+                    matching: (block) => block && block.name === config.targetBlock,
+                    maxDistance: 16,
+                    count: 1
                 });
 
                 if (block) {
                     const tool = bot.pathfinder.bestHarvestTool(block);
-                    if (tool) await bot.equip(tool, 'hand');
+                    if (tool) {
+                        await bot.equip(tool, 'hand');
+                    }
                     
                     await bot.dig(block);
-                    addLog(socket, username, `[OTO-KAZMA] ${config.targetBlock} kazıldı`, "success");
-                } else {
-                    addLog(socket, username, `[OTO-KAZMA] Hedef blok bulunamadı: ${config.targetBlock}`, "warning");
+                    session.addLog(username, `[OTO-KAZMA] ${config.targetBlock} kazıldı`, 'success');
                 }
             } catch (err) {
-                addLog(socket, username, `[OTO-KAZMA] Hata: ${err.message}`, "error");
+                session.addLog(username, `[OTO-KAZMA] Hata: ${err.message}`, 'error');
             }
         }, 2000);
     }
-}
-
-function performShiftRightClick(bot, position) {
-    bot.setControlState('sneak', true);
-    setTimeout(() => {
-        bot.activateBlock(bot.blockAt(position));
-        setTimeout(() => {
-            bot.setControlState('sneak', false);
-        }, 500);
-    }, 200);
 }
 
 // Hata yakalama
@@ -339,10 +481,17 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Statik dosyalar
 app.use(express.static(__dirname));
+
+// Socket.io client için endpoint
+app.get('/socket.io/socket.io.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'node_modules', 'socket.io', 'client-dist', 'socket.io.js'));
+});
+
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 server.listen(PORT, () => {
-    console.log(`Sunucu ${PORT} portunda çalışıyor`);
+    console.log(`✅ Sunucu ${PORT} portunda çalışıyor`);
+    console.log(`✅ Socket.IO aktif`);
 });
