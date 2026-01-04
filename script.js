@@ -2,8 +2,7 @@ class AFKClient {
     constructor() {
         this.selectedBot = null;
         this.socket = null;
-        this.isConnected = false;
-        this.activeBots = new Map(); // Bot listesini tut
+        this.activeBots = new Map();
         this.init();
     }
 
@@ -11,43 +10,44 @@ class AFKClient {
         this.setupSocket();
         this.setupEventListeners();
         this.setupTabs();
-        this.setupSettings();
-        this.checkConnection();
-        this.updateConnectionStatus();
+        this.setupNotifications();
     }
 
     setupSocket() {
-        // Socket.io'yu başlat
+        // Socket.io bağlantısı
         this.socket = io();
         
+        // Bağlantı başarılı
         this.socket.on('connect', () => {
-            console.log('Socket bağlantısı kuruldu');
-            this.isConnected = true;
-            this.addLog('✅ Sunucuya bağlanıldı', 'success');
-            this.updateConnectionStatus();
+            console.log('✅ Socket bağlantısı kuruldu');
+            this.updateStatus('✅ Çevrimiçi', '#2ecc71');
+            this.showNotification('Sunucuya bağlanıldı', 'success');
             
-            // Aktif bot listesini iste
+            // Bot listesini iste
             this.socket.emit('get_bot_list');
         });
 
+        // Bağlantı kesildi
         this.socket.on('disconnect', () => {
-            console.log('Socket bağlantısı kesildi');
-            this.isConnected = false;
-            this.addLog('❌ Sunucu bağlantısı kesildi', 'error');
-            this.updateConnectionStatus();
+            console.log('❌ Socket bağlantısı kesildi');
+            this.updateStatus('❌ Çevrimdışı', '#ff4757');
+            this.showNotification('Sunucu bağlantısı kesildi', 'error');
         });
 
+        // Bağlantı hatası
         this.socket.on('connect_error', (error) => {
-            console.error('Socket bağlantı hatası:', error);
-            this.addLog(`❌ Bağlantı hatası: ${error.message}`, 'error');
-            this.updateConnectionStatus();
+            console.error('Socket hatası:', error);
+            this.updateStatus('⚠️ Bağlantı Hatası', '#ffa502');
+            this.showNotification(`Bağlantı hatası: ${error.message}`, 'error');
         });
 
-        this.socket.on('init', (data) => {
-            console.log('Sunucudan ilk mesaj:', data);
-            this.addLog(`🌍 ${data.message}`, 'info');
+        // İlk bağlantı mesajı
+        this.socket.on('connected', (data) => {
+            console.log('Sunucu mesajı:', data);
+            this.addLog(data.message, 'info');
         });
 
+        // Yeni log mesajı
         this.socket.on('new_log', (data) => {
             console.log('Yeni log:', data);
             if (!this.selectedBot || data.username === this.selectedBot) {
@@ -55,35 +55,27 @@ class AFKClient {
             }
         });
 
+        // Bot verisi
         this.socket.on('bot_data', (data) => {
-            console.log('Bot verisi alındı:', data.username);
+            console.log('Bot verisi:', data.username, data.data);
+            
             if (data.username === this.selectedBot) {
+                // İstatistikleri güncelle
                 this.updateBotStats(data.data);
-                this.updateInventory(data.data.inventory);
-                this.updateConfigDisplay(data.data.config);
                 
-                // Bot listesindeki botu da güncelle
+                // Envanteri güncelle
+                this.updateInventory(data.data.inventory);
+                
+                // Bot listesindeki botu güncelle
                 this.updateBotInList(data.username, data.data);
             }
         });
 
-        this.socket.on('bot_stopped', (data) => {
-            console.log('Bot durduruldu:', data.username);
-            if (data.username === this.selectedBot) {
-                this.selectedBot = null;
-                this.clearBotDisplay();
-                this.addLog(`🛑 ${data.username} botu durduruldu`, 'warning');
-            }
-            
-            // Bot listesinden kaldır
-            this.activeBots.delete(data.username);
-            this.updateBotListDisplay();
-        });
-
+        // Bot listesi
         this.socket.on('bot_list', (data) => {
-            console.log('Bot listesi alındı:', data.bots);
-            // Bot listesini güncelle
+            console.log('Bot listesi:', data.bots);
             this.activeBots.clear();
+            
             data.bots.forEach(bot => {
                 this.activeBots.set(bot.name, {
                     name: bot.name,
@@ -91,87 +83,145 @@ class AFKClient {
                     data: bot.data
                 });
             });
+            
             this.updateBotListDisplay();
+        });
+
+        // Bot durduruldu
+        this.socket.on('bot_stopped', (data) => {
+            console.log('Bot durduruldu:', data.username);
+            
+            if (this.selectedBot === data.username) {
+                this.selectedBot = null;
+                this.clearBotDisplay();
+                this.addLog(`🛑 ${data.username} botu durduruldu`, 'warning');
+                document.getElementById('selected-bot-name').textContent = 'Bot Seçilmedi';
+                document.getElementById('bot-name-display').textContent = 'Bot Seçilmedi';
+            }
+            
+            // Listeden kaldır
+            this.activeBots.delete(data.username);
+            this.updateBotListDisplay();
+            
+            this.showNotification(`${data.username} botu durduruldu`, 'info');
+        });
+
+        // Hata mesajı
+        this.socket.on('error', (data) => {
+            this.showNotification(data.message, 'error');
         });
     }
 
     setupEventListeners() {
-        // Bağlantı formu
+        // Bağlantı butonu
         document.getElementById('connect-btn').addEventListener('click', (e) => {
             e.preventDefault();
             this.connectBot();
         });
-        
+
         // Mesaj gönderme
         document.getElementById('send-form').addEventListener('submit', (e) => {
             e.preventDefault();
             this.sendChat();
         });
 
-        // Eşya atma delegasyonu
-        document.getElementById('inv-box').addEventListener('click', (e) => {
-            const slot = e.target.closest('.slot');
-            if (slot && this.selectedBot) {
-                const slotIndex = parseInt(slot.dataset.slot);
-                if (!isNaN(slotIndex)) {
-                    this.dropItem(slotIndex);
-                }
+        // Log temizleme
+        document.getElementById('clear-logs').addEventListener('click', () => {
+            document.getElementById('logbox').innerHTML = `
+                <div class="welcome-message">
+                    <i class="fas fa-info-circle"></i> Konsol temizlendi<br>
+                    <small>Yeni mesajlar burada görünecek</small>
+                </div>
+            `;
+            this.addLog('Konsol temizlendi', 'info');
+        });
+
+        // Bot listesini yenile
+        document.getElementById('refresh-bots').addEventListener('click', () => {
+            this.socket.emit('get_bot_list');
+            this.showNotification('Bot listesi yenilendi', 'info');
+        });
+
+        // Envanteri yenile
+        document.getElementById('update-inv').addEventListener('click', () => {
+            if (this.selectedBot) {
+                this.socket.emit('request_bot_data', { username: this.selectedBot });
+                this.showNotification('Envanter yenilendi', 'info');
             }
         });
 
         // Klavye kısayolları
         document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'Enter' && document.activeElement.id !== 'chat-input') {
-                document.getElementById('chat-input').focus();
+            // Ctrl+Enter ile mesaj gönder
+            if (e.ctrlKey && e.key === 'Enter' && document.activeElement.id === 'chat-input') {
+                this.sendChat();
             }
             
-            // ESC ile ayarları kapat
-            if (e.key === 'Escape' && document.getElementById('settings-overlay').style.display === 'flex') {
-                this.closeSettings();
+            // ESC ile odak kaldır
+            if (e.key === 'Escape') {
+                document.activeElement.blur();
             }
         });
 
-        // Ayarlar butonu
-        document.getElementById('settings-btn').addEventListener('click', () => {
-            this.toggleSettings();
-        });
-
-        // Ayarlar kaydetme
-        document.getElementById('save-settings').addEventListener('click', () => {
-            this.saveSettings();
-        });
-
-        // Shift + Sağ Tık butonu
-        document.getElementById('shift-click-btn').addEventListener('click', () => {
-            this.performShiftClick();
+        // Sekme değiştirme
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tabId = e.target.id.replace('btn-', 'tab-');
+                this.switchTab(tabId);
+            });
         });
     }
 
-    updateConnectionStatus() {
-        const statusElement = document.getElementById('connection-status');
-        if (!statusElement) return;
-        
-        if (this.isConnected) {
-            statusElement.textContent = '✅ Çevrimiçi';
-            statusElement.style.color = '#2ecc71';
-        } else {
-            statusElement.textContent = '❌ Çevrimdışı';
-            statusElement.style.color = '#ff4757';
+    setupTabs() {
+        // İlk sekme aktif
+        this.switchTab('tab-bots');
+    }
+
+    setupNotifications() {
+        // Bildirim konteyneri oluştur
+        if (!document.getElementById('notification-container')) {
+            const container = document.createElement('div');
+            container.id = 'notification-container';
+            document.body.appendChild(container);
         }
     }
 
-    async connectBot() {
+    switchTab(tabId) {
+        // Tüm sekmeleri gizle
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active-tab');
+        });
+        
+        // Tüm butonları pasif yap
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Hedef sekme ve butonu aktif yap
+        document.getElementById(tabId).classList.add('active-tab');
+        document.getElementById(`btn-${tabId.split('-')[1]}`).classList.add('active');
+    }
+
+    updateStatus(text, color) {
+        const statusEl = document.getElementById('connection-status-text');
+        if (statusEl) {
+            statusEl.textContent = text;
+            statusEl.style.color = color;
+        }
+    }
+
+    connectBot() {
         const host = document.getElementById('host-input').value.trim();
         const username = document.getElementById('username-input').value.trim();
         const version = document.getElementById('version-input').value.trim();
 
         if (!host) {
-            this.showNotification('Lütfen sunucu IP adresi girin!', 'error');
+            this.showNotification('Sunucu IP adresi gerekli!', 'error');
             return;
         }
 
         if (!username) {
-            this.showNotification('Lütfen bot ismi girin!', 'error');
+            this.showNotification('Bot ismi gerekli!', 'error');
             return;
         }
 
@@ -180,124 +230,74 @@ class AFKClient {
             return;
         }
 
-        try {
-            this.showNotification('Bot başlatılıyor...', 'info');
-            
-            this.socket.emit('start_bot', { 
-                host, 
-                username, 
-                version: version || '1.16.5' 
-            });
-            
-            // Formu temizle
-            document.getElementById('host-input').value = '';
-            document.getElementById('username-input').value = '';
-            
-            // 2 saniye sonra botu seç
-            setTimeout(() => {
-                this.selectBot(username);
-                this.switchTab('tab-term');
-            }, 2000);
-            
-        } catch (error) {
-            this.showNotification(`Hata: ${error.message}`, 'error');
+        if (this.activeBots.has(username)) {
+            this.showNotification('Bu isimle zaten bir bot var!', 'error');
+            return;
         }
+
+        this.showNotification('Bot başlatılıyor...', 'info');
+        
+        this.socket.emit('start_bot', { 
+            host, 
+            username, 
+            version: version || '1.16.5' 
+        });
+
+        // Formu temizle
+        document.getElementById('host-input').value = '';
+        document.getElementById('username-input').value = '';
+
+        // 3 saniye sonra botu seç
+        setTimeout(() => {
+            this.selectBot(username);
+            this.switchTab('tab-term');
+        }, 3000);
     }
 
     selectBot(botName) {
         if (!this.activeBots.has(botName)) {
-            this.showNotification('Bu bot bulunamadı!', 'error');
+            this.showNotification('Bot bulunamadı!', 'error');
             return;
         }
 
-        // Önceki seçili botu temizle
+        // Önceki seçimi temizle
         document.querySelectorAll('.bot-card').forEach(card => {
             card.classList.remove('selected');
         });
 
         // Yeni botu seç
         this.selectedBot = botName;
+        
+        // Bot kartını seçili yap
         const selectedCard = document.querySelector(`.bot-card[data-bot-name="${botName}"]`);
         if (selectedCard) {
             selectedCard.classList.add('selected');
-            this.addLog(`🤖 ${botName} seçildi`, 'success');
-            
-            // Seçili bot adını ayarlar panelinde göster
-            document.getElementById('selected-bot-name').textContent = botName;
-            
-            // Bot verilerini iste
-            this.socket.emit('request_bot_data', { username: botName });
-            
-            // Konsolu temizle ve sadece bu bota ait logları göster
-            document.getElementById('logbox').innerHTML = '';
-            this.addLog(`📡 ${botName} botuna ait loglar yükleniyor...`, 'info');
         }
+
+        // Arayüzü güncelle
+        document.getElementById('selected-bot-name').textContent = botName;
+        document.getElementById('bot-name-display').textContent = botName;
+        
+        this.addLog(`🤖 "${botName}" botu seçildi`, 'success');
+        
+        // Konsolu temizle (opsiyonel)
+        // document.getElementById('logbox').innerHTML = '';
+        
+        // Bot verilerini iste
+        this.socket.emit('request_bot_data', { username: botName });
+        
+        this.showNotification(`${botName} botu seçildi`, 'success');
     }
 
     stopBot(botName) {
-        if (!botName) return;
-        
-        if (confirm(`${botName} botunu durdurmak istediğinize emin misiniz?`)) {
-            this.socket.emit('stop_bot', botName);
-            this.showNotification(`${botName} botu durduruluyor...`, 'info');
-        }
-    }
-
-    updateBotListDisplay() {
-        const botListElement = document.getElementById('bot-list');
-        if (!botListElement) return;
-        
-        if (this.activeBots.size === 0) {
-            botListElement.innerHTML = `
-                <div style="text-align: center; padding: 30px; color: var(--text-secondary);">
-                    <div style="font-size: 48px; margin-bottom: 10px;">🤖</div>
-                    <div>Aktif bot bulunmuyor</div>
-                    <div style="font-size: 12px; margin-top: 5px;">Yukarıdan yeni bot bağlatabilirsiniz</div>
-                </div>
-            `;
+        if (!botName || !this.activeBots.has(botName)) {
+            this.showNotification('Bot bulunamadı!', 'error');
             return;
         }
-        
-        let html = '';
-        this.activeBots.forEach((bot, botName) => {
-            const isSelected = this.selectedBot === botName;
-            const hp = bot.data?.hp || 0;
-            const food = bot.data?.food || 0;
-            
-            html += `
-                <div class="bot-card ${isSelected ? 'selected' : ''}" data-bot-name="${botName}">
-                    <div class="bot-info">
-                        <div class="bot-name">${botName}</div>
-                        <div class="bot-status" style="color: ${bot.online ? '#2ecc71' : '#ff4757'}">
-                            ${bot.online ? '🟢 Çevrimiçi' : '🔴 Çevrimdışı'}
-                            ${hp > 0 ? ` | ❤️ ${Math.round(hp)}` : ''}
-                            ${food > 0 ? ` | 🍖 ${Math.round(food)}` : ''}
-                        </div>
-                    </div>
-                    <div class="bot-actions">
-                        <button class="btn btn-secondary btn-small" 
-                                onclick="app.selectBot('${botName}')"
-                                style="padding: 6px 12px;">
-                            ${isSelected ? '✓ SEÇİLİ' : 'SEÇ'}
-                        </button>
-                        <button class="btn btn-danger btn-small" 
-                                onclick="app.stopBot('${botName}')"
-                                style="padding: 6px 12px;">
-                            🛑 KES
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-        
-        botListElement.innerHTML = html;
-    }
 
-    updateBotInList(botName, data) {
-        const bot = this.activeBots.get(botName);
-        if (bot) {
-            bot.data = data;
-            this.updateBotListDisplay();
+        if (confirm(`"${botName}" botunu durdurmak istediğinize emin misiniz?`)) {
+            this.socket.emit('stop_bot', botName);
+            this.showNotification(`${botName} durduruluyor...`, 'info');
         }
     }
 
@@ -306,12 +306,12 @@ class AFKClient {
         const message = input.value.trim();
         
         if (!message) {
-            this.showNotification('Lütfen bir mesaj yazın!', 'warning');
+            this.showNotification('Mesaj yazın!', 'warning');
             return;
         }
 
         if (!this.selectedBot) {
-            this.showNotification('Lütfen önce bir bot seçin!', 'warning');
+            this.showNotification('Önce bir bot seçin!', 'warning');
             return;
         }
 
@@ -325,16 +325,140 @@ class AFKClient {
             message: message
         });
 
-        // Kendi mesajımızı da log'a ekle
+        // Kendi mesajımızı log'a ekle
         this.addLog(`[SİZ] ${message}`, 'chat');
         
         input.value = '';
         input.focus();
     }
 
+    updateBotListDisplay() {
+        const container = document.getElementById('bot-list');
+        
+        if (this.activeBots.size === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-robot fa-3x"></i>
+                    <p>Aktif bot bulunmuyor</p>
+                    <small>Yukarıdan yeni bot bağlatabilirsiniz</small>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        this.activeBots.forEach((bot, botName) => {
+            const isSelected = this.selectedBot === botName;
+            const hp = bot.data?.hp || 0;
+            const food = bot.data?.food || 0;
+            
+            html += `
+                <div class="bot-card ${isSelected ? 'selected' : ''}" data-bot-name="${botName}">
+                    <div class="bot-info">
+                        <div class="bot-name">
+                            <i class="fas fa-robot"></i> ${botName}
+                            ${isSelected ? '<span style="color: #2ecc71; font-size: 11px;">(SEÇİLİ)</span>' : ''}
+                        </div>
+                        <div class="bot-status">
+                            <span class="status-indicator"></span>
+                            🟢 Çevrimiçi
+                        </div>
+                        <div class="bot-stats-small">
+                            ${hp > 0 ? `<span>❤️ ${Math.round(hp)}</span>` : ''}
+                            ${food > 0 ? `<span>🍖 ${Math.round(food)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="bot-actions">
+                        <button class="btn btn-small" onclick="app.selectBot('${botName}')">
+                            <i class="fas fa-check"></i> ${isSelected ? 'SEÇİLİ' : 'SEÇ'}
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="app.stopBot('${botName}')">
+                            <i class="fas fa-stop"></i> DURDUR
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    updateBotInList(botName, data) {
+        const bot = this.activeBots.get(botName);
+        if (bot) {
+            bot.data = data;
+            this.updateBotListDisplay();
+        }
+    }
+
+    updateBotStats(data) {
+        if (!data) return;
+        
+        // Can değeri
+        const hpElement = document.getElementById('hp-value');
+        if (hpElement) {
+            hpElement.textContent = Math.round(data.hp);
+            hpElement.style.color = data.hp > 10 ? '#2ecc71' : data.hp > 5 ? '#ffa502' : '#ff4757';
+        }
+        
+        // Açlık değeri
+        const foodElement = document.getElementById('food-value');
+        if (foodElement) {
+            foodElement.textContent = Math.round(data.food);
+            foodElement.style.color = data.food > 10 ? '#2ecc71' : data.food > 5 ? '#ffa502' : '#ff4757';
+        }
+        
+        // Konum
+        const posElement = document.getElementById('pos-value');
+        if (posElement && data.position) {
+            posElement.textContent = `${data.position.x}, ${data.position.y}, ${data.position.z}`;
+        }
+    }
+
+    updateInventory(inventory) {
+        const container = document.getElementById('inv-box');
+        if (!container) return;
+        
+        if (!inventory || inventory.length === 0) {
+            container.innerHTML = `
+                <div class="empty-inventory">
+                    <i class="fas fa-box-open fa-2x"></i>
+                    <p>Envanter boş veya yüklenemedi</p>
+                </div>
+            `;
+            return;
+        }
+
+        // 45 slot oluştur (9x5 envanter)
+        let html = '';
+        for (let i = 0; i < 45; i++) {
+            const item = inventory.find(item => item.slot === i);
+            
+            html += `
+                <div class="slot" data-slot="${i}" 
+                     onclick="app.dropItem(${i})"
+                     title="${item ? (item.displayName || item.name) + (item.count > 1 ? ` (${item.count})` : '') : 'Boş'}">
+            `;
+            
+            if (item) {
+                const itemName = item.name.replace('minecraft:', '');
+                html += `
+                    <img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${itemName}.png"
+                         alt="${item.name}"
+                         onerror="this.src='https://minecraft.wiki/images/Barrier_JE2_BE2.png'; this.onerror=null;">
+                    ${item.count > 1 ? `<span class="count">${item.count}</span>` : ''}
+                `;
+            }
+            
+            html += '</div>';
+        }
+        
+        container.innerHTML = html;
+    }
+
     dropItem(slotIndex) {
         if (!this.selectedBot) {
-            this.showNotification('Lütfen önce bir bot seçin!', 'warning');
+            this.showNotification('Önce bir bot seçin!', 'warning');
             return;
         }
 
@@ -348,27 +472,124 @@ class AFKClient {
         }
     }
 
-    performShiftClick() {
-        if (!this.selectedBot) {
-            this.showNotification('Lütfen önce bir bot seçin!', 'warning');
-            return;
+    addLog(message, type = 'info', timestamp = null) {
+        const logbox = document.getElementById('logbox');
+        const time = timestamp || new Date().toLocaleTimeString('tr-TR');
+        
+        // Welcome mesajını kaldır
+        const welcomeMsg = logbox.querySelector('.welcome-message');
+        if (welcomeMsg) {
+            welcomeMsg.remove();
         }
-
-        const x = document.getElementById('x-coord').value;
-        const y = document.getElementById('y-coord').value;
-        const z = document.getElementById('z-coord').value;
-
-        if (!x || !y || !z) {
-            this.showNotification('Lütfen X, Y, Z koordinatlarını girin!', 'warning');
-            return;
+        
+        const logElement = document.createElement('div');
+        logElement.className = `log-message ${type}`;
+        logElement.innerHTML = `
+            <span class="log-time">[${time}]</span>
+            <span class="log-content">${this.escapeHtml(message)}</span>
+        `;
+        
+        logbox.appendChild(logElement);
+        
+        // Animasyon
+        setTimeout(() => {
+            logElement.style.opacity = '1';
+        }, 10);
+        
+        // Otomatik scroll
+        logbox.scrollTop = logbox.scrollHeight;
+        
+        // Çok fazla log varsa temizle (300'den fazla)
+        const logs = logbox.querySelectorAll('.log-message');
+        if (logs.length > 300) {
+            for (let i = 0; i < 100; i++) {
+                if (logs[i]) logs[i].remove();
+            }
         }
-
-        this.showNotification(`Shift + Sağ Tık (${x}, ${y}, ${z}) yapılıyor...`, 'info');
-        // Bu fonksiyonu server.js'de implement edebilirsiniz
     }
 
-    // ... (diğer metodlar aynı kalacak, sadece yukarıdaki değişiklikleri yapın)
+    clearBotDisplay() {
+        document.getElementById('hp-value').textContent = '-';
+        document.getElementById('food-value').textContent = '-';
+        document.getElementById('pos-value').textContent = '-';
+        
+        document.getElementById('inv-box').innerHTML = `
+            <div class="empty-inventory">
+                <i class="fas fa-box-open fa-2x"></i>
+                <p>Bot seçilmedi</p>
+            </div>
+        `;
+    }
+
+    showNotification(message, type = 'info', duration = 3000) {
+        const container = document.getElementById('notification-container');
+        if (!container) return;
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        
+        // İkon seç
+        let icon = 'fas fa-info-circle';
+        switch (type) {
+            case 'success': icon = 'fas fa-check-circle'; break;
+            case 'error': icon = 'fas fa-exclamation-circle'; break;
+            case 'warning': icon = 'fas fa-exclamation-triangle'; break;
+            case 'info': icon = 'fas fa-info-circle'; break;
+        }
+        
+        notification.innerHTML = `
+            <i class="${icon}"></i>
+            <span>${this.escapeHtml(message)}</span>
+        `;
+        
+        container.appendChild(notification);
+        
+        // Otomatik kaldır
+        setTimeout(() => {
+            notification.classList.add('hide');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }, duration);
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 }
 
-// Uygulamayı global erişime aç
-window.app = new AFKClient();
+// Global instance oluştur
+const app = new AFKClient();
+window.app = app;
+
+// Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('AFK Client Pro yüklendi');
+    
+    // Ek CSS animasyonları
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .bot-card {
+            animation: fadeInUp 0.4s ease;
+        }
+        
+        .log-message {
+            animation: slideInUp 0.3s ease;
+        }
+    `;
+    document.head.appendChild(style);
+});
