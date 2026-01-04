@@ -7,64 +7,39 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
-// ✅ RENDER.COM İÇİN GEREKLİ SOCKET.IO AYARI
 const io = socketIo(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+    cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
-// ✅ RENDER'IN PORT'UNU KULLAN
 const PORT = process.env.PORT || 10000;
-
-// Bot oturumları
 const sessions = new Map();
 
 class BotSession {
     constructor(socketId) {
         this.socketId = socketId;
-        this.bots = new Map();        // Aktif botlar
-        this.logs = new Map();        // Bot logları
-        this.dataTimers = new Map();  // Veri güncelleme timer'ları
+        this.bots = new Map();
+        this.logs = new Map();
+        this.dataTimers = new Map();
+        this.autoMessageTimers = new Map();
+        this.autoMineTimers = new Map();
+        this.movementStates = new Map();
     }
 
-    // Log ekle ve socket'e gönder
     addLog(botName, message, type = 'info') {
-        if (!this.logs.has(botName)) {
-            this.logs.set(botName, []);
-        }
-        
-        const logEntry = {
-            message: message,
-            type: type,
-            timestamp: new Date().toLocaleTimeString('tr-TR')
-        };
-        
+        if (!this.logs.has(botName)) this.logs.set(botName, []);
+        const logEntry = { message, type, timestamp: new Date().toLocaleTimeString('tr-TR') };
         this.logs.get(botName).push(logEntry);
+        if (this.logs.get(botName).length > 100) this.logs.get(botName).shift();
         
-        // 100 log'dan fazlasını saklama
-        if (this.logs.get(botName).length > 100) {
-            this.logs.get(botName).shift();
-        }
-        
-        // Socket'e gönder
         const socket = io.sockets.sockets.get(this.socketId);
-        if (socket) {
-            socket.emit('new_log', { 
-                username: botName, 
-                log: logEntry 
-            });
-        }
+        if (socket) socket.emit('new_log', { username: botName, log: logEntry });
     }
 
-    // Bot verilerini al
     getBotData(botName) {
         const bot = this.bots.get(botName);
         if (!bot) return null;
 
         try {
-            // Envanter verisi
             const inventory = [];
             if (bot.inventory && bot.inventory.slots) {
                 bot.inventory.slots.forEach((item, slotIndex) => {
@@ -97,271 +72,414 @@ class BotSession {
         }
     }
 
-    // Botu durdur
     stopBot(botName) {
         const bot = this.bots.get(botName);
-        if (bot) {
-            try {
-                bot.quit();
-                bot.end();
-            } catch (e) {}
+        if (bot) { 
+            try { 
+                bot.quit(); 
+                bot.end(); 
+            } catch (e) {} 
         }
         
-        // Timer'ı temizle
-        const timer = this.dataTimers.get(botName);
-        if (timer) {
-            clearInterval(timer);
-            this.dataTimers.delete(botName);
-        }
+        // Tüm timer'ları temizle
+        const timers = ['dataTimers', 'autoMessageTimers', 'autoMineTimers'];
+        timers.forEach(timerType => {
+            const timer = this[timerType].get(botName);
+            if (timer) {
+                clearInterval(timer);
+                this[timerType].delete(botName);
+            }
+        });
         
         this.bots.delete(botName);
         this.logs.delete(botName);
+        this.movementStates.delete(botName);
+    }
+
+    // OTO MESAJ FONKSİYONU
+    setupAutoMessage(botName, enabled, message, interval) {
+        const timer = this.autoMessageTimers.get(botName);
+        if (timer) {
+            clearInterval(timer);
+            this.autoMessageTimers.delete(botName);
+        }
+
+        if (enabled && message && interval > 0) {
+            const bot = this.bots.get(botName);
+            if (bot) {
+                const newTimer = setInterval(() => {
+                    if (this.bots.has(botName)) {
+                        bot.chat(message);
+                        this.addLog(botName, `[OTOMESAJ] ${message}`, 'info');
+                    }
+                }, interval * 1000);
+                this.autoMessageTimers.set(botName, newTimer);
+                this.addLog(botName, `Otomatik mesaj aktif: ${interval}s aralıkla`, 'success');
+            }
+        }
+    }
+
+    // OTO KAZMA FONKSİYONU (ZEKİ)
+    setupAutoMine(botName, enabled, targetBlock) {
+        const timer = this.autoMineTimers.get(botName);
+        if (timer) {
+            clearInterval(timer);
+            this.autoMineTimers.delete(botName);
+        }
+
+        if (enabled && targetBlock) {
+            const bot = this.bots.get(botName);
+            if (bot) {
+                let isMining = false;
+                
+                const mineLogic = async () => {
+                    if (!this.bots.has(botName) || isMining) return;
+                    
+                    try {
+                        const block = bot.findBlock({
+                            matching: (block) => block && block.name.includes(targetBlock),
+                            maxDistance: 5,
+                            count: 1
+                        });
+
+                        if (block) {
+                            isMining = true;
+                            
+                            // En iyi aleti bul
+                            const tool = bot.pathfinder.bestHarvestTool(block);
+                            if (tool) {
+                                await bot.equip(tool, 'hand');
+                            }
+                            
+                            // Blok kırılana kadar kaz
+                            await bot.dig(block, true);
+                            this.addLog(botName, `[OTOKAZMA] ${targetBlock} kazıldı`, 'success');
+                            
+                            // 1 saniye bekle
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        }
+                    } catch (err) {
+                        if (err.message !== 'Digging aborted') {
+                            this.addLog(botName, `[OTOKAZMA] Hata: ${err.message}`, 'error');
+                        }
+                    } finally {
+                        isMining = false;
+                    }
+                };
+
+                const newTimer = setInterval(mineLogic, 2000);
+                this.autoMineTimers.set(botName, newTimer);
+                this.addLog(botName, `Otomatik kazma aktif: ${targetBlock}`, 'success');
+            }
+        }
+    }
+
+    // HAREKET KONTROLÜ
+    setMovement(botName, direction, state) {
+        const bot = this.bots.get(botName);
+        if (!bot) return;
+
+        const controls = {
+            'forward': 'forward',
+            'back': 'back',
+            'left': 'left',
+            'right': 'right',
+            'jump': 'jump',
+            'sneak': 'sneak',
+            'sprint': 'sprint'
+        };
+
+        if (controls[direction]) {
+            bot.setControlState(controls[direction], state);
+            
+            // Durumu kaydet
+            if (!this.movementStates.has(botName)) {
+                this.movementStates.set(botName, {});
+            }
+            const states = this.movementStates.get(botName);
+            states[direction] = state;
+            
+            if (state) {
+                this.addLog(botName, `[HAREKET] ${direction} aktif`, 'info');
+            }
+        }
+    }
+
+    // EŞYA İŞLEMLERİ
+    async handleItemAction(botName, slot, action) {
+        const bot = this.bots.get(botName);
+        if (!bot || !bot.inventory || !bot.inventory.slots[slot]) return false;
+
+        const item = bot.inventory.slots[slot];
+        if (!item) return false;
+
+        try {
+            switch(action) {
+                case 'drop_all':
+                    // Tümünü at
+                    for (let i = 0; i < item.count; i++) {
+                        await bot.tossStack(item);
+                    }
+                    this.addLog(botName, `[ENVANTER] ${item.displayName} tümü atıldı`, 'info');
+                    break;
+                    
+                case 'eat':
+                    // Yemekse ye
+                    if (item.name.includes('potion')) {
+                        await bot.equip(item, 'hand');
+                        bot.activateItem();
+                        this.addLog(botName, `[ENVANTER] ${item.displayName} içildi`, 'info');
+                    } else if (item.food) {
+                        await bot.equip(item, 'hand');
+                        bot.consume();
+                        this.addLog(botName, `[ENVANTER] ${item.displayName} yenildi`, 'info');
+                    } else {
+                        this.addLog(botName, `[ENVANTER] Bu eşya yenilemez`, 'warning');
+                        return false;
+                    }
+                    break;
+                    
+                case 'right_click':
+                    // Sağ tık
+                    await bot.equip(item, 'hand');
+                    bot.activateItem();
+                    this.addLog(botName, `[ENVANTER] ${item.displayName} sağ tıklandı`, 'info');
+                    break;
+                    
+                case 'left_click':
+                    // Sol tık
+                    await bot.equip(item, 'hand');
+                    this.addLog(botName, `[ENVANTER] ${item.displayName} sol tıklandı`, 'info');
+                    break;
+            }
+            return true;
+        } catch (err) {
+            this.addLog(botName, `[ENVANTER] İşlem hatası: ${err.message}`, 'error');
+            return false;
+        }
     }
 }
 
 // ✅ SOCKET.IO OLAYLARI
 io.on('connection', (socket) => {
     console.log('Yeni bağlantı:', socket.id);
-    
     const session = new BotSession(socket.id);
     sessions.set(socket.id, session);
 
-    // İlk bağlantı mesajı
     socket.emit('connected', { 
-        message: 'AFK Client Pro bağlantısı kuruldu',
-        timestamp: new Date().toISOString()
+        message: 'AFK Client Pro bağlantısı kuruldu', 
+        timestamp: new Date().toISOString() 
     });
 
-    // Bot başlatma
-    socket.on('start_bot', (data) => {
-        console.log('Bot başlat:', data);
-        startBot(socket, session, data);
-    });
-
-    // Bot durdurma
-    socket.on('stop_bot', (botName) => {
-        console.log('Bot durdur:', botName);
-        session.stopBot(botName);
-        socket.emit('bot_stopped', { username: botName });
-        updateBotList(socket, session);
-    });
-
-    // Mesaj gönderme
-    socket.on('send_chat', (data) => {
+    socket.on('start_bot', (data) => { startBot(socket, session, data); });
+    socket.on('stop_bot', (botName) => { session.stopBot(botName); socket.emit('bot_stopped', { username: botName }); updateBotList(socket, session); });
+    
+    socket.on('send_chat', (data) => { 
         const bot = session.bots.get(data.username);
         if (bot) {
             try {
                 bot.chat(data.message);
-                session.addLog(data.username, `[SİZ] ${data.message}`, 'chat');
+                // "[SİZ]" önekini KALDIRIYORUZ - sadece mesajı göster
+                session.addLog(data.username, data.message, 'chat');
             } catch (e) {
                 session.addLog(data.username, `[HATA] Mesaj gönderilemedi: ${e.message}`, 'error');
             }
         }
     });
 
-    // Bot verisi isteği
-    socket.on('request_bot_data', (data) => {
-        const botData = session.getBotData(data.username);
-        if (botData) {
-            socket.emit('bot_data', {
-                username: data.username,
-                data: botData
+    socket.on('request_bot_data', (data) => { 
+        const botData = session.getBotData(data.username); 
+        if (botData) socket.emit('bot_data', { username: data.username, data: botData }); 
+    });
+
+    socket.on('get_bot_list', () => { updateBotList(socket, session); });
+    
+    socket.on('item_action', (data) => {
+        session.handleItemAction(data.username, data.slot, data.action)
+            .then(success => {
+                if (success) {
+                    socket.emit('item_action_result', { 
+                        success: true, 
+                        message: 'İşlem başarılı' 
+                    });
+                    // Envanteri güncelle
+                    const botData = session.getBotData(data.username);
+                    if (botData) {
+                        socket.emit('bot_data', {
+                            username: data.username,
+                            data: botData
+                        });
+                    }
+                }
             });
+    });
+
+    // HAREKET KONTROLLERİ
+    socket.on('movement', (data) => {
+        session.setMovement(data.username, data.direction, data.state);
+    });
+
+    // AYARLAR
+    socket.on('update_settings', (data) => {
+        const { username, settings } = data;
+        
+        if (settings.autoMessage) {
+            session.setupAutoMessage(
+                username,
+                settings.autoMessage.enabled,
+                settings.autoMessage.message,
+                settings.autoMessage.interval
+            );
         }
-    });
-
-    // Bot listesi isteği
-    socket.on('get_bot_list', () => {
-        updateBotList(socket, session);
-    });
-
-    // Eşya atma
-    socket.on('drop_item', (data) => {
-        const bot = session.bots.get(data.username);
-        if (bot && bot.inventory && bot.inventory.slots[data.slot]) {
-            try {
-                const item = bot.inventory.slots[data.slot];
-                bot.tossStack(item);
-                session.addLog(data.username, `[ENVANTER] ${item.displayName || item.name} atıldı`, 'info');
-            } catch (e) {
-                session.addLog(data.username, `[HATA] Eşya atılamadı: ${e.message}`, 'error');
-            }
+        
+        if (settings.autoMine) {
+            session.setupAutoMine(
+                username,
+                settings.autoMine.enabled,
+                settings.autoMine.targetBlock
+            );
         }
+        
+        socket.emit('settings_updated', { success: true });
     });
 
-    // Bağlantı kesilince
     socket.on('disconnect', () => {
         console.log('Bağlantı kesildi:', socket.id);
-        
-        // Tüm botları durdur
-        for (const [botName] of session.bots) {
-            session.stopBot(botName);
-        }
-        
+        for (const [botName] of session.bots) session.stopBot(botName);
         sessions.delete(socket.id);
     });
 });
 
-// ✅ BOT BAŞLATMA FONKSİYONU
 function startBot(socket, session, data) {
     const { host, username, version } = data;
-    
-    if (!host || !username) {
-        socket.emit('error', { message: 'Host ve kullanıcı adı gerekli!' });
-        return;
+    if (!host || !username) { 
+        socket.emit('notification', { 
+            type: 'error', 
+            message: 'Host ve kullanıcı adı gerekli!' 
+        }); 
+        return; 
     }
-
-    if (session.bots.has(username)) {
-        session.addLog(username, '[HATA] Bu isimle zaten bir bot var!', 'error');
-        return;
+    
+    if (session.bots.has(username)) { 
+        socket.emit('notification', { 
+            type: 'warning', 
+            message: 'Bu isimle zaten bir bot var!' 
+        }); 
+        return; 
     }
 
     const [ip, portStr] = host.includes(':') ? host.split(':') : [host, '25565'];
     const port = parseInt(portStr) || 25565;
-
-    session.addLog(username, `[SİSTEM] ${ip}:${port} adresine bağlanılıyor...`, 'info');
+    
+    socket.emit('notification', { 
+        type: 'info', 
+        message: 'Bot başlatılıyor...' 
+    });
 
     try {
-        const bot = mineflayer.createBot({
-            host: ip,
-            port: port,
-            username: username,
-            version: version || '1.16.5',
-            auth: 'offline',
-            hideErrors: false
+        const bot = mineflayer.createBot({ 
+            host: ip, 
+            port: port, 
+            username: username, 
+            version: version || '1.16.5', 
+            auth: 'offline', 
+            hideErrors: false 
         });
 
         session.bots.set(username, bot);
 
-        // ✅ GİRİŞ BAŞARILI
         bot.on('login', () => {
-            console.log(`Bot ${username} giriş yaptı`);
-            session.addLog(username, '[BAŞARI] Oyuna giriş yapıldı!', 'success');
+            session.addLog(username, 'Oyuna giriş yapıldı!', 'success');
             updateBotList(socket, session);
-            
-            // Hemen veri gönder
             const botData = session.getBotData(username);
-            if (botData) {
-                socket.emit('bot_data', {
-                    username: username,
-                    data: botData
-                });
-            }
+            if (botData) socket.emit('bot_data', { username: username, data: botData });
+            
+            socket.emit('notification', { 
+                type: 'success', 
+                message: `${username} botu bağlandı!` 
+            });
         });
 
-        // ✅ CHAT MESAJLARI
-        bot.on('message', (jsonMsg) => {
-            try {
+        bot.on('message', (jsonMsg) => { 
+            try { 
                 const message = jsonMsg.toString();
-                if (message.trim()) {
-                    session.addLog(username, message, 'chat');
-                }
-            } catch (e) {
-                console.error('Mesaj parse hatası:', e);
-            }
+                // Minecraft mesaj formatını koru
+                session.addLog(username, message, 'chat'); 
+            } catch (e) { 
+                console.error('Mesaj parse hatası:', e); 
+            } 
         });
 
-        // ✅ SUNUCU MESAJLARI
-        bot.on('whisper', (from, message) => {
-            session.addLog(username, `[FISILTI] ${from}: ${message}`, 'chat');
+        bot.on('health', () => { 
+            const botData = session.getBotData(username); 
+            if (botData) socket.emit('bot_data', { username: username, data: botData }); 
         });
 
-        // ✅ SAĞLIK DEĞİŞİMİ
-        bot.on('health', () => {
-            const botData = session.getBotData(username);
-            if (botData) {
-                socket.emit('bot_data', {
-                    username: username,
-                    data: botData
-                });
-            }
+        bot.on('windowUpdate', () => { 
+            const botData = session.getBotData(username); 
+            if (botData) socket.emit('bot_data', { username: username, data: botData }); 
         });
 
-        // ✅ ENVANTER DEĞİŞİMİ
-        bot.on('windowUpdate', () => {
-            const botData = session.getBotData(username);
-            if (botData) {
-                socket.emit('bot_data', {
-                    username: username,
-                    data: botData
-                });
-            }
-        });
-
-        // ✅ HATA YÖNETİMİ
-        bot.on('error', (err) => {
-            console.error(`Bot ${username} hatası:`, err);
-            session.addLog(username, `[HATA] ${err.message}`, 'error');
-            session.stopBot(username);
-            updateBotList(socket, session);
-        });
-
-        bot.on('kicked', (reason) => {
-            console.log(`Bot ${username} atıldı:`, reason);
-            session.addLog(username, `[ATILDI] ${reason}`, 'error');
-            session.stopBot(username);
-            updateBotList(socket, session);
-        });
-
-        bot.on('end', () => {
-            console.log(`Bot ${username} bağlantısı kesildi`);
-            session.addLog(username, "[BAĞLANTI] Bağlantı kesildi", 'warning');
-            session.stopBot(username);
-            updateBotList(socket, session);
-        });
-
-        // ✅ PERİYODİK VERİ GÖNDERİMİ (SANIYEDE 1)
-        const dataTimer = setInterval(() => {
-            if (!session.bots.has(username)) {
-                clearInterval(dataTimer);
-                session.dataTimers.delete(username);
-                return;
-            }
+        bot.on('error', (err) => { 
+            session.addLog(username, `Hata: ${err.message}`, 'error'); 
+            session.stopBot(username); 
+            updateBotList(socket, session); 
             
-            const botData = session.getBotData(username);
-            if (botData) {
-                socket.emit('bot_data', {
-                    username: username,
-                    data: botData
-                });
+            socket.emit('notification', { 
+                type: 'error', 
+                message: `${username} botunda hata: ${err.message}` 
+            });
+        });
+
+        bot.on('kicked', (reason) => { 
+            session.addLog(username, `Atıldı: ${reason}`, 'error'); 
+            session.stopBot(username); 
+            updateBotList(socket, session); 
+        });
+
+        bot.on('end', () => { 
+            session.addLog(username, "Bağlantı kesildi", 'warning'); 
+            session.stopBot(username); 
+            updateBotList(socket, session); 
+        });
+
+        const dataTimer = setInterval(() => {
+            if (!session.bots.has(username)) { 
+                clearInterval(dataTimer); 
+                session.dataTimers.delete(username); 
+                return; 
             }
+            const botData = session.getBotData(username);
+            if (botData) socket.emit('bot_data', { username: username, data: botData });
         }, 1000);
         
         session.dataTimers.set(username, dataTimer);
 
     } catch (error) {
         console.error('Bot oluşturma hatası:', error);
-        session.addLog(username, `[HATA] Bot oluşturulamadı: ${error.message}`, 'error');
+        socket.emit('notification', { 
+            type: 'error', 
+            message: `Bot oluşturulamadı: ${error.message}` 
+        });
     }
 }
 
-// ✅ BOT LİSTESİ GÜNCELLE
 function updateBotList(socket, session) {
-    const botList = Array.from(session.bots.keys()).map(botName => ({
-        name: botName,
-        online: true,
-        data: session.getBotData(botName)
+    const botList = Array.from(session.bots.keys()).map(botName => ({ 
+        name: botName, 
+        online: true, 
+        data: session.getBotData(botName) 
     }));
-    
     socket.emit('bot_list', { bots: botList });
 }
 
-// ✅ STATİK DOSYALARI SUN
+// STATİK DOSYALAR
 app.use(express.static(__dirname));
-
-// ✅ SOCKET.IO CLIENT DOSYASINI SUN
 app.get('/socket.io/socket.io.js', (req, res) => {
-    res.sendFile(path.join(__dirname, 'node_modules', 'socket.io', 'client-dist', 'socket.io.js'));
+    res.sendFile(path.join(__dirname, 'node_modules/socket.io/client-dist/socket.io.js'));
 });
+app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
 
-// ✅ TÜM DİĞER İSTEKLER İÇİN INDEX.HTML
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// ✅ SUNUCUYU BAŞLAT (RENDER İÇİN 0.0.0.0)
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ AFK Client Pro ${PORT} portunda çalışıyor!`);
-    console.log(`✅ Socket.IO aktif`);
-    console.log(`✅ Render.com uyumlu`);
 });
