@@ -1,4 +1,5 @@
 :root {
+    /* Renkler */
     --bg-primary: #0d1117;
     --bg-secondary: #161b22;
     --bg-tertiary: #21262d;
@@ -12,40 +13,61 @@
     --accent-primary: #238636;
     --accent-secondary: #1f6feb;
     --accent-danger: #da3633;
+    
+    /* Gölgeler */
     --shadow-light: rgba(255, 255, 255, 0.05);
     --shadow-dark: rgba(0, 0, 0, 0.3);
+    --shadow-heavy: rgba(0, 0, 0, 0.5);
+    
+    /* Animasyonlar */
     --transition-fast: 0.2s ease;
     --transition-normal: 0.3s ease;
-    --radius-small: 6px;
-    --radius-medium: 8px;
-    --radius-large: 12px;
+    --transition-slow: 0.5s ease;
+    
+    /* Kenar Yuvarlaklıkları */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    
+    /* Boyutlar */
+    --header-height: 55px;
+    --input-height: 46px;
+    --slot-size: 44px;
 }
 
+/* ===== TEMEL STİLLER ===== */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-primary);
 }
 
 body {
-    background: var(--bg-primary);
     color: var(--text-primary);
-    height: 100vh;
-    overflow: hidden;
+    line-height: 1.5;
     display: flex;
     flex-direction: column;
+    background: var(--bg-primary);
 }
 
-/* Navigasyon */
+/* ===== NAVIGASYON ===== */
 nav {
     display: flex;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
-    height: 50px;
+    height: var(--header-height);
     flex-shrink: 0;
     position: relative;
-    z-index: 100;
+    z-index: 1000;
+    padding: 0;
 }
 
 nav button {
@@ -57,17 +79,23 @@ nav button {
     font-weight: 600;
     font-size: 14px;
     transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     position: relative;
     overflow: hidden;
+    padding: 0 5px;
 }
 
 nav button:hover {
     color: var(--text-primary);
-    background: var(--shadow-light);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 nav button.active {
     color: var(--text-success);
+    background: rgba(46, 204, 113, 0.1);
 }
 
 nav button.active::after {
@@ -79,286 +107,519 @@ nav button.active::after {
     height: 3px;
     background: var(--text-success);
     border-radius: 3px 3px 0 0;
+    animation: slideIn 0.3s ease;
 }
 
-/* Sekmeler */
+.connection-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#connection-status-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ===== SEKMELER ===== */
 .tab {
     display: none;
     flex: 1;
-    padding: 15px;
+    padding: 20px;
     overflow-y: auto;
     flex-direction: column;
-    gap: 15px;
-    animation: fadeIn 0.3s ease;
+    gap: 20px;
+    animation: fadeIn 0.4s ease;
+    min-height: 0;
 }
 
 .active-tab {
     display: flex;
 }
 
-/* Gelişmiş Terminal */
-.terminal-container {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    gap: 10px;
-}
-
-.log-container {
-    flex: 1;
-    background: #000;
-    border-radius: var(--radius-medium);
-    border: 1px solid var(--border-color);
-    overflow: hidden;
-    position: relative;
-    min-height: 300px;
-}
-
-#logbox {
-    height: 100%;
-    padding: 15px;
-    overflow-y: auto;
-    font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 13px;
-    line-height: 1.5;
-    scroll-behavior: smooth;
-}
-
-.log-message {
-    padding: 8px 12px;
-    margin: 4px 0;
-    border-radius: var(--radius-small);
-    background: rgba(255, 255, 255, 0.03);
-    animation: slideIn 0.3s ease;
-    border-left: 3px solid var(--text-info);
-    opacity: 0;
-    animation: fadeIn 0.5s ease forwards;
-}
-
-.log-message.success {
-    border-left-color: var(--text-success);
-    background: rgba(46, 204, 113, 0.05);
-}
-
-.log-message.error {
-    border-left-color: var(--text-danger);
-    background: rgba(255, 71, 87, 0.05);
-}
-
-.log-message.warning {
-    border-left-color: var(--text-warning);
-    background: rgba(255, 165, 2, 0.05);
-}
-
-.log-message.chat {
-    border-left-color: var(--accent-secondary);
-    background: rgba(31, 111, 235, 0.05);
-}
-
-.log-message.action {
-    border-left-color: #9b59b6;
-    background: rgba(155, 89, 182, 0.05);
-}
-
-.log-message.boss {
-    border-left-color: #e74c3c;
-    background: rgba(231, 76, 60, 0.05);
-}
-
-.log-message.title {
-    border-left-color: #f1c40f;
-    background: rgba(241, 196, 15, 0.05);
-}
-
-.log-time {
-    color: var(--text-secondary);
-    font-size: 11px;
-    margin-right: 8px;
-    opacity: 0.7;
-}
-
-/* Mesaj Gönderme Formu */
-.chat-form {
-    display: flex;
-    gap: 10px;
-    flex-shrink: 0;
-}
-
-.chat-form input {
-    flex: 1;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    padding: 12px 15px;
-    border-radius: var(--radius-medium);
-    font-size: 14px;
-    transition: all var(--transition-fast);
-}
-
-.chat-form input:focus {
-    outline: none;
-    border-color: var(--accent-secondary);
-    box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.2);
-}
-
-/* Bot Bağlantı Formu */
+/* ===== BOTLAR SEKMESİ ===== */
 .connection-form {
     background: var(--bg-secondary);
-    padding: 20px;
-    border-radius: var(--radius-medium);
+    padding: 24px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 18px;
+    box-shadow: 0 8px 32px var(--shadow-heavy);
+}
+
+.connection-form h3 {
+    color: var(--text-primary);
+    font-size: 18px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
 }
 
 .input-group label {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .input-group input {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    padding: 12px 15px;
-    border-radius: var(--radius-small);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
     font-size: 14px;
     transition: all var(--transition-fast);
+    height: var(--input-height);
 }
 
 .input-group input:focus {
     outline: none;
     border-color: var(--accent-secondary);
+    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.2);
 }
 
-/* Bot Listesi */
+#connect-btn {
+    height: var(--input-height);
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all var(--transition-normal);
+    margin-top: 10px;
+    border-radius: var(--radius-md);
+}
+
+#connect-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(35, 134, 54, 0.4);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.section-header h3 {
+    color: var(--text-primary);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ===== BOT LİSTESİ ===== */
 .bot-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     max-height: 400px;
     overflow-y: auto;
+    padding-right: 5px;
 }
 
 .bot-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-medium);
-    padding: 15px;
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     transition: all var(--transition-fast);
     cursor: pointer;
+    animation: slideInLeft 0.3s ease;
 }
 
 .bot-card:hover {
     background: var(--bg-tertiary);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--shadow-dark);
+    box-shadow: 0 8px 24px var(--shadow-dark);
+    border-color: var(--accent-secondary);
 }
 
 .bot-card.selected {
     border-color: var(--text-success);
-    background: rgba(46, 204, 113, 0.05);
+    background: rgba(46, 204, 113, 0.1);
+    box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.2);
 }
 
 .bot-info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
+    flex: 1;
 }
 
 .bot-name {
-    font-weight: 600;
-    font-size: 15px;
+    font-weight: 700;
+    font-size: 16px;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .bot-status {
     font-size: 12px;
-    color: var(--text-success);
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+    color: var(--text-success);
 }
 
-.bot-status::before {
-    content: '';
+.status-indicator {
     width: 8px;
     height: 8px;
-    background: currentColor;
     border-radius: 50%;
-    display: inline-block;
+    background: var(--text-success);
+    animation: pulse 2s infinite;
+}
+
+.bot-stats-small {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 4px;
 }
 
 .bot-actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
 }
 
-/* Envanter */
+.empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--text-secondary);
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    margin-top: 20px;
+}
+
+.empty-state i {
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.empty-state small {
+    font-size: 12px;
+}
+
+/* ===== KONSOL SEKMESİ ===== */
+.terminal-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 20px;
+    min-height: 0;
+}
+
+.terminal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.terminal-header h3 {
+    color: var(--text-primary);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#selected-bot-name {
+    color: var(--text-success);
+    font-weight: 700;
+}
+
+.log-container {
+    flex: 1;
+    background: #000;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    position: relative;
+    min-height: 400px;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+#logbox {
+    height: 100%;
+    padding: 20px;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    scroll-behavior: smooth;
+}
+
+.welcome-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.welcome-message i {
+    font-size: 32px;
+    margin-bottom: 15px;
+    opacity: 0.7;
+}
+
+/* Log Mesajları */
+.log-message {
+    padding: 10px 15px;
+    margin: 8px 0;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.03);
+    animation: slideIn 0.3s ease;
+    border-left: 4px solid var(--text-info);
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+    word-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.5;
+}
+
+.log-message.success {
+    border-left-color: var(--text-success);
+    background: rgba(46, 204, 113, 0.08);
+}
+
+.log-message.error {
+    border-left-color: var(--text-danger);
+    background: rgba(255, 71, 87, 0.08);
+}
+
+.log-message.warning {
+    border-left-color: var(--text-warning);
+    background: rgba(255, 165, 2, 0.08);
+}
+
+.log-message.chat {
+    border-left-color: var(--accent-secondary);
+    background: rgba(31, 111, 235, 0.08);
+}
+
+.log-message.info {
+    border-left-color: var(--text-info);
+    background: rgba(30, 144, 255, 0.08);
+}
+
+.log-message.system {
+    border-left-color: #9b59b6;
+    background: rgba(155, 89, 182, 0.08);
+}
+
+.log-time {
+    color: var(--text-secondary);
+    font-size: 11px;
+    margin-right: 12px;
+    opacity: 0.7;
+    font-family: monospace;
+    font-weight: 600;
+}
+
+/* Mesaj Formu */
+.chat-form {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+#chat-input {
+    flex: 1;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    transition: all var(--transition-fast);
+    height: var(--input-height);
+}
+
+#chat-input:focus {
+    outline: none;
+    border-color: var(--accent-secondary);
+    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.2);
+}
+
+#send-form button {
+    height: var(--input-height);
+    min-width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* ===== ENVANTER SEKMESİ ===== */
 .inventory-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
 }
 
+.stats-header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.stats-header h3 {
+    color: var(--text-primary);
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+#bot-name-display {
+    color: var(--text-success);
+    font-weight: 700;
+    font-size: 14px;
+    background: rgba(46, 204, 113, 0.1);
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+}
+
+/* Bot İstatistikleri */
 .bot-stats {
     display: flex;
     gap: 20px;
     background: var(--bg-secondary);
-    padding: 15px 25px;
-    border-radius: var(--radius-medium);
+    padding: 20px 30px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px var(--shadow-heavy);
 }
 
 .stat-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 14px;
+    gap: 12px;
+    font-size: 16px;
     font-weight: 600;
+    padding: 12px 20px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    min-width: 180px;
+    justify-content: center;
 }
 
 .stat-icon {
-    font-size: 18px;
+    font-size: 22px;
 }
 
-.health {
+.stat-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-value {
+    color: var(--text-primary);
+    font-weight: 700;
+    min-width: 40px;
+    text-align: center;
+}
+
+.health .stat-icon {
     color: var(--text-danger);
 }
 
-.food {
+.food .stat-icon {
     color: var(--text-warning);
 }
 
+.position .stat-icon {
+    color: var(--accent-secondary);
+}
+
 /* Envanter Grid */
+.inventory-header {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.inventory-header h3 {
+    color: var(--text-primary);
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.inventory-header small {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
 .inv-grid {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
-    gap: 6px;
-    background: linear-gradient(145deg, #3a3a3a, #2e2e2e);
-    padding: 15px;
-    border: 4px solid #1a1a1a;
-    border-radius: 4px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    gap: 8px;
+    background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+    padding: 24px;
+    border: 4px solid #151515;
+    border-radius: 8px;
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.empty-inventory {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+.empty-inventory i {
+    margin-bottom: 15px;
+    opacity: 0.5;
 }
 
 .slot {
-    width: 44px;
-    height: 44px;
+    width: var(--slot-size);
+    height: var(--slot-size);
     background: linear-gradient(145deg, #8b8b8b, #7a7a7a);
     border: 3px solid #1a1a1a;
     position: relative;
@@ -367,15 +628,15 @@ nav button.active::after {
     align-items: center;
     justify-content: center;
     transition: all var(--transition-fast);
-    border-radius: 3px;
+    border-radius: 4px;
     overflow: hidden;
 }
 
 .slot:hover {
     background: linear-gradient(145deg, #a5a5a5, #8b8b8b);
-    transform: scale(1.05);
-    z-index: 1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transform: scale(1.12);
+    z-index: 10;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
 }
 
 .slot:active {
@@ -383,37 +644,97 @@ nav button.active::after {
 }
 
 .slot img {
-    width: 36px;
-    height: 36px;
+    width: calc(var(--slot-size) - 8px);
+    height: calc(var(--slot-size) - 8px);
     image-rendering: pixelated;
-    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(1px 1px 3px rgba(0, 0, 0, 0.7));
+    transition: transform var(--transition-fast);
+}
+
+.slot:hover img {
+    transform: scale(1.15);
 }
 
 .count {
     position: absolute;
-    bottom: 2px;
+    bottom: 3px;
     right: 4px;
     font-size: 11px;
-    font-weight: bold;
+    font-weight: 900;
     color: white;
-    text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;
+    text-shadow: 
+        1px 1px 2px #000,
+        -1px -1px 2px #000,
+        1px -1px 2px #000,
+        -1px 1px 2px #000;
     font-family: 'Minecraft', monospace;
+    pointer-events: none;
 }
 
-/* Butonlar */
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+#settings-btn {
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all var(--transition-normal);
+    min-width: 160px;
+}
+
+#settings-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(31, 111, 235, 0.4);
+}
+
+/* ===== BUTONLAR ===== */
 .btn {
-    padding: 10px 16px;
+    padding: 12px 24px;
     border: none;
-    border-radius: var(--radius-small);
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-weight: 600;
     font-size: 14px;
     transition: all var(--transition-fast);
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    min-width: 80px;
+    gap: 8px;
+    text-decoration: none;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn:active::after {
+    animation: ripple 1s ease-out;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
 .btn-primary {
@@ -421,10 +742,10 @@ nav button.active::after {
     color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     background: #2ea043;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(35, 134, 54, 0.3);
 }
 
 .btn-secondary {
@@ -432,10 +753,10 @@ nav button.active::after {
     color: white;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
     background: #2b81eb;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(31, 111, 235, 0.3);
 }
 
 .btn-danger {
@@ -443,140 +764,257 @@ nav button.active::after {
     color: white;
 }
 
-.btn-danger:hover {
+.btn-danger:hover:not(:disabled) {
     background: #e62e2e;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(218, 54, 51, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(218, 54, 51, 0.3);
 }
 
 .btn-small {
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: 8px 16px;
+    font-size: 13px;
     min-width: auto;
 }
 
-/* Animasyonlar */
+/* ===== NOTIFICATION ===== */
+#notification-container {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 350px;
+}
+
+.notification {
+    padding: 14px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    animation: slideInRight 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    backdrop-filter: blur(10px);
+    border-left: 5px solid;
+    transform: translateX(0);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.notification.success {
+    background: rgba(35, 134, 54, 0.9);
+    color: white;
+    border-left-color: var(--text-success);
+}
+
+.notification.error {
+    background: rgba(218, 54, 51, 0.9);
+    color: white;
+    border-left-color: var(--text-danger);
+}
+
+.notification.warning {
+    background: rgba(255, 165, 2, 0.9);
+    color: #000;
+    border-left-color: #ff8c00;
+}
+
+.notification.info {
+    background: rgba(31, 111, 235, 0.9);
+    color: white;
+    border-left-color: var(--text-info);
+}
+
+.notification.hide {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+/* ===== ANIMASYONLAR ===== */
 @keyframes fadeIn {
     from {
         opacity: 0;
+        transform: translateY(10px);
     }
     to {
         opacity: 1;
+        transform: translateY(0);
     }
 }
 
 @keyframes slideIn {
     from {
-        transform: translateX(-10px);
         opacity: 0;
+        transform: translateX(-20px);
     }
     to {
-        transform: translateX(0);
         opacity: 1;
+        transform: translateX(0);
     }
 }
 
-/* Kaydırma Çubuğu */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(0.95);
+    }
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(20, 20);
+        opacity: 0;
+    }
+}
+
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 5px currentColor;
+    }
+    50% {
+        box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+    }
+}
+
+/* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
 }
 
 ::-webkit-scrollbar-track {
     background: var(--bg-secondary);
-    border-radius: var(--radius-small);
+    border-radius: var(--radius-sm);
+    border: 3px solid var(--bg-primary);
 }
 
 ::-webkit-scrollbar-thumb {
     background: var(--border-color);
-    border-radius: var(--radius-small);
+    border-radius: var(--radius-sm);
+    border: 3px solid var(--bg-secondary);
+    transition: background var(--transition-fast);
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
 }
 
-/* Mobil Uyumluluk */
+::-webkit-scrollbar-corner {
+    background: var(--bg-primary);
+}
+
+/* ===== MOBİL UYUMLULUK ===== */
 @media (max-width: 768px) {
+    :root {
+        --header-height: 50px;
+        --input-height: 42px;
+        --slot-size: 38px;
+    }
+    
     nav {
-        height: 45px;
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 50px;
     }
     
     nav button {
-        font-size: 13px;
-        padding: 0 5px;
+        flex: 1 0 33.33%;
+        padding: 12px 5px;
+        font-size: 12px;
+    }
+    
+    .connection-status {
+        order: 4;
+        flex-basis: 100%;
+        justify-content: center;
+        padding: 10px;
+        border-top: 1px solid var(--border-color);
     }
     
     .tab {
-        padding: 10px;
+        padding: 15px;
+        gap: 15px;
     }
     
     .connection-form {
-        padding: 15px;
-    }
-    
-    .inv-grid {
-        grid-template-columns: repeat(9, 1fr);
-        gap: 4px;
-        padding: 10px;
-    }
-    
-    .slot {
-        width: 36px;
-        height: 36px;
-    }
-    
-    .slot img {
-        width: 30px;
-        height: 30px;
-    }
-    
-    .bot-stats {
-        flex-wrap: wrap;
-        justify-content: center;
-        padding: 12px;
+        padding: 18px;
     }
     
     .bot-card {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
+        gap: 12px;
+        padding: 14px;
     }
     
     .bot-actions {
         width: 100%;
         justify-content: flex-end;
     }
-}
-
-/* Ayarlar Menüsü için Temel Stil */
-.settings-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    display: none;
-    justify-content: flex-end;
-    z-index: 1000;
-    animation: fadeIn var(--transition-normal);
-}
-
-.settings-panel {
-    width: 400px;
-    max-width: 90vw;
-    height: 100%;
-    background: var(--bg-secondary);
-    border-left: 1px solid var(--border-color);
-    transform: translateX(100%);
-    animation: slideInRight 0.3s ease forwards;
-    display: flex;
-    flex-direction: column;
-}
-
-@keyframes slideInRight {
-    to {
-        transform: translateX(0);
+    
+    .bot-stats {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+        width: 100%;
     }
-}
+    
+    .stat-item {
+        width: 100%;
+        justify-content: flex-start;
+        min-width: auto;
+    }
+    
+    .inv-grid {
+        grid-template-columns: repeat(9, 1fr);
+        gap: 6px;
+        padding: 15px;
+        transform: scale(0.92);
+        transform-origin: center;
+    }
+    
+    .slot {
+        width: var(--slot-size);
+        height: var(--slot-size);
+    }
+    
+    .slot img {
+        width: calc(var(--slot-size) - 6px);
+        height: calc(var(--slot-size) - 6px);
+    }
+    
+    .chat-form {
+        flex-direction: column;
+        gap: 12
