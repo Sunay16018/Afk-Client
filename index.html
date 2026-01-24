@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFK Client Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <nav>
+        <button id="btn-bots" class="active">🤖 BOTLAR</button>
+        <button id="btn-term">📟 KONSOL</button>
+        <button id="btn-inv">🎒 ENVANTER</button>
+        <div style="margin-left: auto; padding: 0 15px;">
+            <span id="status" style="font-size: 12px;">Bağlanıyor...</span>
+        </div>
+    </nav>
+
+    <!-- Botlar Sekmesi -->
+    <div id="tab-bots" class="tab active">
+        <div class="form-group">
+            <label>Sunucu IP:Port</label>
+            <input id="host" placeholder="play.hypixel.net:25565">
+        </div>
+        <div class="form-group">
+            <label>Bot İsmi</label>
+            <input id="username" placeholder="Bot123">
+        </div>
+        <div class="form-group">
+            <label>Sürüm</label>
+            <input id="version" value="1.20.1">
+        </div>
+        <button id="connect-btn" class="btn">📡 BAĞLAN</button>
+        
+        <div class="bot-list" id="bot-list"></div>
+    </div>
+
+    <!-- Konsol Sekmesi -->
+    <div id="tab-term" class="tab">
+        <div class="log-container" id="logbox"></div>
+        <form id="send-form" class="chat-form">
+            <input id="chat-input" placeholder="Mesaj yazın..." autocomplete="off">
+            <button type="submit" class="btn">📨 GÖNDER</button>
+        </form>
+    </div>
+
+    <!-- Envanter Sekmesi -->
+    <div id="tab-inv" class="tab">
+        <div class="stats" id="bot-stats">
+            <div class="stat">
+                <span>❤️ -</span>
+                <span>🍖 -</span>
+                <span>📍 -</span>
+            </div>
+        </div>
+        
+        <div class="inv-grid" id="inv-box"></div>
+        
+        <div class="movement-grid">
+            <div class="move-btn" id="forward-btn">⬆️</div>
+            <div class="move-btn" id="back-btn">⬇️</div>
+            <div class="move-btn" id="left-btn">⬅️</div>
+            <div class="move-btn" id="right-btn">➡️</div>
+            <div class="move-btn" id="jump-btn">⬆️</div>
+            <div class="move-btn" id="sprint-btn">🏃</div>
+            <div class="move-btn" id="sneak-btn">🥷</div>
+        </div>
+        
+        <button id="settings-btn" class="btn">⚙️ AYARLAR</button>
+    </div>
+
+    <!-- Ayarlar Panel -->
+    <div class="settings-panel" id="settings">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h3>⚙️ Ayarlar</h3>
+            <button onclick="document.getElementById('settings').style.display='none'" class="btn btn-danger">✖</button>
+        </div>
+        
+        <p>Seçili Bot: <span id="selected-bot" style="color: var(--success);">Yok</span></p>
+        
+        <div class="setting-group">
+            <div class="setting-row">
+                <span>📢 Otomatik Mesaj</span>
+                <div class="toggle" id="auto-msg-toggle"></div>
+            </div>
+            <div id="msg-fields" style="display: none; margin-top: 10px;">
+                <input id="msg-content" placeholder="Mesaj..." style="margin-bottom: 5px;">
+                <input type="number" id="msg-interval" value="10" min="5">
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <div class="setting-row">
+                <span>⛏️ Akıllı Kazma</span>
+                <div class="toggle" id="auto-mine-toggle"></div>
+            </div>
+            <div id="mine-fields" style="display: none; margin-top: 10px;">
+                <input id="target-block" value="diamond_ore" style="margin-bottom: 5px;">
+                <label><input type="checkbox" id="smart-mine" checked> Akıllı Mod</label>
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <div class="setting-row">
+                <span>🔄 Anti-AFK</span>
+                <div class="toggle active" id="anti-afk-toggle"></div>
+            </div>
+            <input type="number" id="afk-interval" value="30" min="10" style="margin-top: 10px;">
+        </div>
+        
+        <div class="setting-group">
+            <h4>🚶 Koordinatlı Yürüme</h4>
+            <input type="number" id="walk-x" placeholder="X" style="width: 30%; margin: 5px;">
+            <input type="number" id="walk-y" placeholder="Y" style="width: 30%; margin: 5px;">
+            <input type="number" id="walk-z" placeholder="Z" style="width: 30%; margin: 5px;">
+            <div style="margin-top: 10px;">
+                <button id="start-walk" class="btn">🚶 Başlat</button>
+                <button id="stop-walk" class="btn btn-danger">⏹️ Durdur</button>
+            </div>
+        </div>
+        
+        <div class="setting-group">
+            <h4>🖱️ Shift + Sağ Tık</h4>
+            <input type="number" id="shift-x" placeholder="X" style="width: 30%; margin: 5px;">
+            <input type="number" id="shift-y" placeholder="Y" style="width: 30%; margin: 5px;">
+            <input type="number" id="shift-z" placeholder="Z" style="width: 30%; margin: 5px;">
+            <button id="shift-click" class="btn" style="margin-top: 10px;">🖱️ Yap</button>
+        </div>
+        
+        <button id="save-settings" class="btn" style="margin-top: 20px; width: 100%;">💾 KAYDET</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
