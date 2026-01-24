@@ -1,136 +1,128 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AFK Client Pro</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="/socket.io/socket.io.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AFK Client Fix</title>
+    <style>
+        * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
+        body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        nav { display: flex; background: #161b22; border-bottom: 1px solid #30363d; height: 45px; flex-shrink: 0; }
+        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
+        nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; }
+        .tab { display: none; flex: 1; padding: 10px; overflow-y: auto; flex-direction: column; }
+        .active-tab { display: flex; }
+        
+        /* ORTA BOY KONSOL */
+        #logbox { height: 250px; background: #000; color: #2ecc71; padding: 10px; overflow-y: auto; font-family: monospace; border-radius: 5px; border: 1px solid #30363d; margin-bottom: 10px; flex-shrink: 0; }
+
+        /* ENVANTER GUI */
+        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; background: #8b8b8b; padding: 10px; border: 3px solid #373737; border-radius: 2px; width: fit-content; margin: 0 auto; }
+        .slot { width: 34px; height: 34px; background: #8b8b8b; border: 2px solid #373737; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .slot:hover { background: #c6c6c6; }
+        .slot img { width: 28px; height: 28px; image-rendering: pixelated; }
+        .count { position: absolute; bottom: 1px; right: 2px; font-size: 10px; color: white; text-shadow: 1px 1px #000; font-weight: bold; }
+
+        .bot-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #161b22; border: 1px solid #30363d; margin-top: 8px; border-radius: 8px; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
+        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 6px; width: 100%; }
+    </style>
 </head>
 <body>
     <nav>
-        <button id="btn-bots" class="active">🤖 BOTLAR</button>
-        <button id="btn-term">📟 KONSOL</button>
-        <button id="btn-inv">🎒 ENVANTER</button>
-        <div style="margin-left: auto; padding: 0 15px;">
-            <span id="status" style="font-size: 12px;">Bağlanıyor...</span>
-        </div>
+        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
+        <button onclick="tab('term')" id="btn-term">KONSOL</button>
+        <button onclick="tab('inv')" id="btn-inv">ENVANTER</button>
     </nav>
 
-    <!-- Botlar Sekmesi -->
-    <div id="tab-bots" class="tab active">
-        <div class="form-group">
-            <label>Sunucu IP:Port</label>
-            <input id="host" placeholder="play.hypixel.net:25565">
+    <div id="tab-bots" class="tab active-tab">
+        <div style="background: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #30363d;">
+            <input id="h" placeholder="IP:Port" style="margin-bottom:5px;">
+            <input id="u" placeholder="İsim" style="margin-bottom:5px;">
+            <input id="v" placeholder="Sürüm (1.16.5)" style="margin-bottom:10px;">
+            <button class="btn" style="width:100%; background:#238636;" onclick="add()">BAĞLAN</button>
         </div>
-        <div class="form-group">
-            <label>Bot İsmi</label>
-            <input id="username" placeholder="Bot123">
-        </div>
-        <div class="form-group">
-            <label>Sürüm</label>
-            <input id="version" value="1.20.1">
-        </div>
-        <button id="connect-btn" class="btn">📡 BAĞLAN</button>
-        
-        <div class="bot-list" id="bot-list"></div>
+        <div id="list"></div>
     </div>
 
-    <!-- Konsol Sekmesi -->
     <div id="tab-term" class="tab">
-        <div class="log-container" id="logbox"></div>
-        <form id="send-form" class="chat-form">
-            <input id="chat-input" placeholder="Mesaj yazın..." autocomplete="off">
-            <button type="submit" class="btn">📨 GÖNDER</button>
+        <div id="logbox"></div>
+        <form onsubmit="doSend(event)" style="display:flex; gap:5px;">
+            <input id="m" placeholder="Mesaj..." autocomplete="off">
+            <button type="submit" class="btn">GÖNDER</button>
         </form>
     </div>
 
-    <!-- Envanter Sekmesi -->
     <div id="tab-inv" class="tab">
-        <div class="stats" id="bot-stats">
-            <div class="stat">
-                <span>❤️ -</span>
-                <span>🍖 -</span>
-                <span>📍 -</span>
-            </div>
-        </div>
-        
+        <div id="stats" style="text-align:center; margin-bottom:10px;">❤️ - | 🍖 -</div>
         <div class="inv-grid" id="inv-box"></div>
-        
-        <div class="movement-grid">
-            <div class="move-btn" id="forward-btn">⬆️</div>
-            <div class="move-btn" id="back-btn">⬇️</div>
-            <div class="move-btn" id="left-btn">⬅️</div>
-            <div class="move-btn" id="right-btn">➡️</div>
-            <div class="move-btn" id="jump-btn">⬆️</div>
-            <div class="move-btn" id="sprint-btn">🏃</div>
-            <div class="move-btn" id="sneak-btn">🥷</div>
-        </div>
-        
-        <button id="settings-btn" class="btn">⚙️ AYARLAR</button>
     </div>
 
-    <!-- Ayarlar Panel -->
-    <div class="settings-panel" id="settings">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-            <h3>⚙️ Ayarlar</h3>
-            <button onclick="document.getElementById('settings').style.display='none'" class="btn btn-danger">✖</button>
-        </div>
-        
-        <p>Seçili Bot: <span id="selected-bot" style="color: var(--success);">Yok</span></p>
-        
-        <div class="setting-group">
-            <div class="setting-row">
-                <span>📢 Otomatik Mesaj</span>
-                <div class="toggle" id="auto-msg-toggle"></div>
-            </div>
-            <div id="msg-fields" style="display: none; margin-top: 10px;">
-                <input id="msg-content" placeholder="Mesaj..." style="margin-bottom: 5px;">
-                <input type="number" id="msg-interval" value="10" min="5">
-            </div>
-        </div>
-        
-        <div class="setting-group">
-            <div class="setting-row">
-                <span>⛏️ Akıllı Kazma</span>
-                <div class="toggle" id="auto-mine-toggle"></div>
-            </div>
-            <div id="mine-fields" style="display: none; margin-top: 10px;">
-                <input id="target-block" value="diamond_ore" style="margin-bottom: 5px;">
-                <label><input type="checkbox" id="smart-mine" checked> Akıllı Mod</label>
-            </div>
-        </div>
-        
-        <div class="setting-group">
-            <div class="setting-row">
-                <span>🔄 Anti-AFK</span>
-                <div class="toggle active" id="anti-afk-toggle"></div>
-            </div>
-            <input type="number" id="afk-interval" value="30" min="10" style="margin-top: 10px;">
-        </div>
-        
-        <div class="setting-group">
-            <h4>🚶 Koordinatlı Yürüme</h4>
-            <input type="number" id="walk-x" placeholder="X" style="width: 30%; margin: 5px;">
-            <input type="number" id="walk-y" placeholder="Y" style="width: 30%; margin: 5px;">
-            <input type="number" id="walk-z" placeholder="Z" style="width: 30%; margin: 5px;">
-            <div style="margin-top: 10px;">
-                <button id="start-walk" class="btn">🚶 Başlat</button>
-                <button id="stop-walk" class="btn btn-danger">⏹️ Durdur</button>
-            </div>
-        </div>
-        
-        <div class="setting-group">
-            <h4>🖱️ Shift + Sağ Tık</h4>
-            <input type="number" id="shift-x" placeholder="X" style="width: 30%; margin: 5px;">
-            <input type="number" id="shift-y" placeholder="Y" style="width: 30%; margin: 5px;">
-            <input type="number" id="shift-z" placeholder="Z" style="width: 30%; margin: 5px;">
-            <button id="shift-click" class="btn" style="margin-top: 10px;">🖱️ Yap</button>
-        </div>
-        
-        <button id="save-settings" class="btn" style="margin-top: 20px; width: 100%;">💾 KAYDET</button>
-    </div>
+    <script>
+        if(!localStorage.getItem('sid')) localStorage.setItem('sid', 'sid_'+Math.random().toString(36).substr(2,9));
+        const mySID = localStorage.getItem('sid');
+        let sel = "";
 
-    <script src="script.js"></script>
+        function tab(t) {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
+            document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.add('active-tab');
+            document.getElementById('btn-'+t).classList.add('active');
+        }
+
+        async function add() {
+            const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
+            await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
+            sel = u; tab('term');
+        }
+
+        async function doSend(e) {
+            if(e) e.preventDefault(); // Sayfa yenilenmesini engeller
+            const i = document.getElementById('m');
+            if(!sel || !i.value) return;
+            await fetch(`/send?sid=${mySID}&user=${sel}&msg=${encodeURIComponent(i.value)}`);
+            i.value = "";
+        }
+
+        async function dropItem(slot) {
+            if(confirm("Eşyayı atmak istiyor musun?"))
+                await fetch(`/update?sid=${mySID}&user=${sel}&type=inv&status=drop&val=${slot}`);
+        }
+
+        setInterval(async () => {
+            try {
+                const r = await fetch(`/data?sid=${mySID}&user=${sel}`);
+                const d = await r.json();
+                
+                document.getElementById('list').innerHTML = d.active.map(n => `
+                    <div class="bot-row" style="border-color:${sel==n?'#2ecc71':'#30363d'}" onclick="sel='${n}'">
+                        <span>${n} ${sel==n?'(SEÇİLİ)':''}</span>
+                        <button class="btn" style="background:#da3633; padding:5px 10px;" onclick="fetch('/stop?sid=${mySID}&user=${n}')">KES</button>
+                    </div>
+                `).join('');
+
+                if(sel && d.logs[sel]) {
+                    const lb = document.getElementById('logbox');
+                    lb.innerHTML = d.logs[sel].join('<br>');
+                    lb.scrollTop = lb.scrollHeight;
+
+                    if(d.botData[sel]) {
+                        const bd = d.botData[sel];
+                        document.getElementById('stats').innerText = `❤️ ${Math.round(bd.hp)} | 🍖 ${Math.round(bd.food)}`;
+                        let invH = "";
+                        for(let i=0; i<45; i++) {
+                            const it = bd.inv.find(x => x.slot === i);
+                            invH += `<div class="slot" onclick="dropItem(${i})">
+                                ${it ? `<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png" onerror="this.src='https://minecraft.wiki/images/Barrier_JE2_BE2.png'"><span class="count">${it.count>1?it.count:''}</span>` : ''}
+                            </div>`;
+                        }
+                        document.getElementById('inv-box').innerHTML = invH;
+                    }
+                } else if (sel && !d.active.includes(sel)) {
+                    sel = ""; // Bot düştüyse seçimi sıfırla
+                }
+            } catch(e) {}
+        }, 1000);
+    </script>
 </body>
 </html>
