@@ -1,267 +1,615 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AFK Client Fix</title>
+    <title>AFK Minecraft Client</title>
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
-        body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        nav { display: flex; background: #161b22; border-bottom: 1px solid #30363d; height: 45px; flex-shrink: 0; }
-        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
-        nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; }
-        .tab { display: none; flex: 1; padding: 10px; overflow-y: auto; flex-direction: column; }
-        .active-tab { display: flex; }
+        * { 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-size: 14px; 
+            margin: 0; 
+            padding: 0; 
+        }
         
-        /* ORTA BOY KONSOL */
-        #logbox { height: 250px; background: #000; color: #2ecc71; padding: 10px; overflow-y: auto; font-family: monospace; border-radius: 5px; border: 1px solid #30363d; margin-bottom: 10px; flex-shrink: 0; }
-
-        /* ENVANTER GUI */
-        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; background: #8b8b8b; padding: 10px; border: 3px solid #373737; border-radius: 2px; width: fit-content; margin: 0 auto; }
-        .slot { width: 34px; height: 34px; background: #8b8b8b; border: 2px solid #373737; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .slot:hover { background: #c6c6c6; }
-        .slot img { width: 28px; height: 28px; image-rendering: pixelated; }
-        .count { position: absolute; bottom: 1px; right: 2px; font-size: 10px; color: white; text-shadow: 1px 1px #000; font-weight: bold; }
-
-        .bot-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #161b22; border: 1px solid #30363d; margin-top: 8px; border-radius: 8px; }
-        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
-        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 6px; width: 100%; }
+        body { 
+            background: #0d1117; 
+            color: #c9d1d9; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
         
-        /* YENİ EKLENEN STILLER */
-        .movement-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px auto; max-width: 300px; }
-        .movement-btn { padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; background: #238636; font-size: 16px; }
-        .movement-btn:hover { opacity: 0.9; }
-        .movement-btn:active { transform: scale(0.95); }
-        #btn-jump { grid-column: 2; grid-row: 2; }
+        nav { 
+            display: flex; 
+            background: #161b22; 
+            border-bottom: 1px solid #30363d; 
+            height: 50px; 
+            flex-shrink: 0; 
+        }
         
-        .settings-section { background: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 15px; }
-        .settings-title { color: #2ecc71; margin-top: 0; margin-bottom: 10px; }
+        nav button { 
+            flex: 1; 
+            border: none; 
+            background: none; 
+            color: #8b949e; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 14px; 
+            transition: all 0.2s; 
+        }
         
-        .toggle-switch { position: relative; display: inline-block; width: 60px; height: 34px; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #30363d; transition: .4s; border-radius: 34px; }
-        .toggle-slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .toggle-slider { background-color: #2ecc71; }
-        input:checked + .toggle-slider:before { transform: translateX(26px); }
+        nav button:hover { 
+            background: rgba(255, 255, 255, 0.05); 
+        }
+        
+        nav button.active { 
+            color: #2ecc71; 
+            border-bottom: 3px solid #2ecc71; 
+            background: rgba(46, 204, 113, 0.1); 
+        }
+        
+        .tab { 
+            display: none; 
+            flex: 1; 
+            padding: 15px; 
+            overflow-y: auto; 
+            flex-direction: column; 
+        }
+        
+        .active-tab { 
+            display: flex; 
+        }
+        
+        /* KONSOL */
+        #logbox { 
+            height: 250px; 
+            background: #000; 
+            color: #2ecc71; 
+            padding: 12px; 
+            overflow-y: auto; 
+            font-family: 'Consolas', 'Monaco', monospace; 
+            border-radius: 8px; 
+            border: 1px solid #30363d; 
+            margin-bottom: 12px; 
+            flex-shrink: 0; 
+            line-height: 1.4; 
+        }
+        
+        /* ENVANTER */
+        .inv-grid { 
+            display: grid; 
+            grid-template-columns: repeat(9, 1fr); 
+            gap: 5px; 
+            background: #4a4a4a; 
+            padding: 12px; 
+            border: 3px solid #373737; 
+            border-radius: 4px; 
+            width: fit-content; 
+            margin: 0 auto; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); 
+        }
+        
+        .slot { 
+            width: 40px; 
+            height: 40px; 
+            background: #8b8b8b; 
+            border: 2px outset #c6c6c6; 
+            position: relative; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: all 0.1s; 
+        }
+        
+        .slot:hover { 
+            background: #a9a9a9; 
+            transform: scale(1.05); 
+        }
+        
+        .slot:active { 
+            border-style: inset; 
+            transform: scale(0.95); 
+        }
+        
+        .slot img { 
+            width: 32px; 
+            height: 32px; 
+            image-rendering: pixelated; 
+            pointer-events: none; 
+        }
+        
+        .count { 
+            position: absolute; 
+            bottom: 2px; 
+            right: 3px; 
+            font-size: 11px; 
+            color: white; 
+            text-shadow: 1px 1px 2px #000; 
+            font-weight: bold; 
+            pointer-events: none; 
+        }
+        
+        /* BOT SATIRLARI */
+        .bot-row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 14px; 
+            background: #161b22; 
+            border: 2px solid #30363d; 
+            margin-top: 10px; 
+            border-radius: 10px; 
+            transition: all 0.3s; 
+            cursor: pointer; 
+        }
+        
+        .bot-row:hover { 
+            border-color: #8b949e; 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+        }
+        
+        .bot-row.selected { 
+            border-color: #2ecc71; 
+            background: rgba(46, 204, 113, 0.05); 
+        }
+        
+        .btn { 
+            padding: 10px 16px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            color: white; 
+            background: #1f6feb; 
+            transition: all 0.2s; 
+        }
+        
+        .btn:hover { 
+            opacity: 0.9; 
+            transform: translateY(-1px); 
+        }
+        
+        .btn:active { 
+            transform: translateY(0); 
+        }
+        
+        .btn-danger { 
+            background: #da3633; 
+        }
+        
+        .btn-success { 
+            background: #238636; 
+        }
+        
+        .btn-warning { 
+            background: #d29922; 
+        }
+        
+        input { 
+            background: #0d1117; 
+            border: 1px solid #30363d; 
+            color: #fff; 
+            padding: 12px; 
+            border-radius: 8px; 
+            width: 100%; 
+            margin-bottom: 10px; 
+            transition: all 0.2s; 
+        }
+        
+        input:focus { 
+            outline: none; 
+            border-color: #1f6feb; 
+            box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.1); 
+        }
+        
+        /* HAREKET KONTROLLERİ */
+        .movement-controls { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 12px; 
+            margin: 20px auto; 
+            max-width: 320px; 
+        }
+        
+        .movement-btn { 
+            padding: 18px; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            color: white; 
+            background: #238636; 
+            font-size: 16px; 
+            transition: all 0.1s; 
+        }
+        
+        .movement-btn:hover { 
+            opacity: 0.9; 
+            transform: scale(1.05); 
+        }
+        
+        .movement-btn:active { 
+            transform: scale(0.95); 
+        }
+        
+        #btn-jump { 
+            grid-column: 2; 
+            grid-row: 2; 
+            background: #d29922; 
+        }
+        
+        /* AYARLAR BÖLÜMÜ */
+        .settings-section { 
+            background: #161b22; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px solid #30363d; 
+            margin-bottom: 20px; 
+        }
+        
+        .settings-title { 
+            color: #2ecc71; 
+            margin-top: 0; 
+            margin-bottom: 15px; 
+            font-size: 18px; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        
+        /* TOGGLE SWITCH */
+        .toggle-container { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 15px; 
+            padding: 10px; 
+            background: rgba(255, 255, 255, 0.03); 
+            border-radius: 8px; 
+        }
+        
+        .toggle-label { 
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        .toggle-description { 
+            color: #8b949e; 
+            font-size: 12px; 
+            margin-top: 4px; 
+        }
+        
+        .toggle-switch { 
+            position: relative; 
+            display: inline-block; 
+            width: 60px; 
+            height: 30px; 
+        }
+        
+        .toggle-switch input { 
+            opacity: 0; 
+            width: 0; 
+            height: 0; 
+        }
+        
+        .toggle-slider { 
+            position: absolute; 
+            cursor: pointer; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0; 
+            background-color: #30363d; 
+            transition: .4s; 
+            border-radius: 30px; 
+        }
+        
+        .toggle-slider:before { 
+            position: absolute; 
+            content: ""; 
+            height: 22px; 
+            width: 22px; 
+            left: 4px; 
+            bottom: 4px; 
+            background-color: white; 
+            transition: .4s; 
+            border-radius: 50%; 
+        }
+        
+        input:checked + .toggle-slider { 
+            background-color: #2ecc71; 
+        }
+        
+        input:checked + .toggle-slider:before { 
+            transform: translateX(30px); 
+        }
+        
+        /* SAĞLIK VE AÇLIK GÖSTERGESİ */
+        #stats { 
+            text-align: center; 
+            margin-bottom: 20px; 
+            font-size: 18px; 
+            font-weight: bold; 
+            padding: 15px; 
+            background: rgba(255, 255, 255, 0.05); 
+            border-radius: 10px; 
+            border: 1px solid #30363d; 
+        }
+        
+        .health { 
+            color: #ff4757; 
+        }
+        
+        .food { 
+            color: #ffa502; 
+        }
+        
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8b949e;
+        }
+        
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .inv-grid {
+                gap: 3px;
+                padding: 8px;
+            }
+            
+            .slot {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .slot img {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .movement-controls {
+                max-width: 280px;
+            }
+            
+            .movement-btn {
+                padding: 15px;
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- NAVIGATION -->
     <nav>
-        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
-        <button onclick="tab('term')" id="btn-term">KONSOL</button>
-        <button onclick="tab('inv')" id="btn-inv">ENVANTER</button>
-        <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
+        <button onclick="switchTab('bots')" id="btn-bots" class="active">🤖 BOTLAR</button>
+        <button onclick="switchTab('term')" id="btn-term">📟 KONSOL</button>
+        <button onclick="switchTab('inv')" id="btn-inv">🎒 ENVANTER</button>
+        <button onclick="switchTab('settings')" id="btn-settings">⚙️ AYARLAR</button>
     </nav>
 
+    <!-- BOTLAR TAB -->
     <div id="tab-bots" class="tab active-tab">
-        <div style="background: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #30363d;">
-            <input id="h" placeholder="IP:Port" style="margin-bottom:5px;">
-            <input id="u" placeholder="İsim" style="margin-bottom:5px;">
-            <input id="v" placeholder="Sürüm (1.16.5)" style="margin-bottom:10px;">
-            <button class="btn" style="width:100%; background:#238636;" onclick="add()">BAĞLAN</button>
+        <div class="settings-section">
+            <h3 class="settings-title">➕ YENİ BOT EKLE</h3>
+            <input id="server-ip" placeholder="Sunucu IP:Port (örn: play.hivemc.com:25565)" type="text">
+            <input id="bot-name" placeholder="Bot İsmi" type="text">
+            <input id="mc-version" placeholder="Minecraft Sürümü (örn: 1.16.5)" type="text" value="1.16.5">
+            <button class="btn btn-success" onclick="connectBot()" style="width:100%;">
+                🌐 BAĞLAN
+            </button>
         </div>
-        <div id="list"></div>
+        
+        <div style="margin-top: 20px;">
+            <h3 style="color: #c9d1d9; margin-bottom: 15px;">🤖 AKTİF BOTLAR</h3>
+            <div id="bot-list"></div>
+        </div>
     </div>
 
+    <!-- KONSOL TAB -->
     <div id="tab-term" class="tab">
-        <div id="logbox"></div>
-        <form onsubmit="doSend(event)" style="display:flex; gap:5px;">
-            <input id="m" placeholder="Mesaj..." autocomplete="off">
-            <button type="submit" class="btn">GÖNDER</button>
+        <div id="logbox">[SİSTEM] AFK Minecraft Client'a hoş geldiniz!<br>[SİSTEM] Bir bot seçerek başlayabilirsiniz.</div>
+        <form onsubmit="sendMessage(event)" style="display:flex; gap:10px; margin-top:15px;">
+            <input id="chat-input" placeholder="Mesaj yazın veya komut girin..." autocomplete="off">
+            <button type="submit" class="btn" style="white-space:nowrap;">📨 GÖNDER</button>
         </form>
     </div>
 
+    <!-- ENVANTER TAB -->
     <div id="tab-inv" class="tab">
-        <div id="stats" style="text-align:center; margin-bottom:10px;">❤️ - | 🍖 -</div>
-        <div class="inv-grid" id="inv-box"></div>
+        <div id="stats">
+            <span class="health">❤️ <span id="health-value">-</span></span>
+            <span style="margin: 0 15px;">|</span>
+            <span class="food">🍖 <span id="food-value">-</span></span>
+        </div>
+        <div class="inv-grid" id="inventory-grid"></div>
     </div>
 
+    <!-- AYARLAR TAB -->
     <div id="tab-settings" class="tab">
-        <!-- Kazma Modu -->
+        <!-- KAZMA MODU -->
         <div class="settings-section">
-            <h3 class="settings-title">🔨 AKILLI KAZMA MODU</h3>
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                <span>Kazma Modu:</span>
+            <h3 class="settings-title">⛏️ AKILLI KAZMA MODU</h3>
+            <div class="toggle-container">
+                <div class="toggle-label">
+                    <span>Kazma Modu</span>
+                    <span class="toggle-description">Açıkken bot önündeki bloğu otomatik kırar</span>
+                </div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="digging-toggle" onchange="toggleDigging()">
                     <span class="toggle-slider"></span>
                 </label>
-                <span id="digging-status" style="color: #8b949e;">Kapalı</span>
             </div>
-            <div style="color: #8b949e; font-size: 12px;">
-                Açıldığında bot önündeki bloğu otomatik kıracak. Blok kırılınca duracak.
+            <div id="digging-status" style="color: #8b949e; font-size: 12px; text-align: center; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+                Durum: <span style="color: #8b949e;">Kapalı</span>
             </div>
         </div>
 
-        <!-- Hareket Kontrolleri -->
+        <!-- HAREKET KONTROLLERİ -->
         <div class="settings-section">
             <h3 class="settings-title">🎮 HAREKET KONTROLLERİ</h3>
             <div class="movement-controls">
                 <div></div>
-                <button class="movement-btn" onmousedown="startMove('forward')" onmouseup="stopMove('forward')" ontouchstart="startMove('forward')" ontouchend="stopMove('forward')">İLERİ</button>
+                <button class="movement-btn" 
+                        onmousedown="startMovement('forward')" 
+                        onmouseup="stopMovement('forward')" 
+                        ontouchstart="startMovement('forward')" 
+                        ontouchend="stopMovement('forward')">⬆️ İLERİ</button>
                 <div></div>
-                <button class="movement-btn" onmousedown="startMove('left')" onmouseup="stopMove('left')" ontouchstart="startMove('left')" ontouchend="stopMove('left')">SOL</button>
-                <button class="movement-btn" onmousedown="startMove('back')" onmouseup="stopMove('back')" ontouchstart="startMove('back')" ontouchend="stopMove('back')">GERİ</button>
-                <button class="movement-btn" onmousedown="startMove('right')" onmouseup="stopMove('right')" ontouchstart="startMove('right')" ontouchend="stopMove('right')">SAĞ</button>
-                <button class="movement-btn" id="btn-jump" onclick="jump()">ZIPLA</button>
+                
+                <button class="movement-btn" 
+                        onmousedown="startMovement('left')" 
+                        onmouseup="stopMovement('left')" 
+                        ontouchstart="startMovement('left')" 
+                        ontouchend="stopMovement('left')">⬅️ SOL</button>
+                        
+                <button class="movement-btn" 
+                        onmousedown="startMovement('back')" 
+                        onmouseup="stopMovement('back')" 
+                        ontouchstart="startMovement('back')" 
+                        ontouchend="stopMovement('back')">⬇️ GERİ</button>
+                        
+                <button class="movement-btn" 
+                        onmousedown="startMovement('right')" 
+                        onmouseup="stopMovement('right')" 
+                        ontouchstart="startMovement('right')" 
+                        ontouchend="stopMovement('right')">➡️ SAĞ</button>
+                
+                <button class="movement-btn" id="btn-jump" onclick="jump()">🦘 ZIPLA</button>
             </div>
-            <div style="color: #8b949e; font-size: 12px; text-align: center; margin-top: 10px;">
-                Tuşlara basılı tutarak hareket ettirebilirsiniz.
+            <div style="color: #8b949e; font-size: 12px; text-align: center; margin-top: 15px;">
+                ⚡ Tuşlara basılı tutarak hareket ettirebilirsiniz
             </div>
         </div>
 
-        <!-- Ek Ayarlar -->
+        <!-- OTOMATİK AYARLAR -->
         <div class="settings-section">
-            <h3 class="settings-title">⚙️ DİĞER AYARLAR</h3>
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                <span>Otomatik Yeniden Bağlanma:</span>
+            <h3 class="settings-title">⚡ OTOMATİK AYARLAR</h3>
+            
+            <div class="toggle-container">
+                <div class="toggle-label">
+                    <span>Otomatik Yeniden Bağlanma</span>
+                    <span class="toggle-description">Bağlantı kesilirse otomatik yeniden bağlanır</span>
+                </div>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="reconnect-toggle" onchange="toggleReconnect()">
+                    <input type="checkbox" id="auto-reconnect" onchange="toggleAutoReconnect()">
                     <span class="toggle-slider"></span>
                 </label>
             </div>
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-                <span>Anti-AFK Modu:</span>
+            
+            <div class="toggle-container">
+                <div class="toggle-label">
+                    <span>Anti-AFK Modu</span>
+                    <span class="toggle-description">Botun atılmaması için otomatik hareket</span>
+                </div>
                 <label class="toggle-switch">
-                    <input type="checkbox" id="antiafk-toggle" onchange="toggleAntiAFK()">
+                    <input type="checkbox" id="anti-afk" onchange="toggleAntiAFK()">
                     <span class="toggle-slider"></span>
                 </label>
+            </div>
+            
+            <div class="toggle-container">
+                <div class="toggle-label">
+                    <span>Otomatik Saldırı</span>
+                    <span class="toggle-description">Yakındaki düşmanlara otomatik saldırır</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="auto-attack" onchange="toggleAutoAttack()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+        
+        <!-- BİLGİ -->
+        <div class="settings-section">
+            <h3 class="settings-title">ℹ️ SİSTEM BİLGİSİ</h3>
+            <div style="color: #8b949e; font-size: 13px; line-height: 1.6;">
+                <p>🌐 Sunucu Durumu: <span id="server-status" style="color:#2ecc71">Çalışıyor</span></p>
+                <p>📊 Aktif Botlar: <span id="active-bots-count">0</span></p>
+                <p>🆔 Oturum ID: <span id="session-id" style="font-family: monospace;">-</span></p>
+                <p>🔄 Güncelleme: <span id="last-update" style="color:#8b949e;">-</span></p>
             </div>
         </div>
     </div>
 
     <script>
-        if(!localStorage.getItem('sid')) localStorage.setItem('sid', 'sid_'+Math.random().toString(36).substr(2,9));
-        const mySID = localStorage.getItem('sid');
-        let sel = "";
-        let digInterval = null;
-        let moveInterval = null;
-
-        function tab(t) {
-            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
-            document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
-            document.getElementById('tab-'+t).classList.add('active-tab');
-            document.getElementById('btn-'+t).classList.add('active');
+        // SİSTEM DEĞİŞKENLERİ
+        if(!localStorage.getItem('sid')) {
+            localStorage.setItem('sid', 'sid_' + Math.random().toString(36).substring(2, 11));
         }
-
-        async function add() {
-            const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
-            if(!h || !u || !v) return alert("Lütfen tüm alanları doldurun!");
-            await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
-            sel = u; tab('term');
-        }
-
-        async function doSend(e) {
-            if(e) e.preventDefault();
-            const i = document.getElementById('m');
-            if(!sel || !i.value) return;
-            await fetch(`/send?sid=${mySID}&user=${sel}&msg=${encodeURIComponent(i.value)}`);
-            i.value = "";
-        }
-
-        async function dropItem(slot) {
-            if(confirm("Eşyayı atmak istiyor musun?"))
-                await fetch(`/update?sid=${mySID}&user=${sel}&type=inv&status=drop&val=${slot}`);
-        }
-
-        // KAZMA FONKSİYONLARI
-        async function toggleDigging() {
-            const toggle = document.getElementById('digging-toggle');
-            const status = document.getElementById('digging-status');
+        const SESSION_ID = localStorage.getItem('sid');
+        let selectedBot = "";
+        let isDiggingActive = false;
+        let movementInterval = null;
+        let lastUpdateTime = Date.now();
+        
+        // DOM YÜKLENDİĞİNDE
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('session-id').textContent = SESSION_ID.substring(0, 12) + '...';
+            updateData();
+            setInterval(updateData, 1000);
+        });
+        
+        // TAB DEĞİŞTİRME
+        function switchTab(tabName) {
+            // Tüm tabları ve butonları gizle
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active-tab');
+            });
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('active');
+            });
             
-            if(!sel) {
-                alert("Önce bir bot seçin!");
-                toggle.checked = false;
+            // Seçili tabı ve butonu göster
+            document.getElementById('tab-' + tabName).classList.add('active-tab');
+            document.getElementById('btn-' + tabName).classList.add('active');
+            
+            // Envanter tab'ına geçildiğinde güncelle
+            if (tabName === 'inv' && selectedBot) {
+                updateInventory();
+            }
+        }
+        
+        // BOT BAĞLANTISI
+        async function connectBot() {
+            const serverIp = document.getElementById('server-ip').value.trim();
+            const botName = document.getElementById('bot-name').value.trim();
+            const mcVersion = document.getElementById('mc-version').value.trim();
+            
+            if (!serverIp || !botName || !mcVersion) {
+                showAlert('⚠️ Lütfen tüm alanları doldurun!', 'warning');
                 return;
             }
             
-            if(toggle.checked) {
-                // Kazmayı başlat
-                await fetch(`/dig?sid=${mySID}&user=${sel}&action=start`);
-                status.textContent = "Açık";
-                status.style.color = "#2ecc71";
-            } else {
-                // Kazmayı durdur
-                await fetch(`/dig?sid=${mySID}&user=${sel}&action=stop`);
-                status.textContent = "Kapalı";
-                status.style.color = "#8b949e";
+            if (!serverIp.includes(':')) {
+                showAlert('⚠️ IP:Port formatında girin (örn: play.server.com:25565)', 'warning');
+                return;
             }
-        }
-
-        // HAREKET FONKSİYONLARI
-        async function startMove(direction) {
-            if(!sel) return;
-            await fetch(`/control?sid=${mySID}&user=${sel}&direction=${direction}&state=true`);
-        }
-
-        async function stopMove(direction) {
-            if(!sel) return;
-            await fetch(`/control?sid=${mySID}&user=${sel}&direction=${direction}&state=false`);
-        }
-
-        async function jump() {
-            if(!sel) return;
-            // Zıplama için kısa süreli aktivasyon
-            await fetch(`/control?sid=${mySID}&user=${sel}&direction=jump&state=true`);
-            setTimeout(() => {
-                fetch(`/control?sid=${mySID}&user=${sel}&direction=jump&state=false`);
-            }, 200);
-        }
-
-        // DİĞER AYARLAR
-        async function toggleReconnect() {
-            const toggle = document.getElementById('reconnect-toggle');
-            await fetch(`/update?sid=${mySID}&user=${sel}&type=setting&setting=reconnect&value=${toggle.checked}`);
-        }
-
-        async function toggleAntiAFK() {
-            const toggle = document.getElementById('antiafk-toggle');
-            await fetch(`/update?sid=${mySID}&user=${sel}&type=setting&setting=antiafk&value=${toggle.checked}`);
-        }
-
-        // VERİ GÜNCELLEME
-        setInterval(async () => {
+            
             try {
-                const r = await fetch(`/data?sid=${mySID}&user=${sel}`);
-                const d = await r.json();
-                
-                // Bot listesini güncelle
-                document.getElementById('list').innerHTML = d.active.map(n => `
-                    <div class="bot-row" style="border-color:${sel==n?'#2ecc71':'#30363d'}" onclick="sel='${n}'; updateUI();">
-                        <span>${n} ${sel==n?'(SEÇİLİ)':''}</span>
-                        <button class="btn" style="background:#da3633; padding:5px 10px;" onclick="event.stopPropagation(); fetch('/stop?sid=${mySID}&user=${n}')">KES</button>
-                    </div>
-                `).join('');
-
-                // Seçili bot varsa verileri güncelle
-                if(sel && d.logs[sel]) {
-                    const lb = document.getElementById('logbox');
-                    lb.innerHTML = d.logs[sel].join('<br>');
-                    lb.scrollTop = lb.scrollHeight;
-
-                    if(d.botData[sel]) {
-                        const bd = d.botData[sel];
-                        document.getElementById('stats').innerText = `❤️ ${Math.round(bd.hp || 0)} | 🍖 ${Math.round(bd.food || 0)}`;
-                        let invH = "";
-                        for(let i=0; i<45; i++) {
-                            const it = bd.inv.find(x => x.slot === i);
-                            invH += `<div class="slot" onclick="dropItem(${i})">
-                                ${it ? `<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png" onerror="this.src='https://minecraft.wiki/images/Barrier_JE2_BE2.png'"><span class="count">${it.count>1?it.count:''}</span>` : ''}
-                            </div>`;
-                        }
-                        document.getElementById('inv-box').innerHTML = invH;
-                    }
-                } else if (sel && !d.active.includes(sel)) {
-                    sel = ""; // Bot düştüyse seçimi sıfırla
-                }
-            } catch(e) {
-                console.error("Veri güncelleme hatası:", e);
-            }
-        }, 1000);
-
-        function updateUI() {
-            // UI güncellemeleri burada yapılabilir
-        }
-    </script>
-</body>
-</html>
+                const response = await fetch(`/start?sid=${SESSION_ID}&host=${encodeURIComponent(serverIp)}&user=${encodeURIComponent(botName)}&ver=${encodeURIComponent(mcVersion)}`);
+                if (response.ok) {
+                    selectedBot = botName;
+                    showAlert(`✅ ${botName} sunucuya bağlanıyor...`, 'success');
+                    switchTab('term');
+                    
+                    // Formu temizle
+                    document.getElementById('server-ip').value = '';
+                    document.getEle
