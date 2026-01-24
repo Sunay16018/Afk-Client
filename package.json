@@ -1,26 +1,15 @@
 {
   "name": "afk-minecraft-client",
   "version": "3.0.0",
-  "description": "Türkçe Minecraft AFK Client - Bozuk Karakter Düzeltmeli",
+  "description": "Türkçe Minecraft AFK Client",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "mineflayer": "^4.20.0",
-    "mineflayer-pathfinder": "^2.4.5",
-    "vec3": "^0.1.8"
+    "mineflayer": "^4.20.0"
   },
-  "keywords": [
-    "minecraft",
-    "bot",
-    "afk",
-    "turkish"
-  ],
+  "keywords": ["minecraft", "bot", "afk", "türkçe"],
   "author": "AFK Client",
-  "license": "MIT",
-  "engines": {
-    "node": ">=14.0.0"
-  }
+  "license": "MIT"
 }
