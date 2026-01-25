@@ -1,16 +1,18 @@
 {
-  "short_name": "AFKPanel",
-  "name": "AFK Bot Pro Panel",
+  "name": "AFK BOT PRO MAX",
+  "short_name": "AFKBot",
+  "description": "Profesyonel Minecraft AFK Bot Kontrol Paneli",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#2ecc71",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/616/616430.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "sizes": "512x512"
+      "purpose": "any maskable"
     }
-  ],
-  "start_url": "/",
-  "background_color": "#0c0c0c",
-  "display": "standalone",
-  "scope": "/",
-  "theme_color": "#2ecc71"
+  ]
 }
