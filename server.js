@@ -7,9 +7,10 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static(__dirname));
+app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 
 let sessions = {};
-const clean = (t) => t ? t.replace(/§[0-9a-fk-or]/g, '') : '';
+const clean = (text) => text ? text.replace(/§[0-9a-fk-or]/g, '') : '';
 
 io.on('connection', (socket) => {
     const sid = socket.handshake.query.sessionId;
@@ -21,10 +22,14 @@ io.on('connection', (socket) => {
         let [ip, port] = host.split(':');
         if (!sessions[sid].logs[user]) sessions[sid].logs[user] = [];
         
-        addLog(sid, user, `>>> ${ip} bağlanılıyor...`, "system");
+        addLog(sid, user, `>>> ${ip} adresine bağlanılıyor...`, "system");
 
         try {
-            const bot = mineflayer.createBot({ host: ip, port: port || 25565, username: user, version: ver, auth: 'offline' });
+            const bot = mineflayer.createBot({ 
+                host: ip, port: port || 25565, 
+                username: user, version: ver, auth: 'offline' 
+            });
+
             sessions[sid].bots[user] = bot;
             sessions[sid].sel = user;
 
