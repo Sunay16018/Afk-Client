@@ -21,19 +21,30 @@ io.on('connection', (socket) => {
     socket.on('start-bot', (data) => {
         const { host, user, ver } = data;
         let [ip, port] = host.split(':');
-        try {
-            const bot = mineflayer.createBot({ host: ip, port: port || 25565, username: user, version: ver, auth: 'offline' });
-            sessions[sid].bots[user] = bot;
-            if (!sessions[sid].logs[user]) sessions[sid].logs[user] = [];
+        
+        addLog(sid, user, `SİSTEM: ${ip} adresine bağlanılıyor...`, "system");
 
-            bot.on('login', () => addLog(sid, user, "Sistem bağlandı.", "system"));
+        try {
+            const bot = mineflayer.createBot({ 
+                host: ip, 
+                port: port || 25565, 
+                username: user, 
+                version: ver, 
+                auth: 'offline',
+                hideErrors: false 
+            });
+
+            sessions[sid].bots[user] = bot;
+            sessions[sid].sel = user;
+
+            bot.on('login', () => addLog(sid, user, "BAŞARI: Sunucuya giriş yapıldı!", "system"));
+            bot.on('spawn', () => addLog(sid, user, "BİLGİ: Bot dünyada aktif.", "system"));
             bot.on('message', (m) => addLog(sid, user, clean(m.toString()), "chat"));
-            bot.on('kicked', (r) => addLog(sid, user, `Atıldı: ${r}`, "error"));
-            bot.on('error', (e) => addLog(sid, user, `Hata: ${e.message}`, "error"));
+            bot.on('kicked', (r) => addLog(sid, user, `ATILDI: ${r}`, "error"));
+            bot.on('error', (e) => addLog(sid, user, `HATA: ${e.message}`, "error"));
             
-            // Bot verilerini periyodik gönder
             setInterval(() => updateClient(sid), 2000);
-        } catch (e) { socket.emit('err', e.message); }
+        } catch (e) { addLog(sid, user, `KRİTİK: ${e.message}`, "error"); }
     });
 
     socket.on('select-bot', (n) => { sessions[sid].sel = n; updateClient(sid); });
@@ -49,7 +60,7 @@ function addLog(sid, name, text, type) {
     const s = sessions[sid];
     if(s && s.logs[name]) {
         s.logs[name].push({ time: new Date().toLocaleTimeString(), text, type });
-        if(s.logs[name].length > 50) s.logs[name].shift();
+        if(s.logs[name].length > 100) s.logs[name].shift();
         updateClient(sid);
     }
 }
