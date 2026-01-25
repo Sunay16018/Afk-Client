@@ -1,69 +1,55 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AFK Client Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AFK Bot Panel</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="status"></div>
-    
+    <div id="status" style="position:fixed; top:0; width:100%; z-index:9999; display:none; text-align:center; padding:10px;"></div>
+
     <div class="menu">
-        <button class="menu-btn active" onclick="ui.showTab('bots')">BOTLAR</button>
-        <button class="menu-btn" onclick="ui.showTab('console')">KONSOL</button>
-        <button class="menu-btn" onclick="ui.showTab('movement')">HAREKET</button>
-        <button class="menu-btn" onclick="ui.showTab('inventory')">ENVANTER</button>
-        <button class="menu-btn" onclick="ui.showTab('players')">OYUNCULAR</button>
+        <div class="menu-btn active" onclick="ui.showTab('bots')">BOTLAR</div>
+        <div class="menu-btn" onclick="ui.showTab('console')">KONSOL</div>
+        <div class="menu-btn" onclick="ui.showTab('movement')">KONTROL</div>
+        <div class="menu-btn" onclick="ui.showTab('players')">OYUNCULAR</div>
     </div>
-    
+
     <div id="tab-bots" class="tab active">
-        <h2>🤖 Bot Ekle</h2>
         <div class="input-group">
-            <input type="text" id="host" placeholder="IP:Port (örn: play.sunucu.com)" value="localhost:25565">
-            <input type="text" id="username" placeholder="Bot Adı (örn: Kadir)">
-            <input type="text" id="version" placeholder="Sürüm (örn: 1.16.5)" value="1.16.5">
-            <button class="btn" onclick="app.connectBot()">✅ BAĞLAN</button>
+            <input type="text" id="host" placeholder="Sunucu IP:Port" value="play.sunucu.com">
+            <input type="text" id="username" placeholder="Bot İsmi">
+            <input type="text" id="version" placeholder="Sürüm (1.16.5)" value="1.16.5">
+            <button class="btn" onclick="app.connectBot()">SUNUCUYA BAĞLAN</button>
         </div>
-        <h3>Aktif Botlar</h3>
-        <div id="bot-list" class="bot-list">
-            </div>
+        <div id="bot-list"></div>
     </div>
-    
+
     <div id="tab-console" class="tab">
-        <h2>📟 Konsol <span id="console-bot-name"></span></h2>
         <div id="console"></div>
-        <div class="input-group" style="display:flex; gap:5px;">
-            <input type="text" id="chat-msg" placeholder="Mesaj gönder...">
-            <button class="btn" style="width:auto;" onclick="app.sendMessage()">📨</button>
+        <div class="input-group" style="display:flex; margin-top:10px; gap:5px;">
+            <input type="text" id="chat-msg" placeholder="Mesaj yaz..." style="margin:0">
+            <button class="btn" style="width:60px;" onclick="app.sendMessage()">></button>
         </div>
     </div>
-    
+
     <div id="tab-movement" class="tab">
-        <h2>🎮 Kontrolcü</h2>
         <div class="movement-grid">
             <div></div>
-            <button class="move-btn" onmousedown="app.move('ileri', 'down')" onmouseup="app.move('ileri', 'up')" ontouchstart="app.move('ileri', 'down')" ontouchend="app.move('ileri', 'up')">⬆</button>
+            <button class="move-btn" onmousedown="app.move('ileri','down')" onmouseup="app.move('ileri','up')" ontouchstart="app.move('ileri','down')" ontouchend="app.move('ileri','up')">▲</button>
             <div></div>
-            <button class="move-btn" onmousedown="app.move('sol', 'down')" onmouseup="app.move('sol', 'up')" ontouchstart="app.move('sol', 'down')" ontouchend="app.move('sol', 'up')">⬅</button>
-            <button class="move-btn" onmousedown="app.move('geri', 'down')" onmouseup="app.move('geri', 'up')" ontouchstart="app.move('geri', 'down')" ontouchend="app.move('geri', 'up')">⬇</button>
-            <button class="move-btn" onmousedown="app.move('sag', 'down')" onmouseup="app.move('sag', 'up')" ontouchstart="app.move('sag', 'down')" ontouchend="app.move('sag', 'up')">➡</button>
-            <button class="move-btn jump-btn" onclick="app.jump()">ZIPLA</button>
+            <button class="move-btn" onmousedown="app.move('sol','down')" onmouseup="app.move('sol','up')" ontouchstart="app.move('sol','down')" ontouchend="app.move('sol','up')">◀</button>
+            <button class="move-btn" onmousedown="app.move('geri','down')" onmouseup="app.move('geri','up')" ontouchstart="app.move('geri','down')" ontouchend="app.move('geri','up')">▼</button>
+            <button class="move-btn" onmousedown="app.move('sag','down')" onmouseup="app.move('sag','up')" ontouchstart="app.move('sag','down')" ontouchend="app.move('sag','up')">▶</button>
         </div>
-    </div>
-    
-    <div id="tab-inventory" class="tab">
-        <h2>🎒 Durum ve Çanta</h2>
-        <div id="stats" class="stats-bar">Veri bekleniyor...</div>
-        <div id="inventory-grid" class="inv-grid"></div>
+        <button class="btn" style="background:#FF9800; margin-top:20px" onclick="app.jump()">ZIPLA</button>
     </div>
 
     <div id="tab-players" class="tab">
-        <h2>👥 Sunucudaki Oyuncular</h2>
-        <div id="player-list-container" class="player-list-box">
-            </div>
+        <div id="player-list-container" class="player-list-box"></div>
     </div>
-    
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
