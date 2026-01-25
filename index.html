@@ -10,38 +10,31 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; user-select: none; }
         body { background: #000; color: #fff; margin: 0; overflow: hidden; }
         
-        /* Animasyonlu Splash */
-        #splash { position: fixed; inset: 0; background: #000; z-index: 99; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
-        .loader { width: 50px; height: 50px; border: 3px solid #111; border-top: 3px solid #2ecc71; border-radius: 50%; animation: s 1s linear infinite; }
-        @keyframes s { to { transform: rotate(360deg); } }
-
         /* Menü */
         .menu { display: flex; background: #080808; border-bottom: 2px solid #2ecc71; height: 60px; }
-        .menu-btn { flex: 1; border: none; background: none; color: #444; font-weight: bold; font-size: 12px; transition: 0.3s; }
+        .menu-btn { flex: 1; border: none; background: none; color: #444; font-weight: bold; cursor: pointer; }
         .menu-btn.active { color: #2ecc71; background: rgba(46, 204, 113, 0.1); border-bottom: 3px solid #2ecc71; }
 
-        /* Konsol Kutusu */
-        .tab { display: none; height: calc(100vh - 60px); padding: 15px; overflow-y: auto; }
-        .tab.active { display: block; animation: fade 0.3s; }
-        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        /* Sekmeler */
+        .tab { display: none; height: calc(100vh - 60px); padding: 15px; }
+        .tab.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+        /* Konsol - Belirgin Yeşil Çerçeve */
         #console { 
-            height: 75%; background: #000; border: 2px solid #2ecc71; 
+            height: 75%; background: #000; border: 3px solid #2ecc71; 
             border-radius: 12px; padding: 12px; overflow-y: auto; 
-            font-family: monospace; font-size: 14px; box-shadow: 0 0 20px rgba(46,204,113,0.2);
+            font-family: monospace; font-size: 14px; box-shadow: 0 0 20px rgba(46,204,113,0.3);
         }
         .log-system { color: #2ecc71; font-weight: bold; }
         .log-error { color: #ff4757; }
         .log-chat { color: #eccc68; }
 
-        input { width: 100%; padding: 15px; margin-bottom: 10px; background: #111; border: 1px solid #333; color: #2ecc71; border-radius: 8px; font-weight: bold; }
-        .btn { width: 100%; padding: 15px; background: #2ecc71; border: none; border-radius: 8px; font-weight: 900; color: #000; cursor: pointer; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); }
+        input { width: 100%; padding: 15px; margin-bottom: 10px; background: #111; border: 1px solid #333; color: #2ecc71; border-radius: 8px; }
+        .btn { width: 100%; padding: 15px; background: #2ecc71; border: none; border-radius: 8px; font-weight: 900; color: #000; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="splash"> <div class="loader"></div> <h2 style="color:#2ecc71">AFK BOT PRO</h2> </div>
-
     <div class="menu">
         <button class="menu-btn active" onclick="ui.tab('bots', this)">BAĞLANTI</button>
         <button class="menu-btn" onclick="ui.tab('console', this)">KONSOL</button>
@@ -49,9 +42,9 @@
 
     <div id="tab-bots" class="tab active">
         <input type="text" id="h" placeholder="Sunucu IP" value="play.sunucu.com">
-        <input type="text" id="u" placeholder="Bot İsmi">
-        <input type="text" id="v" placeholder="Sürüm (1.16.5)" value="1.16.5">
-        <button class="btn" onclick="app.connect()">BAĞLAN VE KONSOLA GİT</button>
+        <input type="text" id="u" placeholder="Bot Kullanıcı Adı">
+        <input type="text" id="v" placeholder="Sürüm (Örn: 1.16.5)" value="1.16.5">
+        <button class="btn" onclick="app.connect()">SUNUCUYA BAĞLAN VE KONSOLA GİT</button>
         <div id="bot-list" style="margin-top:20px"></div>
     </div>
 
@@ -69,8 +62,6 @@
         const socket = io({ query: { sessionId: sid } });
         let currentBot = null;
 
-        window.onload = () => setTimeout(() => document.getElementById('splash').style.display='none', 1500);
-
         const ui = {
             tab: (id, btn) => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -85,6 +76,7 @@
                 const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
                 if(!u) return;
                 socket.emit('start-bot', { host: h, user: u, ver: v });
+                // Otomatik Konsola Atar:
                 ui.tab('console', document.querySelectorAll('.menu-btn')[1]);
             },
             send: () => {
@@ -94,7 +86,11 @@
         };
 
         socket.on('update', (d) => {
-            document.getElementById('bot-list').innerHTML = d.active.map(n => `<div class="btn" style="margin-bottom:8px; background:#111; color:#2ecc71; border:1px solid #2ecc71" onclick="currentBot='${n}'; ui.tab('console', document.querySelectorAll('.menu-btn')[1])">🤖 ${n} (KONTROL ET)</div>`).join('');
+            document.getElementById('bot-list').innerHTML = d.active.map(n => `
+                <div class="btn" style="margin-bottom:8px; background:#111; color:#2ecc71; border:1px solid #2ecc71" 
+                onclick="currentBot='${n}'; ui.tab('console', document.querySelectorAll('.menu-btn')[1])">🤖 ${n} (KONTROL ET)</div>
+            `).join('');
+            
             if(d.sel && d.logs[d.sel]) {
                 currentBot = d.sel;
                 const c = document.getElementById('console');
