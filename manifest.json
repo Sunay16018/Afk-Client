@@ -1,0 +1,16 @@
+{
+  "short_name": "AFKPanel",
+  "name": "AFK Bot Pro Panel",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/616/616430.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0c0c0c",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#2ecc71"
+}
