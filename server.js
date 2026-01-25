@@ -9,8 +9,7 @@ const io = new Server(server);
 app.use(express.static(__dirname));
 
 let sessions = {};
-
-function clean(text) { return text ? text.replace(/§[0-9a-fk-or]/g, '') : ''; }
+const clean = (t) => t ? t.replace(/§[0-9a-fk-or]/g, '') : '';
 
 io.on('connection', (socket) => {
     const sid = socket.handshake.query.sessionId;
@@ -20,20 +19,16 @@ io.on('connection', (socket) => {
     socket.on('start-bot', (data) => {
         const { host, user, ver } = data;
         let [ip, port] = host.split(':');
-        
         if (!sessions[sid].logs[user]) sessions[sid].logs[user] = [];
-        addLog(sid, user, `[SİSTEM] ${ip} adresine bağlanılıyor...`, "system");
+        
+        addLog(sid, user, `>>> ${ip} bağlanılıyor...`, "system");
 
         try {
-            const bot = mineflayer.createBot({ 
-                host: ip, port: port || 25565, 
-                username: user, version: ver, auth: 'offline' 
-            });
-
+            const bot = mineflayer.createBot({ host: ip, port: port || 25565, username: user, version: ver, auth: 'offline' });
             sessions[sid].bots[user] = bot;
             sessions[sid].sel = user;
 
-            bot.on('login', () => addLog(sid, user, "BAŞARI: Giriş yapıldı!", "system"));
+            bot.on('login', () => addLog(sid, user, "BAŞARI: Sunucuya girildi!", "system"));
             bot.on('message', (m) => addLog(sid, user, clean(m.toString()), "chat"));
             bot.on('kicked', (r) => addLog(sid, user, `ATILDI: ${r}`, "error"));
             bot.on('error', (e) => addLog(sid, user, `HATA: ${e.message}`, "error"));
@@ -42,7 +37,6 @@ io.on('connection', (socket) => {
         } catch (e) { addLog(sid, user, `HATA: ${e.message}`, "error"); }
     });
 
-    socket.on('select-bot', (n) => { sessions[sid].sel = n; updateClient(sid); });
     socket.on('send-chat', (d) => { if(sessions[sid].bots[d.bot]) sessions[sid].bots[d.bot].chat(d.msg); });
 });
 
@@ -57,8 +51,7 @@ function addLog(sid, name, text, type) {
 
 function updateClient(sid) {
     const s = sessions[sid];
-    if(!s) return;
-    io.to(s.socketId).emit('update', { active: Object.keys(s.bots), logs: s.logs, sel: s.sel });
+    if(s) io.to(s.socketId).emit('update', { active: Object.keys(s.bots), logs: s.logs, sel: s.sel });
 }
 
 server.listen(process.env.PORT || 10000);
