@@ -4,57 +4,95 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AFK BOT PRO</title>
-    <link rel="manifest" href="/manifest.json">
-    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: sans-serif; user-select: none; }
+        body { background: #000; color: #fff; margin: 0; }
+        
+        /* Menü Stili */
+        .menu { display: flex; background: #0a0a0a; border-bottom: 2px solid #2ecc71; }
+        .menu-btn { flex: 1; padding: 20px; color: #555; border: none; background: none; font-weight: bold; cursor: pointer; }
+        .menu-btn.active { color: #2ecc71; background: rgba(46, 204, 113, 0.1); }
+
+        /* Sekme Yönetimi */
+        .tab { display: none; padding: 20px; }
+        .tab.active { display: block; }
+
+        /* Konsol - İstediğin gibi yeşil çerçeveli */
+        #console { 
+            height: 65vh; background: #000; border: 2px solid #2ecc71; 
+            border-radius: 10px; padding: 10px; overflow-y: auto; 
+            font-family: monospace; font-size: 13px; box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
+        }
+        .log-system { color: #f1c40f; } .log-error { color: #e74c3c; } .log-chat { color: #2ecc71; }
+
+        /* Butonlar ve Inputlar */
+        input { width: 100%; padding: 15px; margin-bottom: 10px; background: #111; border: 1px solid #222; color: #2ecc71; border-radius: 5px; }
+        .btn { width: 100%; padding: 15px; background: #2ecc71; border: none; font-weight: bold; border-radius: 5px; cursor: pointer; }
+    </style>
 </head>
 <body>
-    <div id="splash">
-        <div class="loader"></div>
-        <h1 style="color:#2ecc71; margin-top:25px; text-shadow: 0 0 15px #2ecc71;">AFK BOT PRO</h1>
-        <p style="color:#555;">SİSTEM YÜKLENİYOR...</p>
-    </div>
-
-    <div class="menu">
-        <button class="menu-btn active" onclick="ui.tab('bots')">BOTLAR</button>
-        <button class="menu-btn" onclick="ui.tab('console')">KONSOL</button>
-        <button class="menu-btn" onclick="ui.tab('move')">KONTROL</button>
-        <button class="menu-btn" onclick="ui.tab('players')">LİSTE</button>
+    <div class="menu" id="mainMenu">
+        <button class="menu-btn active" onclick="ui.tab('bots', this)">BOTLAR</button>
+        <button class="menu-btn" onclick="ui.tab('console', this)">KONSOL</button>
     </div>
 
     <div id="tab-bots" class="tab active">
-        <div class="card">
-            <h2 style="color:#2ecc71; margin-top:0;">BAĞLANTI KUR</h2>
-            <input type="text" id="host" placeholder="IP:Port" value="play.sunucu.com">
-            <input type="text" id="user" placeholder="Bot İsmi">
-            <input type="text" id="ver" placeholder="Sürüm (1.16.5)" value="1.16.5">
-            <button class="btn" onclick="app.connect()">SUNUCUYA GÖNDER</button>
-        </div>
-        <div id="bot-list"></div>
+        <input type="text" id="host" placeholder="Sunucu IP" value="play.sunucu.com">
+        <input type="text" id="user" placeholder="Bot İsmi">
+        <input type="text" id="ver" placeholder="Sürüm" value="1.16.5">
+        <button class="btn" onclick="app.connect()">SUNUCUYA BAĞLAN VE KONSOLA GİT</button>
+        <div id="bot-list" style="margin-top:20px"></div>
     </div>
 
     <div id="tab-console" class="tab">
         <div id="console"></div>
-        <div style="display:flex; gap:10px; margin-top:15px;">
-            <input type="text" id="msg" placeholder="Mesaj yaz..." style="margin:0;">
-            <button class="btn" style="width:100px; box-shadow:none;" onclick="app.send()">></button>
+        <div style="display:flex; gap:5px; margin-top:10px">
+            <input type="text" id="msg" placeholder="Mesaj yaz..." style="margin:0">
+            <button class="btn" style="width:80px" onclick="app.send()">></button>
         </div>
     </div>
 
-    <div id="tab-move" class="tab">
-        <div class="dpad">
-            <div class="empty"></div>
-            <button class="m-btn" onmousedown="app.move('ileri','down')" onmouseup="app.move('ileri','up')">▲</button>
-            <div class="empty"></div>
-            <button class="m-btn" onmousedown="app.move('sol','down')" onmouseup="app.move('sol','up')">◀</button>
-            <button class="m-btn" onmousedown="app.move('geri','down')" onmouseup="app.move('geri','up')">▼</button>
-            <button class="m-btn" onmousedown="app.move('sag','down')" onmouseup="app.move('sag','up')">▶</button>
-        </div>
-        <button class="btn" style="margin-top:30px; background:#f1c40f;" onclick="app.jump()">ZIPLA (JUMP)</button>
-    </div>
+    <script>
+        const sid = localStorage.getItem('sid') || 's' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('sid', sid);
+        const socket = io({ query: { sessionId: sid } });
+        let currentBot = null;
 
-    <div id="tab-players" class="tab"><div id="player-list" class="card"></div></div>
+        const ui = {
+            tab: (id, btn) => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('tab-' + id).classList.add('active');
+                if(btn) btn.classList.add('active');
+            }
+        };
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="script.js"></script>
+        const app = {
+            connect: () => {
+                const h = document.getElementById('host').value, u = document.getElementById('user').value, v = document.getElementById('ver').value;
+                if(!u) return;
+                socket.emit('start-bot', { host: h, user: u, ver: v });
+                // Bağlana basınca otomatik konsol sekmesine atar
+                ui.tab('console', document.querySelectorAll('.menu-btn')[1]);
+            },
+            send: () => {
+                const m = document.getElementById('msg').value;
+                if(currentBot && m) { socket.emit('send-chat', { bot: currentBot, msg: m }); document.getElementById('msg').value = ""; }
+            }
+        };
+
+        socket.on('update', (d) => {
+            const bl = document.getElementById('bot-list');
+            bl.innerHTML = d.active.map(n => `<div class="btn" style="margin-bottom:5px; background:#111; color:#2ecc71; border:1px solid #2ecc71" onclick="currentBot='${n}'; ui.tab('console', document.querySelectorAll('.menu-btn')[1])">🤖 ${n} (KONTROL ET)</div>`).join('');
+            
+            if(d.sel && d.logs[d.sel]) {
+                currentBot = d.sel;
+                const c = document.getElementById('console');
+                c.innerHTML = d.logs[currentBot].map(l => `<div class="log-${l.type}">[${l.time}] ${l.text}</div>`).join('');
+                c.scrollTop = c.scrollHeight;
+            }
+        });
+    </script>
 </body>
 </html>
