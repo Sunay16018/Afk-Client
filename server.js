@@ -15,144 +15,102 @@ app.get('/', (req, res) => {
 
 let sessions = {};
 
-// Renk kodlarını temizleme ve okunabilir yapma
 function stripColors(text) {
-    if (!text) return '';
-    return text.replace(/§[0-9a-fk-or]/g, '');
+    return text ? text.replace(/§[0-9a-fk-or]/g, '') : '';
 }
 
 io.on('connection', (socket) => {
-    const sessionId = socket.handshake.query.sessionId;
+    const sid = socket.handshake.query.sessionId;
     
-    if (sessionId && sessions[sessionId]) {
-        sessions[sessionId].socketId = socket.id;
-        updateClient(sessionId);
+    if (sid && sessions[sid]) {
+        sessions[sid].socketId = socket.id;
+        updateClient(sid);
     } else {
-        const newId = sessionId || Math.random().toString(36).substring(7);
-        sessions[newId] = { socketId: socket.id, bots: {}, logs: {}, selectedBot: null };
+        sessions[sid] = { socketId: socket.id, bots: {}, logs: {}, selectedBot: null };
     }
 
     socket.on('start-bot', (data) => {
-        const session = sessions[socket.handshake.query.sessionId];
-        if (!session) return;
-
+        const session = sessions[sid];
         const { host, user, ver } = data;
-        const sId = socket.handshake.query.sessionId;
-
-        if (session.bots[user]) {
-            socket.emit('error', 'Bu bot zaten listede!');
-            return;
-        }
-
         let [ip, port] = host.split(':');
         port = port ? parseInt(port) : 25565;
 
-        logToBot(session, user, `[SİSTEM] ${host} adresine bağlanılıyor...`);
-        updateClient(sId);
-
         try {
             const bot = mineflayer.createBot({
-                host: ip,
-                port: port,
-                username: user,
-                version: ver,
-                auth: 'offline'
+                host: ip, port: port, username: user, version: ver, auth: 'offline'
             });
 
             session.bots[user] = bot;
+            if (!session.logs[user]) session.logs[user] = [];
 
-            // BOT OLAYLARI (EVENTS)
+            bot.on('message', (json) => {
+                addLog(session, user, stripColors(json.toString()), 'chat');
+                updateClient(sid);
+            });
+
             bot.on('login', () => {
-                logToBot(session, user, `✅ BAŞARILI: ${user} sunucuya giriş yaptı!`);
-                updateClient(sId);
-            });
-
-            bot.on('spawn', () => {
-                logToBot(session, user, `🌍 Bot dünyada doğdu.`);
-                updateClient(sId);
-            });
-
-            bot.on('message', (jsonMsg) => {
-                const msg = stripColors(jsonMsg.toString());
-                logToBot(session, user, msg);
-                updateClient(sId);
+                addLog(session, user, "Sunucuya girildi.", 'system');
+                updateClient(sid);
             });
 
             bot.on('kicked', (reason) => {
-                const kickReason = JSON.parse(reason).text || reason;
-                logToBot(session, user, `❌ ATILDI: Sunucudan atıldın! Sebep: ${kickReason}`);
-                updateClient(sId);
+                addLog(session, user, `Atıldı: ${reason}`, 'error');
+                updateClient(sid);
             });
 
             bot.on('error', (err) => {
-                logToBot(session, user, `⚠️ HATA: ${err.message}`);
-                updateClient(sId);
-            });
-
-            bot.on('end', () => {
-                logToBot(session, user, `🔌 Bağlantı tamamen kesildi.`);
-                updateClient(sId);
+                addLog(session, user, `Hata: ${err.message}`, 'error');
+                updateClient(sid);
             });
 
         } catch (e) {
-            socket.emit('error', 'Bot başlatılamadı: ' + e.message);
+            socket.emit('error', e.message);
         }
     });
 
     socket.on('select-bot', (name) => {
-        const session = sessions[socket.handshake.query.sessionId];
-        if (session) {
-            session.selectedBot = name;
-            updateClient(socket.handshake.query.sessionId);
-        }
+        sessions[sid].selectedBot = name;
+        updateClient(sid);
     });
 
     socket.on('stop-bot', (name) => {
-        const session = sessions[socket.handshake.query.sessionId];
-        if (session && session.bots[name]) {
-            session.bots[name].quit();
-            delete session.bots[name];
-            updateClient(socket.handshake.query.sessionId);
+        if (sessions[sid].bots[name]) {
+            sessions[sid].bots[name].quit();
+            delete sessions[sid].bots[name];
+            updateClient(sid);
         }
     });
 
     socket.on('send-chat', (data) => {
-        const session = sessions[socket.handshake.query.sessionId];
-        if (session && session.bots[data.bot]) {
-            session.bots[data.bot].chat(data.msg);
-        }
+        if (sessions[sid].bots[data.bot]) sessions[sid].bots[data.bot].chat(data.msg);
+    });
+
+    socket.on('control-move', (data) => {
+        const bot = sessions[sid].bots[data.bot];
+        if (!bot) return;
+        const map = { 'ileri':'forward', 'geri':'back', 'sol':'left', 'sag':'right', 'zipla':'jump' };
+        if (map[data.direction]) bot.setControlState(map[data.direction], data.state === 'down');
     });
 });
 
-function logToBot(session, botName, msg) {
+function addLog(session, botName, text, type) {
     if (!session.logs[botName]) session.logs[botName] = [];
-    const time = new Date().toLocaleTimeString();
-    session.logs[botName].push(`[${time}] ${msg}`);
-    if (session.logs[botName].length > 50) session.logs[botName].shift();
+    session.logs[botName].push({ time: new Date().toLocaleTimeString(), text, type });
+    if (session.logs[botName].length > 100) session.logs[botName].shift();
 }
 
-function updateClient(sId) {
-    const session = sessions[sId];
-    if (!session) return;
-
+function updateClient(sid) {
+    const s = sessions[sid];
+    if (!s) return;
     const botData = {};
-    Object.keys(session.bots).forEach(name => {
-        const b = session.bots[name];
-        botData[name] = {
+    Object.keys(s.bots).forEach(n => {
+        const b = s.bots[n];
+        botData[n] = {
             hp: b.health || 0,
-            players: b.players ? Object.keys(b.players).map(p => ({
-                username: p,
-                ping: b.players[p].ping
-            })) : []
+            players: b.players ? Object.keys(b.players).map(p => ({ username: p, ping: b.players[p].ping })) : []
         };
     });
-
-    io.to(session.socketId).emit('bot-update', {
-        active: Object.keys(session.bots),
-        logs: session.logs,
-        botData: botData,
-        selectedBot: session.selectedBot
-    });
+    io.to(s.socketId).emit('bot-update', { active: Object.keys(s.bots), logs: s.logs, botData, selectedBot: s.selectedBot });
 }
 
-server.listen(process.env.PORT || 10000, () => console.log("Server Hazır"));
+server.listen(process.env.PORT || 10000);
