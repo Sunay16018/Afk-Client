@@ -3,43 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AFK Bot Panel</title>
+    <title>AFK BOT PRO</title>
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#2ecc71">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="splash">
         <div class="loader"></div>
-        <h1 class="glow-text">AFK BOT CONTROL</h1>
-        <p>Sistem Hazırlanıyor...</p>
+        <h1 style="color:#2ecc71; margin-top:25px; text-shadow: 0 0 15px #2ecc71;">AFK BOT PRO</h1>
+        <p style="color:#555;">SİSTEM YÜKLENİYOR...</p>
     </div>
-
-    <div id="status"></div>
 
     <div class="menu">
         <button class="menu-btn active" onclick="ui.tab('bots')">BOTLAR</button>
         <button class="menu-btn" onclick="ui.tab('console')">KONSOL</button>
-        <button class="menu-btn" onclick="ui.tab('move')">HAREKET</button>
+        <button class="menu-btn" onclick="ui.tab('move')">KONTROL</button>
         <button class="menu-btn" onclick="ui.tab('players')">LİSTE</button>
     </div>
 
     <div id="tab-bots" class="tab active">
-        <div class="card main-card">
-            <h2 class="neon-title">YENİ BAĞLANTI</h2>
-            <input type="text" id="host" placeholder="Sunucu IP:Port" value="play.sunucu.com">
-            <input type="text" id="user" placeholder="Bot Kullanıcı Adı">
-            <input type="text" id="ver" placeholder="Sürüm (Örn: 1.16.5)" value="1.16.5">
-            <button class="btn pulse" onclick="app.connect()">SUNUCUYA GÖNDER</button>
+        <div class="card">
+            <h2 style="color:#2ecc71; margin-top:0;">BAĞLANTI KUR</h2>
+            <input type="text" id="host" placeholder="IP:Port" value="play.sunucu.com">
+            <input type="text" id="user" placeholder="Bot İsmi">
+            <input type="text" id="ver" placeholder="Sürüm (1.16.5)" value="1.16.5">
+            <button class="btn" onclick="app.connect()">SUNUCUYA GÖNDER</button>
         </div>
         <div id="bot-list"></div>
     </div>
 
     <div id="tab-console" class="tab">
         <div id="console"></div>
-        <div class="card chat-box">
-            <input type="text" id="msg" placeholder="Mesaj yaz veya komut gönder..." style="margin:0">
-            <button class="btn send-btn" onclick="app.send()">GÖNDER</button>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <input type="text" id="msg" placeholder="Mesaj yaz..." style="margin:0;">
+            <button class="btn" style="width:100px; box-shadow:none;" onclick="app.send()">></button>
         </div>
     </div>
 
@@ -52,12 +49,10 @@
             <button class="m-btn" onmousedown="app.move('geri','down')" onmouseup="app.move('geri','up')">▼</button>
             <button class="m-btn" onmousedown="app.move('sag','down')" onmouseup="app.move('sag','up')">▶</button>
         </div>
-        <button class="btn jump-btn" onclick="app.jump()">ZIPLA / JUMP</button>
+        <button class="btn" style="margin-top:30px; background:#f1c40f;" onclick="app.jump()">ZIPLA (JUMP)</button>
     </div>
 
-    <div id="tab-players" class="tab">
-        <div id="player-list" class="card"></div>
-    </div>
+    <div id="tab-players" class="tab"><div id="player-list" class="card"></div></div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
