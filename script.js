@@ -1,84 +1,56 @@
-let sessionId = localStorage.getItem('afk_client_sid') || 'sess_' + Math.random().toString(36).substr(2, 9);
-localStorage.setItem('afk_client_sid', sessionId);
-
-const socket = io({ query: { sessionId: sessionId } });
-let currentSelectedBot = null;
+const sid = localStorage.getItem('sid') || 's' + Math.random().toString(36).substr(2, 9);
+localStorage.setItem('sid', sid);
+const socket = io({ query: { sessionId: sid } });
+let sel = null;
 
 const ui = {
-    showTab: (tabId) => {
-        document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
+    tab: (id) => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-        
-        document.getElementById('tab-' + tabId).style.display = 'block';
-        // Buton aktivasyonu
-        const activeBtn = Array.from(document.querySelectorAll('.menu-btn')).find(b => b.textContent.toLowerCase().includes(tabId.replace('tab-','')));
-        if(activeBtn) activeBtn.classList.add('active');
+        document.getElementById('tab-' + id).classList.add('active');
+        event.target.classList.add('active');
     },
-    showStatus: (msg, color) => {
+    stat: (m, c) => {
         const s = document.getElementById('status');
-        s.style.display = 'block';
-        s.style.backgroundColor = color === 'error' ? '#ff4444' : '#4CAF50';
-        s.textContent = msg;
-        setTimeout(() => s.style.display = 'none', 3000);
+        s.style.display = 'block'; s.style.background = c === 'err' ? '#e74c3c' : '#2ecc71';
+        s.textContent = m; setTimeout(() => s.style.display = 'none', 2000);
     }
 };
 
 const app = {
-    connectBot: () => {
-        const host = document.getElementById('host').value;
-        const user = document.getElementById('username').value;
-        const ver = document.getElementById('version').value;
-        if(!user) return ui.showStatus("İsim girin!", "error");
-        socket.emit('start-bot', { host, user, ver });
+    connect: () => {
+        const h = document.getElementById('host').value, u = document.getElementById('user').value, v = document.getElementById('ver').value;
+        if (!u) return ui.stat("İsim gir!", "err");
+        socket.emit('start-bot', { host: h, user: u, ver: v });
     },
-    selectBot: (name) => {
-        currentSelectedBot = name;
-        socket.emit('select-bot', name);
-        ui.showTab('console'); // Bot seçince direkt konsola atar
+    select: (n) => { sel = n; socket.emit('select-bot', n); ui.tab('console'); },
+    send: () => {
+        const m = document.getElementById('msg').value;
+        if (sel && m) { socket.emit('send-chat', { bot: sel, msg: m }); document.getElementById('msg').value = ""; }
     },
-    stopBot: (name) => {
-        socket.emit('stop-bot', name);
-    },
-    sendMessage: () => {
-        const msg = document.getElementById('chat-msg').value;
-        if(!currentSelectedBot || !msg) return;
-        socket.emit('send-chat', { bot: currentSelectedBot, msg: msg });
-        document.getElementById('chat-msg').value = "";
-    }
+    move: (d, s) => { if (sel) socket.emit('control-move', { bot: sel, direction: d, state: s }); },
+    jump: () => { app.move('zipla', 'down'); setTimeout(() => app.move('zipla', 'up'), 200); }
 };
 
-socket.on('bot-update', (data) => {
-    // Bot Listesini Çiz
-    const list = document.getElementById('bot-list');
-    list.innerHTML = data.active.map(name => `
-        <div class="bot-item ${name === data.selectedBot ? 'active-bot' : ''}" onclick="app.selectBot('${name}')">
-            <span>🤖 ${name}</span>
-            <button class="btn-red" onclick="event.stopPropagation(); app.stopBot('${name}')">KAPAT</button>
+socket.on('bot-update', (d) => {
+    const bl = document.getElementById('bot-list');
+    bl.innerHTML = d.active.map(n => `
+        <div class="bot-item ${n === d.selectedBot ? 'sel' : ''}" onclick="app.select('${n}')">
+            <span>🤖 ${n}</span>
+            <button onclick="socket.emit('stop-bot','${n}')" style="background:#e74c3c; border:none; color:#fff; border-radius:4px; padding:5px 10px;">X</button>
         </div>
     `).join('');
 
-    // Konsolu Güncelle
-    if (data.selectedBot && data.logs[data.selectedBot]) {
-        currentSelectedBot = data.selectedBot;
-        const con = document.getElementById('console');
-        con.innerHTML = data.logs[data.selectedBot].map(line => `<div class="log-line">${line}</div>`).join('');
-        con.scrollTop = con.scrollHeight; // Otomatik aşağı kaydır
+    if (d.selectedBot && d.logs[d.selectedBot]) {
+        sel = d.selectedBot;
+        const c = document.getElementById('console');
+        c.innerHTML = d.logs[sel].map(l => `<div class="log-${l.type}">[${l.time}] ${l.text}</div>`).join('');
+        c.scrollTop = c.scrollHeight;
     }
 
-    // Oyuncu Listesini Güncelle
-    if (data.selectedBot && data.botData[data.selectedBot]) {
-        const pList = document.getElementById('player-list-container');
-        pList.innerHTML = data.botData[data.selectedBot].players.map(p => `
-            <div class="player-card">
-                <img src="https://minotar.net/avatar/${p.username}/32">
-                <div>
-                    <b>${p.username}</b><br>
-                    <small>${p.ping}ms</small>
-                </div>
-            </div>
+    if (d.selectedBot && d.botData[sel]) {
+        document.getElementById('player-list').innerHTML = d.botData[sel].players.map(p => `
+            <div style="padding:10px; border-bottom:1px solid #222;"><b>${p.username}</b> <small>${p.ping}ms</small></div>
         `).join('');
     }
 });
-
-// Pencere açıldığında sekmeyi ayarla
-window.onload = () => ui.showTab('bots');
