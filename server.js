@@ -7,31 +7,32 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Statik dosyaları sun (index.html, style.css, script.js)
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-// Kalıcı hafıza (Basit obje tabanlı veritabanı)
-// Format: { 'session_id': { socketId: '...', bots: { 'BotName': botInstance }, logs: {} } }
+// Oturum Hafızası
 let sessions = {};
 
-// Minecraft renk kodlarını temizleme (Basit loglar için)
+// Minecraft Renk Temizleyici
 function stripColors(text) {
+    if (!text) return '';
     return text.replace(/§[0-9a-fk-or]/g, '');
 }
 
 io.on('connection', (socket) => {
-    // 1. Oturum Kurtarma Mekanizması
+    // 1. Session ID Kontrolü (Oturum Kurtarma)
     const sessionId = socket.handshake.query.sessionId;
     
     if (sessionId && sessions[sessionId]) {
-        console.log(`♻️ Oturum kurtarıldı: ${sessionId}`);
-        sessions[sessionId].socketId = socket.id; // Yeni socket ID'yi güncelle
-        updateClient(sessionId);
+        console.log(`♻️  Eski oturum geri yüklendi: ${sessionId}`);
+        sessions[sessionId].socketId = socket.id;
+        // Kullanıcı geri geldiğinde hemen verileri gönder
+        setTimeout(() => updateClient(sessionId), 500);
     } else {
-        // Yeni oturum oluştur
         const newSessionId = sessionId || Math.random().toString(36).substring(7);
         console.log(`🆕 Yeni oturum: ${newSessionId}`);
         sessions[newSessionId] = { 
@@ -40,8 +41,6 @@ io.on('connection', (socket) => {
             logs: {},
             selectedBot: null 
         };
-        // İstemciye yeni ID'yi bildir (opsiyonel, genelde istemci üretir ama garanti olsun)
-        socket.emit('session-created', newSessionId);
     }
 
     const getCurrentSession = () => {
@@ -66,16 +65,18 @@ io.on('connection', (socket) => {
         const sId = socket.handshake.query.sessionId;
 
         if (session.bots[user]) {
-            socket.emit('error', 'Bu isimde bir bot zaten aktif!');
+            socket.emit('error', 'Bu isimde bir bot zaten var!');
             return;
         }
 
-        console.log(`🚀 Bot başlatılıyor: ${user}`);
-        session.logs[user] = [`[SİSTEM] ${user} sunucuya bağlanıyor...`];
-        updateClient(sId); // Arayüzde "yükleniyor" gibi gözükmesi için
-
+        // Host parse et
         let [ip, port] = host.split(':');
         port = port ? parseInt(port) : 25565;
+
+        // Log başlat
+        if (!session.logs[user]) session.logs[user] = [];
+        session.logs[user].push(`[SİSTEM] ${user} bağlanıyor...`);
+        updateClient(sId);
 
         try {
             const bot = mineflayer.createBot({
@@ -83,7 +84,7 @@ io.on('connection', (socket) => {
                 port: port,
                 username: user,
                 version: ver,
-                auth: 'offline' // Render'da sadece offline/cracked çalışır
+                auth: 'offline' // Render'da offline/cracked çalışır
             });
 
             session.bots[user] = bot;
@@ -96,8 +97,7 @@ io.on('connection', (socket) => {
 
             bot.on('end', () => {
                 logToBot(session, user, `[BAĞLANTI] Bağlantı koptu.`);
-                // Botu sessiondan silme, kullanıcı "Kapat" diyene kadar kalsın ki logları görsün
-                // Ama bot objesi öldüğü için yeniden bağlanması gerekebilir.
+                // Botu silmiyoruz ki logları okuyabilesin. "KES" diyene kadar durur.
                 updateClient(sId);
             });
 
@@ -107,22 +107,25 @@ io.on('connection', (socket) => {
             });
 
             bot.on('message', (jsonMsg) => {
-                // Ham json mesajını al, renk kodlarını frontend halledecek ya da burada işlenecek
-                const cleanMsg = stripColors(jsonMsg.toAnsi()); 
-                // Not: toAnsi() terminal renkleri verir, biz düz text kaydedelim, frontend'e ham veri de yollayabiliriz
-                logToBot(session, user, cleanMsg);
-                
-                // Sohbet mesajı gelince arayüzü güncelle (çok sık olmamalı)
-                // Performans için her mesajda updateClient çağırmak yerine throttle yapılabilir
-                // Şimdilik kritik güncellemeler için bırakıyoruz.
+                const msg = stripColors(jsonMsg.toAnsi());
+                logToBot(session, user, msg);
+                // Çok sık güncelleme yapmamak için chat mesajlarında updateClient çağırmıyoruz
+                // Ama logs array'i güncellendiği için bir sonraki update'de görünecek
+                // Kritik mesajlar için manuel tetiklenebilir
             });
             
-            // Oyuncu listesi güncellemeleri için
+            // Oyuncu giriş çıkışlarında listeyi güncelle
             bot.on('playerJoined', () => updateClient(sId));
             bot.on('playerLeft', () => updateClient(sId));
 
+            // Periyodik güncelleme (Chat vb. için) - Her 2 saniyede bir
+            // Bu, çok fazla socket trafiği yapmadan arayüzü taze tutar
+            if (!bot.updateInterval) {
+                bot.updateInterval = setInterval(() => updateClient(sId), 2000);
+            }
+
         } catch (e) {
-            socket.emit('error', 'Bot oluşturma hatası: ' + e.message);
+            socket.emit('error', 'Bot hatası: ' + e.message);
             delete session.bots[user];
             updateClient(sId);
         }
@@ -133,15 +136,17 @@ io.on('connection', (socket) => {
         const session = getCurrentSession();
         if (!session || !session.bots[botName]) return;
 
-        session.bots[botName].quit();
-        delete session.bots[botName];
-        if (session.logs[botName]) delete session.logs[botName]; // Logları da temizle
-        if (session.selectedBot === botName) session.selectedBot = null;
+        const bot = session.bots[botName];
+        if (bot.updateInterval) clearInterval(bot.updateInterval);
         
+        bot.quit();
+        delete session.bots[botName];
+        
+        if (session.selectedBot === botName) session.selectedBot = null;
         updateClient(socket.handshake.query.sessionId);
     });
 
-    // Chat Gönderme
+    // Chat
     socket.on('send-chat', (data) => {
         const session = getCurrentSession();
         if (session && session.bots[data.bot]) {
@@ -162,44 +167,41 @@ io.on('connection', (socket) => {
             }
         }
     });
-    
-    // Bağlantı koparsa (Tarayıcı kapanırsa)
+
     socket.on('disconnect', () => {
-        console.log(`Kullanıcı ayrıldı (Session korunuyor): ${sessionId}`);
-        // BURADA botları öldürmüyoruz (bot.quit YAPMIYORUZ).
-        // Böylece tarayıcıyı kapatınca botlar oyunda kalır.
+        // Session'ı silmiyoruz. Kullanıcı geri gelirse devam eder.
+        console.log(`Socket ayrıldı: ${sessionId}`);
     });
 });
 
 function logToBot(session, botName, msg) {
     if (!session.logs[botName]) session.logs[botName] = [];
     session.logs[botName].push(msg);
-    if (session.logs[botName].length > 100) session.logs[botName].shift(); // Son 100 log
+    if (session.logs[botName].length > 100) session.logs[botName].shift();
 }
 
 function updateClient(sessionId) {
     if (!sessions[sessionId]) return;
-    
     const session = sessions[sessionId];
     const socketId = session.socketId;
-    
-    // Veriyi hazırla
+
     const activeBots = Object.keys(session.bots);
     const botData = {};
 
     activeBots.forEach(name => {
         const bot = session.bots[name];
         
-        // Oyuncu listesini hazırla
+        // Oyuncuları Hazırla
         const players = [];
         if (bot.players) {
             Object.values(bot.players).forEach(p => {
-                players.push({
-                    username: p.username,
-                    uuid: p.uuid, // Skin almak için
-                    displayName: p.displayName ? p.displayName.toString() : p.username, // Renkli isim desteği için raw json lazım aslında ama basitleştiriyoruz
-                    ping: p.ping
-                });
+                if (p.username) {
+                    players.push({
+                        username: p.username,
+                        ping: p.ping,
+                        uuid: p.uuid // Skin için
+                    });
+                }
             });
         }
 
@@ -207,11 +209,10 @@ function updateClient(sessionId) {
             hp: bot.health || 0,
             food: bot.food || 0,
             inv: bot.inventory ? bot.inventory.slots.filter(i => i!=null).map(i => ({name: i.name, count: i.count, slot: i.slot})) : [],
-            players: players // Oyuncu listesi eklendi
+            players: players
         };
     });
 
-    // Sadece ilgili kullanıcıya gönder
     io.to(socketId).emit('bot-update', {
         active: activeBots,
         logs: session.logs,
@@ -221,7 +222,5 @@ function updateClient(sessionId) {
 }
 
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
-                         
+server.listen(PORT, () => console.log(`Sunucu çalışıyor: ${PORT}`));
+                   
