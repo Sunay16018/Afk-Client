@@ -2,367 +2,68 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>AFK Client - Render</title>
-    <style>
-        * { box-sizing: border-box; font-family: Arial, sans-serif; }
-        body { background: #1a1a1a; color: #fff; margin: 0; padding: 0; }
-        
-        /* Menü */
-        .menu { display: flex; background: #2a2a2a; border-bottom: 2px solid #444; }
-        .menu-btn { flex: 1; padding: 12px; background: none; border: none; color: #aaa; cursor: pointer; }
-        .menu-btn.active { color: #4CAF50; border-bottom: 3px solid #4CAF50; }
-        
-        /* Sekmeler */
-        .tab { display: none; padding: 20px; }
-        .tab.active { display: block; }
-        
-        /* Giriş alanları */
-        .input-group { margin-bottom: 15px; }
-        input { width: 100%; padding: 10px; margin-bottom: 10px; background: #333; border: 1px solid #555; color: white; border-radius: 4px; }
-        
-        /* Butonlar */
-        .btn { padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
-        .btn:hover { background: #45a049; }
-        .btn-red { background: #f44336; }
-        .btn-red:hover { background: #d32f2f; }
-        
-        /* Bot listesi */
-        .bot-list { margin-top: 20px; }
-        .bot-item { background: #2a2a2a; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #444; display: flex; justify-content: space-between; }
-        .bot-item.selected { border-color: #4CAF50; background: #2a4a2a; }
-        
-        /* Konsol */
-        #console { height: 300px; background: #000; color: #4CAF50; padding: 15px; overflow-y: auto; font-family: monospace; border-radius: 6px; margin-bottom: 15px; }
-        
-        /* Hareket kontrolleri */
-        .movement-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 10px; 
-            max-width: 300px; 
-            margin: 20px auto; 
-        }
-        .move-btn { 
-            padding: 20px; 
-            background: #2196F3; 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 16px; 
-        }
-        .move-btn:active { background: #1976D2; }
-        #jump-btn { background: #FF9800; grid-column: 2; }
-        
-        /* Envanter */
-        .inv-grid { 
-            display: grid; 
-            grid-template-columns: repeat(9, 1fr); 
-            gap: 5px; 
-            background: #555; 
-            padding: 10px; 
-            border-radius: 5px; 
-            max-width: 500px; 
-            margin: 0 auto; 
-        }
-        .slot { 
-            width: 50px; 
-            height: 50px; 
-            background: #777; 
-            border: 2px solid #999; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
-        .slot img { width: 40px; height: 40px; }
-        
-        /* Switch */
-        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #4CAF50; }
-        input:checked + .slider:before { transform: translateX(26px); }
-        
-        /* Durum mesajı */
-        #status { 
-            position: fixed; 
-            top: 10px; 
-            right: 10px; 
-            background: #333; 
-            padding: 10px; 
-            border-radius: 5px; 
-            display: none; 
-            z-index: 1000; 
-        }
-    </style>
-</head>
+    <title>AFK Client Pro</title>
+    <link rel="stylesheet" href="style.css"> </head>
 <body>
-    <!-- Durum mesajı -->
     <div id="status"></div>
     
-    <!-- Menü -->
     <div class="menu">
-        <button class="menu-btn active" onclick="showTab('bots')">BOTLAR</button>
-        <button class="menu-btn" onclick="showTab('console')">KONSOL</button>
-        <button class="menu-btn" onclick="showTab('movement')">HAREKET</button>
-        <button class="menu-btn" onclick="showTab('inventory')">ENVANTER</button>
-    </div>
+        <button class="menu-btn active" onclick="ui.showTab('bots')">BOTLAR</button>
+        <button class="menu-btn" onclick="ui.showTab('console')">KONSOL</button>
+        <button class="menu-btn" onclick="ui.showTab('movement')">HAREKET</button>
+        <button class="menu-btn" onclick="ui.showTab('inventory')">ENVANTER</button>
+        <button class="menu-btn" onclick="ui.showTab('players')">OYUNCULAR</button> </div>
     
-    <!-- Botlar Sekmesi -->
     <div id="tab-bots" class="tab active">
-        <h2>🤖 Yeni Bot Ekle</h2>
+        <h2>🤖 Bot Yönetimi</h2>
         <div class="input-group">
-            <input type="text" id="host" placeholder="Sunucu IP:Port (örnek: play.server.com:25565)" value="localhost:25565">
-            <input type="text" id="username" placeholder="Bot Adı" value="Bot_1">
-            <input type="text" id="version" placeholder="Minecraft Sürümü" value="1.16.5">
-            <button class="btn" onclick="connectBot()">✅ BAĞLAN</button>
+            <input type="text" id="host" placeholder="IP:Port (örn: play.sunucu.com)" value="localhost:25565">
+            <input type="text" id="username" placeholder="Bot Adı">
+            <input type="text" id="version" placeholder="Sürüm (örn: 1.16.5)" value="1.16.5">
+            <button class="btn" onclick="app.connectBot()">✅ BAĞLAN</button>
         </div>
-        
         <h3>Aktif Botlar</h3>
-        <div id="bot-list" class="bot-list"></div>
+        <div id="bot-list" class="bot-list">
+            </div>
     </div>
     
-    <!-- Konsol Sekmesi -->
     <div id="tab-console" class="tab">
-        <h2>📟 Konsol</h2>
-        <div id="console">[SİSTEM] AFK Client başlatıldı...</div>
+        <h2>📟 Canlı Konsol <span id="console-bot-name" style="font-size:12px; color:#888;"></span></h2>
+        <div id="console"></div>
         <div class="input-group">
-            <input type="text" id="message" placeholder="Mesaj yazın...">
-            <button class="btn" onclick="sendMessage()">📨 GÖNDER</button>
+            <input type="text" id="chat-msg" placeholder="Mesaj gönder...">
+            <button class="btn" onclick="app.sendMessage()">📨 YOLLA</button>
         </div>
     </div>
     
-    <!-- Hareket Sekmesi -->
     <div id="tab-movement" class="tab">
-        <h2>🎮 Hareket Kontrolleri</h2>
+        <h2>🎮 Kontrolcü</h2>
         <div class="movement-grid">
             <div></div>
-            <button class="move-btn" onmousedown="startMove('ileri')" onmouseup="stopMove('ileri')" ontouchstart="startMove('ileri')" ontouchend="stopMove('ileri')">⬆ İLERİ</button>
+            <button class="move-btn" onmousedown="app.move('ileri', 'down')" onmouseup="app.move('ileri', 'up')">⬆</button>
             <div></div>
-            <button class="move-btn" onmousedown="startMove('sol')" onmouseup="stopMove('sol')" ontouchstart="startMove('sol')" ontouchend="stopMove('sol')">⬅ SOL</button>
-            <button class="move-btn" onmousedown="startMove('geri')" onmouseup="stopMove('geri')" ontouchstart="startMove('geri')" ontouchend="stopMove('geri')">⬇ GERİ</button>
-            <button class="move-btn" onmousedown="startMove('sag')" onmouseup="stopMove('sag')" ontouchstart="startMove('sag')" ontouchend="stopMove('sag')">➡ SAĞ</button>
-            <button class="move-btn" id="jump-btn" onclick="jump()">🦘 ZIPLA</button>
+            <button class="move-btn" onmousedown="app.move('sol', 'down')" onmouseup="app.move('sol', 'up')">⬅</button>
+            <button class="move-btn" onmousedown="app.move('geri', 'down')" onmouseup="app.move('geri', 'up')">⬇</button>
+            <button class="move-btn" onmousedown="app.move('sag', 'down')" onmouseup="app.move('sag', 'up')">➡</button>
+            <button class="move-btn jump-btn" onclick="app.jump()">ZIPLA</button>
         </div>
-        <p style="text-align: center; color: #aaa; margin-top: 20px;">
-            Tuşlara basılı tutarak hareket ettirebilirsiniz
-        </p>
     </div>
     
-    <!-- Envanter Sekmesi -->
     <div id="tab-inventory" class="tab">
-        <h2>🎒 Envanter</h2>
-        <div id="stats" style="text-align: center; margin: 20px; font-size: 18px;">
-            ❤ <span id="hp">0</span> | 🍖 <span id="food">0</span>
+        <h2>🎒 Envanter ve Durum</h2>
+        <div id="stats" class="stats-bar">
+            Bot Seçiniz
         </div>
         <div id="inventory-grid" class="inv-grid"></div>
     </div>
+
+    <div id="tab-players" class="tab">
+        <h2>👥 Sunucudaki Oyuncular</h2>
+        <p style="color:#aaa; font-size:12px;">Seçili botun gördüğü oyuncular listelenir.</p>
+        <div id="player-list-container" class="player-list-box">
+            </div>
+    </div>
     
-    <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-        // Socket.io bağlantısı
-        const socket = io();
-        let selectedBot = '';
-        
-        // Bağlantı durumu
-        socket.on('connect', () => {
-            showStatus('✅ Sunucuya bağlandı', 'success');
-            console.log('Socket.io bağlandı');
-        });
-        
-        socket.on('connect_error', (err) => {
-            showStatus('❌ Sunucu bağlantısı yok', 'error');
-            console.error('Socket.io bağlantı hatası:', err);
-        });
-        
-        // Bot güncellemeleri
-        socket.on('bot-update', (data) => {
-            console.log('Bot güncellemesi:', data);
-            
-            // Bot listesini güncelle
-            updateBotList(data.active);
-            
-            // Konsolu güncelle
-            if (selectedBot && data.logs[selectedBot]) {
-                updateConsole(data.logs[selectedBot]);
-            }
-            
-            // Envanter ve stats
-            if (selectedBot && data.botData[selectedBot]) {
-                updateStats(data.botData[selectedBot]);
-                updateInventory(data.botData[selectedBot].inv);
-            }
-        });
-        
-        // Hata mesajları
-        socket.on('error', (msg) => {
-            showStatus('❌ ' + msg, 'error');
-        });
-        
-        // Fonksiyonlar
-        function showStatus(message, type) {
-            const status = document.getElementById('status');
-            status.textContent = message;
-            status.style.display = 'block';
-            status.style.background = type === 'success' ? '#4CAF50' : '#f44336';
-            
-            setTimeout(() => {
-                status.style.display = 'none';
-            }, 3000);
-        }
-        
-        function showTab(tabName) {
-            // Tüm sekmeleri gizle
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Tüm menü butonlarını pasif yap
-            document.querySelectorAll('.menu-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // İlgili sekmeyi ve butonu aktif yap
-            document.getElementById('tab-' + tabName).classList.add('active');
-            document.querySelector(`button[onclick="showTab('${tabName}')"]`).classList.add('active');
-        }
-        
-        function updateBotList(activeBots) {
-            const list = document.getElementById('bot-list');
-            
-            if (activeBots.length === 0) {
-                list.innerHTML = '<p style="color: #aaa; text-align: center;">Aktif bot yok</p>';
-                return;
-            }
-            
-            let html = '';
-            activeBots.forEach(bot => {
-                const isSelected = selectedBot === bot;
-                html += `
-                    <div class="bot-item ${isSelected ? 'selected' : ''}" onclick="selectBot('${bot}')">
-                        <span>${bot} ${isSelected ? '✓' : ''}</span>
-                        <button class="btn btn-red" onclick="event.stopPropagation(); stopBot('${bot}')">KES</button>
-                    </div>
-                `;
-            });
-            
-            list.innerHTML = html;
-        }
-        
-        function selectBot(botName) {
-            selectedBot = botName;
-            socket.emit('select-bot', botName);
-            showStatus(`✅ ${botName} seçildi`, 'success');
-            showTab('console');
-        }
-        
-        function connectBot() {
-            const host = document.getElementById('host').value.trim();
-            const user = document.getElementById('username').value.trim();
-            const ver = document.getElementById('version').value.trim();
-            
-            if (!host || !user || !ver) {
-                showStatus('❌ Tüm alanları doldurun!', 'error');
-                return;
-            }
-            
-            socket.emit('start-bot', { host, user, ver });
-            showStatus(`🔄 ${user} bağlanıyor...`, 'success');
-            showTab('console');
-        }
-        
-        function stopBot(botName) {
-            if (confirm(`${botName} botunu durdurmak istiyor musunuz?`)) {
-                socket.emit('stop-bot', botName);
-                if (selectedBot === botName) {
-                    selectedBot = '';
-                }
-            }
-        }
-        
-        function updateConsole(logs) {
-            const consoleElement = document.getElementById('console');
-            const logText = logs.join('<br>');
-            consoleElement.innerHTML = logText;
-            consoleElement.scrollTop = consoleElement.scrollHeight;
-        }
-        
-        function sendMessage() {
-            const msg = document.getElementById('message').value.trim();
-            if (!selectedBot) {
-                showStatus('❌ Önce bir bot seçin!', 'error');
-                return;
-            }
-            
-            if (!msg) return;
-            
-            socket.emit('send-chat', { bot: selectedBot, msg: msg });
-            document.getElementById('message').value = '';
-        }
-        
-        function updateStats(data) {
-            document.getElementById('hp').textContent = Math.round(data.hp || 0);
-            document.getElementById('food').textContent = Math.round(data.food || 0);
-        }
-        
-        function updateInventory(inv) {
-            const grid = document.getElementById('inventory-grid');
-            if (!grid) return;
-            
-            let html = '';
-            for (let i = 0; i < 45; i++) {
-                const item = (inv || []).find(it => it.slot === i);
-                html += `
-                    <div class="slot" title="${item ? item.name : 'Boş'}">
-                        ${item ? `
-                            <img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${item.name}.png"
-                                 onerror="this.style.display='none'">
-                        ` : ''}
-                    </div>
-                `;
-            }
-            grid.innerHTML = html;
-        }
-        
-        function startMove(direction) {
-            if (!selectedBot) {
-                showStatus('❌ Önce bir bot seçin!', 'error');
-                return;
-            }
-            socket.emit('control-move', { 
-                bot: selectedBot, 
-                direction: direction, 
-                state: 'down' 
-            });
-        }
-        
-        function stopMove(direction) {
-            if (!selectedBot) return;
-            socket.emit('control-move', { 
-                bot: selectedBot, 
-                direction: direction, 
-                state: 'up' 
-            });
-        }
-        
-        function jump() {
-            if (!selectedBot) {
-                showStatus('❌ Önce bir bot seçin!', 'error');
-                return;
-            }
-            // Zıpla ve hemen bırak
-            socket.emit('control-move', { bot: selectedBot, direction: 'zipla', state: 'down' });
-            setTimeout(() => {
-                socket.emit('control-move', { bot: selectedBot, direction: 'zipla', state: 'up' });
-            }, 200);
-        }
-        
-        // Sayfa yüklendiğinde
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('AFK Client başlatıldı');
-        });
-    </script>
-</body>
-    </html>
+    <script src="script.js"></script> </body>
+</html>
