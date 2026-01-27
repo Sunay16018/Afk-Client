@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>AFK CLIENT PRO</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="top-bar">
+        <div style="font-weight: bold; color: #58a6ff;">AFK CLIENT CONTROL</div>
+        <div class="input-row">
+            <input type="text" id="host" placeholder="IP:Port">
+            <input type="text" id="username" placeholder="Bot İsmi">
+            <input type="password" id="password" placeholder="Şifre">
+        </div>
+        <div class="action-row">
+            <button onclick="connect()" class="btn btn-start">BAĞLAN</button>
+            <button onclick="disconnect()" class="btn btn-stop">KES</button>
+            <button id="tab-btn" class="btn btn-tab">TAB</button>
+            <div style="flex:1"></div>
+            <button onclick="move('forward')" class="btn btn-move">↑</button>
+            <button onclick="move('left')" class="btn btn-move">←</button>
+            <button onclick="move('back')" class="btn btn-move">↓</button>
+            <button onclick="move('right')" class="btn btn-move">→</button>
+            <button onclick="move('jump')" class="btn btn-move">ZIPLA</button>
+        </div>
+    </div>
+
+    <div class="terminal-window">
+        <div class="terminal-header">
+            <span>TERMINAL / CONSOLE</span>
+            <span id="status-indicator" style="color: #ff4d4d;">● OFFLINE</span>
+        </div>
+        <div id="logs"></div>
+        <div class="input-area">
+            <span style="color: #238636;">➜</span>
+            <input type="text" id="chat-input" placeholder="Mesaj yaz..." autocomplete="off">
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
