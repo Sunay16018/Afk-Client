@@ -11,12 +11,12 @@ function getSession(sid) {
     return userSessions[sid];
 }
 
-function startBot(sid, host, user, ver) {
+function startBot(sid, host, user, ver, autoJoinCmds = []) {
     const s = getSession(sid);
     if (s.bots[user]) return;
 
     const [ip, port] = host.split(':');
-    s.logs[user] = ["<b style='color:gray'>[SİSTEM] Başlatılıyor...</b>"];
+    s.logs[user] = ["<b style='color:gray'>[SİSTEM] Bağlantı kuruluyor...</b>"];
 
     const bot = mineflayer.createBot({
         host: ip, port: parseInt(port) || 25565, 
@@ -24,28 +24,47 @@ function startBot(sid, host, user, ver) {
     });
 
     s.bots[user] = bot;
-    s.configs[user] = { msgT: null, afkT: null, mineT: null }; // Ayarlar için timerlar
+    if(!s.configs[user]) {
+        s.configs[user] = { msgT: null, afkT: null, mineT: null, autoReconnect: false, loginCmds: [] };
+    }
 
-    bot.on('login', () => s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " oyuna girdi!</b>"));
+    bot.on('login', () => {
+        s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " başarıyla bağlandı!</b>");
+        
+        // Giriş Komutlarını Çalıştır
+        if (s.configs[user].loginCmds.length > 0) {
+            s.configs[user].loginCmds.forEach(cmdObj => {
+                setTimeout(() => {
+                    if(s.bots[user]) s.bots[user].chat(cmdObj.cmd);
+                }, cmdObj.delay * 1000);
+            });
+        }
+    });
     
     bot.on('message', (m) => {
+        // Oyun içi renkleri ve formatı koruyarak HTML'e çevirir
         s.logs[user].push(m.toHTML());
-        if(s.logs[user].length > 100) s.logs[user].shift();
+        if(s.logs[user].length > 150) s.logs[user].shift();
     });
 
-    bot.on('end', () => {
-        if(s.logs[user]) s.logs[user].push("<b style='color:#ff4757'>[BAĞLANTI] Bağlantı kesildi.</b>");
+    bot.on('end', (reason) => {
+        s.logs[user].push(`<b style='color:#ff4757'>[AYRILDI] Bağlantı kesildi: ${reason}</b>`);
         delete s.bots[user];
+        
+        // Otomatik Yeniden Bağlanma
+        if (s.configs[user].autoReconnect) {
+            s.logs[user].push("<b style='color:#e67e22'>[SİSTEM] 5 saniye içinde otomatik yeniden bağlanılıyor...</b>");
+            setTimeout(() => startBot(sid, host, user, ver), 5000);
+        }
     });
 
     bot.on('kicked', (reason) => {
-        if(s.logs[user]) s.logs[user].push("<b style='color:#ff4757'>[ATILDI] Sunucu bağlantıyı kesti.</b>");
-        delete s.bots[user];
+        const kickMsg = JSON.parse(reason).text || reason;
+        s.logs[user].push(`<b style='color:#ff4757'>[ATILDI] Sebep: ${kickMsg}</b>`);
     });
 
     bot.on('error', (e) => { 
-        if(s.logs[user]) s.logs[user].push("<b style='color:#ff4757'>[HATA] " + e.message + "</b>"); 
-        delete s.bots[user]; 
+        s.logs[user].push("<b style='color:#ff4757'>[HATA] " + e.message + "</b>"); 
     });
 }
 
@@ -59,46 +78,40 @@ const server = http.createServer((req, res) => {
     }
 
     if (!sid) return res.end("No SID");
-
     const s = getSession(sid);
     const bot = s.bots[q.user];
 
     if (p === '/start') { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
-    if (p === '/stop' && bot) { bot.quit(); delete s.bots[q.user]; return res.end("ok"); }
+    if (p === '/stop' && bot) { bot.quit(); return res.end("ok"); }
     if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
     
-    if (p === '/update' && bot) {
+    if (p === '/update') {
         const conf = s.configs[q.user];
-        
-        // ENVANTERDEN EŞYA ATMA
-        if (q.type === 'inv' && q.status === 'drop') {
-            const item = bot.inventory.slots[q.val];
-            if (item) bot.tossStack(item);
-        } 
-        // OTOMATİK MESAJ
-        else if (q.type === 'msg') {
-            if (conf.msgT) { clearInterval(conf.msgT); conf.msgT = null; }
-            else { conf.msgT = setInterval(() => bot.chat(decodeURIComponent(q.val)), parseInt(q.sec) * 1000); }
-        }
-        // ANTI-AFK (ZIPLAMA)
-        else if (q.type === 'afk') {
-            if (conf.afkT) { clearInterval(conf.afkT); conf.afkT = null; }
-            else { conf.afkT = setInterval(() => { bot.setControlState('jump', true); setTimeout(() => bot.setControlState('jump', false), 500); }, 10000); }
-        }
-        // AKILLI KAZMA (ÖNÜNDEKİ BLOĞU KIRAR)
-        else if (q.type === 'mine') {
-            if (conf.mineT) { clearInterval(conf.mineT); conf.mineT = null; }
-            else {
-                conf.mineT = setInterval(async () => {
-                    const block = bot.blockAtCursor(4);
-                    if (block && block.type !== 0) { try { await bot.dig(block); } catch(e) {} }
-                }, 1000);
+        if (q.type === 'reconnect') {
+            conf.autoReconnect = q.val === 'true';
+        } else if (q.type === 'loginCmds') {
+            conf.loginCmds = JSON.parse(decodeURIComponent(q.val));
+        } else if (bot) {
+            if (q.type === 'msg') {
+                if (conf.msgT) { clearInterval(conf.msgT); conf.msgT = null; }
+                else { conf.msgT = setInterval(() => bot.chat(decodeURIComponent(q.val)), parseInt(q.sec) * 1000); }
+            } else if (q.type === 'afk') {
+                if (conf.afkT) { clearInterval(conf.afkT); conf.afkT = null; }
+                else { conf.afkT = setInterval(() => { bot.setControlState('jump', true); setTimeout(() => bot.setControlState('jump', false), 500); }, 10000); }
+            } else if (q.type === 'mine') {
+                if (conf.mineT) { clearInterval(conf.mineT); conf.mineT = null; }
+                else {
+                    conf.mineT = setInterval(async () => {
+                        const block = bot.blockAtCursor(4);
+                        if (block && block.type !== 0) { try { await bot.dig(block); } catch(e) {} }
+                    }, 1000);
+                }
             }
         }
         return res.end("ok");
     }
 
-    if (p === '/data' && sid) {
+    if (p === '/data') {
         const active = Object.keys(s.bots);
         const botData = {};
         if (q.user && s.bots[q.user]) {
@@ -110,16 +123,8 @@ const server = http.createServer((req, res) => {
             };
         }
         res.setHeader('Content-Type', 'application/json');
-        return res.end(JSON.stringify({ active, logs: s.logs, botData }));
+        return res.end(JSON.stringify({ active, logs: s.logs, botData, configs: s.configs }));
     }
 });
 
 server.listen(process.env.PORT || 10000);
-
-// RENDER.COM UYANIK TUTMA (SELF-PING)
-const RENDER_HOST = process.env.RENDER_EXTERNAL_HOSTNAME;
-if (RENDER_HOST) {
-    setInterval(() => {
-        http.get(`http://${RENDER_HOST}`);
-    }, 10 * 60 * 1000); // 10 dakikada bir ping
-}
