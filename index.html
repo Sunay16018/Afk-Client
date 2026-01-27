@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AFK Client v4 Pro</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 13px; }
+        body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        nav { display: flex; background: #161b22; border-bottom: 1px solid #30363d; height: 50px; flex-shrink: 0; }
+        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; background: #1c2128; }
+        .tab { display: none; flex: 1; padding: 15px; overflow-y: auto; flex-direction: column; }
+        .active-tab { display: flex; }
+        
+        #logbox { height: 300px; background: #000; color: #2ecc71; padding: 10px; overflow-y: auto; font-family: 'Consolas', monospace; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; line-height: 1.5; }
+
+        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px; background: #333; padding: 10px; border: 4px solid #1a1a1a; border-radius: 4px; width: fit-content; margin: 0 auto; }
+        .slot { width: 36px; height: 36px; background: #8b8b8b; border: 2px solid #373737; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .slot:hover { background: #aaaaaa; }
+        .slot img { width: 30px; height: 30px; image-rendering: pixelated; }
+        .count { position: absolute; bottom: 1px; right: 2px; font-size: 10px; color: white; text-shadow: 1px 1px #000; font-weight: bold; }
+
+        .bot-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #161b22; border: 1px solid #30363d; margin-top: 8px; border-radius: 8px; cursor: pointer; }
+        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 12px; border-radius: 6px; width: 100%; margin-bottom: 10px; }
+        
+        .settings-card { background: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 15px; }
+        h3 { margin-top: 0; color: #58a6ff; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
+        <button onclick="tab('term')" id="btn-term">KONSOL</button>
+        <button onclick="tab('inv')" id="btn-inv">ENVANTER</button>
+        <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
+    </nav>
+
+    <div id="tab-bots" class="tab active-tab">
+        <div class="settings-card">
+            <input id="h" placeholder="Sunucu IP:Port (Örn: oyna.server.com:25565)">
+            <input id="u" placeholder="Bot Kullanıcı Adı">
+            <input id="v" placeholder="Sürüm (Örn: 1.16.5)">
+            <button class="btn" style="width:100%; background:#238636;" onclick="add()">SİSTEME BAĞLAN</button>
+        </div>
+        <div id="list"></div>
+    </div>
+
+    <div id="tab-term" class="tab">
+        <div id="logbox"></div>
+        <form onsubmit="doSend(event)" style="display:flex; gap:5px;">
+            <input id="m" placeholder="Komut veya mesaj yaz..." autocomplete="off">
+            <button type="submit" class="btn">GÖNDER</button>
+        </form>
+    </div>
+
+    <div id="tab-inv" class="tab">
+        <div id="stats" style="text-align:center; margin-bottom:15px; font-weight:bold; font-size:15px;">❤️ - | 🍖 -</div>
+        <div class="inv-grid" id="inv-box"></div>
+    </div>
+
+    <div id="tab-settings" class="tab">
+        <div class="settings-card">
+            <h3>Otomatik Mesaj</h3>
+            <input id="autoMsg" placeholder="Gönderilecek mesaj...">
+            <input id="autoSec" type="number" placeholder="Saniye aralığı (örn: 60)">
+            <button class="btn" style="width:100%; background:#1f6feb;" onclick="setSetting('msg')">BAŞLAT / DURDUR</button>
+        </div>
+        <div class="settings-card">
+            <h3>Anti-AFK</h3>
+            <button class="btn" style="width:100%; background:#8e44ad;" onclick="setSetting('afk')">ZIPLAMA MODU AÇ/KAPAT</button>
+        </div>
+        <div class="settings-card">
+            <h3>Akıllı Kazma</h3>
+            <p style="font-size:11px; color:#8b949e; margin-bottom:10px;">Bot önündeki bloğu sürekli kazar (Cobblestone farm için ideal).</p>
+            <button class="btn" style="width:100%; background:#f39c12;" onclick="setSetting('mine')">KAZMAYI AÇ/KAPAT</button>
+        </div>
+    </div>
+
+    <script>
+        if(!localStorage.getItem('sid')) localStorage.setItem('sid', 'sid_'+Math.random().toString(36).substr(2,9));
+        const mySID = localStorage.getItem('sid');
+        let sel = "";
+
+        function tab(t) {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
+            document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.add('active-tab');
+            document.getElementById('btn-'+t).classList.add('active');
+        }
+
+        async function add() {
+            const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
+            if(!h || !u) return alert("IP ve İsim zorunludur!");
+            await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
+            sel = u; tab('term');
+        }
+
+        async function doSend(e) {
+            e.preventDefault();
+            const i = document.getElementById('m');
+            if(!sel || !i.value) return;
+            await fetch(`/send?sid=${mySID}&user=${sel}&msg=${encodeURIComponent(i.value)}`);
+            i.value = "";
+        }
+
+        async function setSetting(type) {
+            if(!sel) return alert("Önce bot listesinden bir bot seçmelisin!");
+            let val = "", sec = "";
+            if(type === 'msg') {
+                val = encodeURIComponent(document.getElementById('autoMsg').value);
+                sec = document.getElementById('autoSec').value;
+                if(!sec) return alert("Saniye girmelisin!");
+            }
+            await fetch(`/update?sid=${mySID}&user=${sel}&type=${type}&val=${val}&sec=${sec}`);
+            alert("Ayar komutu gönderildi.");
+        }
+
+        async function dropItem(slot) {
+            if(confirm("Bu eşyayı yere atmak istediğine emin misin?"))
+                await fetch(`/update?sid=${mySID}&user=${sel}&type=inv&status=drop&val=${slot}`);
+        }
+
+        setInterval(async () => {
+            try {
+                const r = await fetch(`/data?sid=${mySID}&user=${sel}`);
+                const d = await r.json();
+                
+                document.getElementById('list').innerHTML = d.active.map(n => `
+                    <div class="bot-row" style="border-color:${sel==n?'#2ecc71':'#30363d'}" onclick="sel='${n}'">
+                        <span>● ${n} ${sel==n?'<b style="color:#2ecc71">(SEÇİLİ)</b>':''}</span>
+                        <button class="btn" style="background:#da3633; padding:5px 10px;" onclick="fetch('/stop?sid=${mySID}&user=${n}')">KAPAT</button>
+                    </div>
+                `).join('');
+
+                if(sel && d.logs[sel]) {
+                    const lb = document.getElementById('logbox');
+                    lb.innerHTML = d.logs[sel].join('<br>');
+                    lb.scrollTop = lb.scrollHeight;
+
+                    if(d.botData[sel]) {
+                        const bd = d.botData[sel];
+                        document.getElementById('stats').innerHTML = `❤️ <span style="color:#ff4757">${Math.round(bd.hp)}</span> | 🍖 <span style="color:#ffa502">${Math.round(bd.food)}</span>`;
+                        let invH = "";
+                        for(let i=0; i<45; i++) {
+                            const it = bd.inv.find(x => x.slot === i);
+                            invH += `<div class="slot" onclick="dropItem(${i})">
+                                ${it ? `<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png" onerror="this.src='https://minecraft.wiki/images/Barrier_JE2_BE2.png'"><span class="count">${it.count>1?it.count:''}</span>` : ''}
+                            </div>`;
+                        }
+                        document.getElementById('inv-box').innerHTML = invH;
+                    }
+                }
+            } catch(e) {}
+        }, 1000);
+    </script>
+</body>
+  </html>
+  
