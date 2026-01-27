@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AFK PRO v11</title>
+    <title>AFK PRO v11 - SPAM & INV</title>
     <style>
         * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; user-select: none; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -17,13 +17,20 @@
         input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 8px; border-radius: 4px; }
         .btn { padding: 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
         .on { background: #238636; } .off { background: #da3633; } .blue { background: #1f6feb; }
-        .task-item { display: flex; justify-content: space-between; align-items: center; background: #0d1117; padding: 8px; margin-top: 5px; border-radius: 4px; border-left: 3px solid #1f6feb; }
+        
+        /* GÖREV LİSTESİ */
+        .task-item { display: flex; justify-content: space-between; align-items: center; background: #0d1117; padding: 8px; margin-top: 5px; border-radius: 4px; border-left: 3px solid #2ecc71; }
+        .task-info { display: flex; flex-direction: column; }
+        .task-info b { color: #58a6ff; }
+        
         .control-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 150px; margin: 5px auto; }
-        .ctrl { padding: 12px; background: #21262d; border: 1px solid #30363d; text-align: center; border-radius: 8px; }
+        .ctrl { padding: 12px; background: #21262d; border: 1px solid #30363d; text-align: center; border-radius: 8px; cursor: pointer; }
+        
+        /* ENVANTER */
         .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; margin-top: 5px; }
-        .slot { width: 34px; height: 34px; background: #333; border: 1px solid #444; position: relative; }
+        .slot { width: 34px; height: 34px; background: #333; border: 1px solid #444; position: relative; cursor: pointer; }
         .slot img { width: 100%; image-rendering: pixelated; }
-        .slot span { position: absolute; bottom: 0; right: 0; font-size: 9px; background: rgba(0,0,0,0.7); padding: 1px; }
+        .slot span { position: absolute; bottom: 0; right: 0; font-size: 9px; background: rgba(0,0,0,0.8); padding: 1px; color: white; }
     </style>
 </head>
 <body>
@@ -37,15 +44,15 @@
         <div class="card">
             <input id="h" placeholder="IP:Port" style="width:100%">
             <input id="u" placeholder="İsim" style="width:100%; margin:5px 0;">
-            <input id="v" placeholder="Sürüm" style="width:100%; margin-bottom:5px;">
-            <button class="btn blue" style="width:100%" onclick="add()">SİSTEMİ BAŞLAT</button>
+            <input id="v" placeholder="Sürüm (1.16.5 vb.)" style="width:100%; margin-bottom:5px;">
+            <button class="btn blue" style="width:100%" onclick="add()">BAĞLAN</button>
         </div>
         <div id="list"></div>
     </div>
 
     <div id="t-term" class="tab">
         <div id="logbox"></div>
-        <input id="m" placeholder="Hızlı mesaj..." style="width:100%; margin-bottom:5px;" onkeypress="if(event.key==='Enter')send()">
+        <input id="m" placeholder="Hızlı mesaj gönder..." style="width:100%; margin-bottom:5px;" onkeypress="if(event.key==='Enter')send()">
         <div class="control-pad">
             <div></div><div class="ctrl" onmousedown="move('forward',true)" onmouseup="move('forward',false)">↑</div><div></div>
             <div class="ctrl" onmousedown="move('left',true)" onmouseup="move('left',false)">←</div>
@@ -59,15 +66,15 @@
         <div id="coords" class="card" style="text-align:center; font-weight:bold; color:#58a6ff;">X: 0 Y: 0 Z: 0</div>
         
         <div class="card">
-            <b>YENİ GÖREV (KOMUT/MESAJ)</b><br>
-            <input id="ti" placeholder="/login şifre veya Mesaj" style="width:100%; margin:5px 0;">
-            Süre (sn): <input id="ts" type="number" value="0" style="width:60px;"> <small>(0=Sadece girişte)</small>
+            <b>SPAM / KOMUT EKLE</b><br>
+            <input id="ti" placeholder="Mesaj veya /komut" style="width:100%; margin:5px 0;">
+            Tekrar (Saniye): <input id="ts" type="number" value="60" style="width:60px;">
             <button class="btn blue" onclick="addTask()" style="float:right">EKLE</button>
             <div id="taskList" style="margin-top:10px;"></div>
         </div>
 
         <div class="card">
-            <b>ENVANTER (Atmak için tıkla)</b>
+            <b>ENVANTER (Eşya Atmak İçin Tıkla)</b>
             <div class="inv-grid" id="inv"></div>
         </div>
 
@@ -139,11 +146,14 @@
                     
                     document.getElementById('taskList').innerHTML = c.tasks.map((t, i) => `
                         <div class="task-item">
-                            <span>${t.text} (<b>${t.time}s</b>)</span>
+                            <div class="task-info">
+                                <b>${t.text}</b>
+                                <small>Süre: ${t.time} sn</small>
+                            </div>
                             <div>
-                                <button class="btn blue" style="padding:2px 5px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=edit_task&val=${i}&amt=5')">+</button>
-                                <button class="btn blue" style="padding:2px 5px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=edit_task&val=${i}&amt=-5')">-</button>
-                                <button class="btn off" style="padding:2px 5px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=del_task&val=${i}')">SİL</button>
+                                <button class="btn blue" style="padding:2px 6px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=edit_task&val=${i}&amt=10')">+10</button>
+                                <button class="btn blue" style="padding:2px 6px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=edit_task&val=${i}&amt=-10')">-10</button>
+                                <button class="btn off" style="padding:2px 6px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=del_task&val=${i}')">SİL</button>
                             </div>
                         </div>
                     `).join('');
