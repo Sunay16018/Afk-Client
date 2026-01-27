@@ -18,9 +18,8 @@ function startBot(sid, host, user, ver) {
     const [ip, port] = host.split(':');
     s.logs[user] = ["<b style='color:gray'>[SİSTEM] Başlatılıyor...</b>"];
     
-    // Ayarların kalıcı olması için default değerler
     if (!s.configs[user]) {
-        s.configs[user] = { afk: false, reconnect: true, mining: false, cmds: [] };
+        s.configs[user] = { afk: false, reconnect: true, mining: false, tasks: [] };
     }
 
     const bot = mineflayer.createBot({
@@ -33,31 +32,57 @@ function startBot(sid, host, user, ver) {
 
     bot.on('login', () => {
         s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " bağlandı!</b>");
-        // Kayıtlı komutları sırayla gönder
-        s.configs[user].cmds.forEach((c, i) => setTimeout(() => bot.chat(c), 3000 * (i + 1)));
+        // Görev Döngülerini Başlat
+        startTasks(sid, user);
     });
 
     bot.on('message', (m) => {
         s.logs[user].push(m.toHTML());
-        if(s.logs[user].length > 50) s.logs[user].shift(); // Render çökmemesi için logu kısa tut
+        if(s.logs[user].length > 60) s.logs[user].shift();
     });
 
-    // Akıllı Kazma (Tick bazlı değil, daha hafif)
+    // Akıllı Kazma
     setInterval(() => {
-        if (s.configs[user] && s.configs[user].mining && bot.entity) {
-            const b = bot.blockAtCursor(4);
-            if (b) bot.dig(b, true, () => {});
+        if (s.configs[user]?.mining && bot.entity) {
+            const block = bot.blockAtCursor(4);
+            if (block) bot.dig(block, true, () => {});
         }
     }, 1000);
 
     bot.on('end', (reason) => {
-        s.logs[user].push(`<b style='color:#ff4757'>[AYRILDI] Durum: ${reason}</b>`);
-        if (s.configs[user] && s.configs[user].reconnect) {
+        s.logs[user].push(`<b style='color:#ff4757'>[AYRILDI] ${reason}</b>`);
+        stopTasks(sid, user);
+        if (s.configs[user]?.reconnect) {
             setTimeout(() => startBot(sid, host, user, ver), 5000);
         }
     });
 
-    bot.on('error', () => {}); // Çökmeyi engelle
+    bot.on('error', () => {});
+}
+
+function startTasks(sid, user) {
+    const s = getSession(sid);
+    const conf = s.configs[user];
+    const bot = s.bots[user];
+    stopTasks(sid, user); // Varsa eskileri durdur
+
+    conf.tasks.forEach((task, index) => {
+        if (task.time > 0) {
+            task.timer = setInterval(() => {
+                if (s.bots[user]) s.bots[user].chat(task.text);
+            }, task.time * 1000);
+        } else {
+            // Süre 0 ise sadece girişte bir kez atar
+            setTimeout(() => { if (s.bots[user]) s.bots[user].chat(task.text); }, 2000);
+        }
+    });
+}
+
+function stopTasks(sid, user) {
+    const s = getSession(sid);
+    if (s.configs[user]) {
+        s.configs[user].tasks.forEach(t => clearInterval(t.timer));
+    }
 }
 
 const server = http.createServer((req, res) => {
@@ -74,6 +99,7 @@ const server = http.createServer((req, res) => {
     if (p === '/stop') { 
         if(s.configs[q.user]) s.configs[q.user].reconnect = false;
         if(bot) bot.quit();
+        stopTasks(sid, q.user);
         delete s.bots[q.user]; 
         return res.end("ok"); 
     }
@@ -82,14 +108,22 @@ const server = http.createServer((req, res) => {
     
     if (p === '/move' && bot) {
         bot.setControlState(q.dir, q.state === 'true');
-        if (q.dir === 'jump' && q.state === 'true') setTimeout(() => bot.setControlState('jump', false), 500);
         return res.end("ok");
     }
 
     if (p === '/update') {
         const conf = s.configs[q.user];
-        if (q.type === 'cmd') conf.cmds.push(decodeURIComponent(q.val));
-        else if (q.type === 'inv' && bot) {
+        if (q.type === 'add_task') {
+            conf.tasks.push({ text: decodeURIComponent(q.val), time: parseInt(q.sec) || 0, timer: null });
+            startTasks(sid, q.user);
+        } else if (q.type === 'del_task') {
+            clearInterval(conf.tasks[q.val].timer);
+            conf.tasks.splice(q.val, 1);
+        } else if (q.type === 'edit_task') {
+            conf.tasks[q.val].time += parseInt(q.amt);
+            if (conf.tasks[q.val].time < 0) conf.tasks[q.val].time = 0;
+            startTasks(sid, q.user);
+        } else if (q.type === 'inv' && bot) {
             const item = bot.inventory.slots[q.val];
             if (item) bot.tossStack(item);
         } else if (conf) {
@@ -105,7 +139,7 @@ const server = http.createServer((req, res) => {
             botData[q.user] = {
                 hp: b.health || 0,
                 pos: b.entity ? b.entity.position : {x:0, y:0, z:0},
-                inv: b.inventory.slots.map((i, idx) => i ? { name: i.name, slot: idx } : null).filter(x => x)
+                inv: b.inventory.slots.map((i, idx) => i ? { name: i.name, slot: idx, count: i.count } : null).filter(x => x)
             };
         }
         res.setHeader('Content-Type', 'application/json');
@@ -113,3 +147,4 @@ const server = http.createServer((req, res) => {
     }
 });
 server.listen(process.env.PORT || 10000);
+            
