@@ -3,90 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AFK Client Proxy-Fix</title>
+    <title>AFK PRO MAX</title>
     <style>
-        * { 
-            box-sizing: border-box; font-family: 'Segoe UI', sans-serif; font-size: 13px; 
-            user-select: none; -webkit-user-select: none; /* Yazı seçimi kapalı */
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; font-size: 13px; user-select: none; -webkit-user-select: none; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
         nav { display: flex; background: #161b22; border-bottom: 1px solid #30363d; height: 50px; flex-shrink: 0; }
         nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
-        nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; background: #1c2128; }
-
+        nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; }
         .tab { display: none; flex: 1; padding: 12px; overflow-y: auto; flex-direction: column; }
         .active-tab { display: flex; }
-        
         #logbox { height: 260px; background: #000; padding: 10px; overflow-y: auto; font-family: monospace; border-radius: 8px; border: 1px solid #30363d; user-select: text; -webkit-user-select: text; }
-        
-        .control-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 180px; margin: 15px auto; }
-        .ctrl-btn { padding: 18px; background: #21262d; border: 1px solid #30363d; color: white; border-radius: 12px; text-align: center; cursor: pointer; font-size: 18px; }
+        .control-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 150px; margin: 10px auto; }
+        .ctrl-btn { padding: 15px; background: #21262d; border: 1px solid #30363d; color: white; border-radius: 8px; text-align: center; cursor: pointer; }
         .ctrl-btn:active { background: #238636; }
-
-        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; background: #111; padding: 8px; border: 2px solid #30363d; margin: 0 auto; }
-        .slot { width: 34px; height: 34px; background: #8b8b8b; border: 1px solid #444; position: relative; }
+        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; background: #111; padding: 8px; margin: 0 auto; width: fit-content; border: 2px solid #30363d; }
+        .slot { width: 32px; height: 32px; background: #8b8b8b; border: 1px solid #444; }
         .slot img { width: 100%; image-rendering: pixelated; }
-
-        .card { background: #161b22; padding: 15px; border-radius: 10px; border: 1px solid #30363d; margin-bottom: 10px; }
-        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 12px; border-radius: 6px; width: 100%; margin: 5px 0; user-select: text; -webkit-user-select: text; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; margin-top: 5px; }
-        .on { background: #238636; }
-        .off { background: #da3633; }
-        .blue { background: #1f6feb; }
+        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 8px; }
+        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 6px; width: 100%; margin: 5px 0; user-select: text; -webkit-user-select: text; }
+        .btn { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; margin-top: 5px; }
+        .on { background: #238636; } .off { background: #da3633; } .blue { background: #1f6feb; }
     </style>
 </head>
 <body>
+    <nav>
+        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
+        <button onclick="tab('term')" id="btn-term">KONSOL</button>
+        <button onclick="tab('inv')" id="btn-inv">ENVANTER</button>
+        <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
+    </nav>
 
-<nav>
-    <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
-    <button onclick="tab('term')" id="btn-term">KONSOL</button>
-    <button onclick="tab('inv')" id="btn-inv">ENVANTER</button>
-    <button onclick="tab('settings')" id="btn-settings">AYARLAR</button>
-</nav>
-
-<div id="tab-bots" class="tab active-tab">
-    <div class="card">
-        <input id="h" placeholder="IP:Port">
-        <input id="u" placeholder="Bot İsmi">
-        <input id="v" placeholder="Sürüm (örn: 1.20.1)">
-        <button class="btn blue" onclick="add()">BAĞLAN</button>
+    <div id="tab-bots" class="tab active-tab">
+        <div class="card">
+            <input id="h" placeholder="IP:Port">
+            <input id="u" placeholder="Bot İsmi">
+            <input id="v" placeholder="Sürüm">
+            <button class="btn blue" onclick="add()">BAĞLAN</button>
+        </div>
+        <div id="list"></div>
     </div>
-    <div id="list"></div>
-</div>
 
-<div id="tab-term" class="tab">
-    <div id="logbox"></div>
-    <form onsubmit="doSend(event)" style="display:flex; gap:5px; margin-top:10px;">
-        <input id="m" placeholder="Mesaj..." autocomplete="off">
-        <button type="submit" class="btn blue" style="width:80px; margin:0;">GÖNDER</button>
-    </form>
-    
-    <div class="control-pad">
-        <div></div><div class="ctrl-btn" onmousedown="move('forward',true)" onmouseup="move('forward',false)" ontouchstart="move('forward',true)" ontouchend="move('forward',false)">↑</div><div></div>
-        <div class="ctrl-btn" onmousedown="move('left',true)" onmouseup="move('left',false)" ontouchstart="move('left',true)" ontouchend="move('left',false)">←</div>
-        <div class="ctrl-btn" onmousedown="move('jump',true)" onmouseup="move('jump',false)" ontouchstart="move('jump',true)" ontouchend="move('jump',false)">JMP</div>
-        <div class="ctrl-btn" onmousedown="move('right',true)" onmouseup="move('right',false)" ontouchstart="move('right',true)" ontouchend="move('right',false)">→</div>
-        <div></div><div class="ctrl-btn" onmousedown="move('back',true)" onmouseup="move('back',false)" ontouchstart="move('back',true)" ontouchend="move('back',false)">↓</div><div></div>
+    <div id="tab-term" class="tab">
+        <div id="logbox"></div>
+        <form onsubmit="doSend(event)" style="display:flex; gap:5px; margin-top:5px;">
+            <input id="m" placeholder="Mesaj..." autocomplete="off">
+            <button type="submit" class="btn blue" style="width:70px; margin:0;">GİT</button>
+        </form>
+        <div class="control-pad">
+            <div></div><div class="ctrl-btn" onmousedown="move('forward',true)" onmouseup="move('forward',false)" ontouchstart="move('forward',true)" ontouchend="move('forward',false)">↑</div><div></div>
+            <div class="ctrl-btn" onmousedown="move('left',true)" onmouseup="move('left',false)" ontouchstart="move('left',true)" ontouchend="move('left',false)">←</div>
+            <div class="ctrl-btn" onmousedown="move('jump',true)" onmouseup="move('jump',false)" ontouchstart="move('jump',true)" ontouchend="move('jump',false)">Zıpla</div>
+            <div class="ctrl-btn" onmousedown="move('right',true)" onmouseup="move('right',false)" ontouchstart="move('right',true)" ontouchend="move('right',false)">→</div>
+            <div></div><div class="ctrl-btn" onmousedown="move('back',true)" onmouseup="move('back',false)" ontouchstart="move('back',true)" ontouchend="move('back',false)">↓</div><div></div>
+        </div>
     </div>
-</div>
 
-<div id="tab-inv" class="tab">
-    <div id="coords" class="card" style="text-align:center; color:#58a6ff; font-weight:bold;">X: 0 | Y: 0 | Z: 0</div>
-    <div class="inv-grid" id="inv-box"></div>
-</div>
+    <div id="tab-inv" class="tab">
+        <div id="coords" class="card" style="text-align:center; color:#58a6ff; font-weight:bold;">X: 0 Y: 0 Z: 0</div>
+        <div class="inv-grid" id="inv-box"></div>
+    </div>
 
-<div id="tab-settings" class="tab">
-    <div class="card">
-        <label>Otomatik Yeniden Bağlanma (Proxy Çözümü)</label>
-        <button id="st-reconnect" class="btn off" onclick="toggle('reconnect')">...</button>
+    <div id="tab-settings" class="tab">
+        <div class="card">
+            <label>Otomatik Komut Ekle (/login şifre vb.)</label>
+            <input id="cmdInp" placeholder="Komut yaz ve ekle...">
+            <button class="btn blue" onclick="addCmd()">KOMUTU KAYDET</button>
+        </div>
+        <div class="card">
+            <label>Otomatik Akıllı Kazma (Önündeki Bloğu Kazar)</label>
+            <button id="st-mining" class="btn off" onclick="toggle('mining')">KAPALI</button>
+        </div>
+        <div class="card">
+            <label>Otomatik Yeniden Bağlanma</label>
+            <button id="st-reconnect" class="btn off" onclick="toggle('reconnect')">KAPALI</button>
+        </div>
+        <div class="card">
+            <label>Anti-AFK (Zıplama)</label>
+            <button id="st-afk" class="btn off" onclick="toggle('afk')">KAPALI</button>
+        </div>
     </div>
-    <div class="card">
-        <label>Anti-AFK (Zıplama)</label>
-        <button id="st-afk" class="btn off" onclick="toggle('afk')">...</button>
-    </div>
-</div>
 
 <script>
     let mySID = localStorage.getItem('sid') || 'sid_'+Math.random().toString(36).substr(2,9);
@@ -116,18 +111,17 @@
     }
 
     function toggle(type) { if(sel) fetch(`/update?sid=${mySID}&user=${sel}&type=${type}`); }
+    function addCmd() {
+        const v = document.getElementById('cmdInp').value;
+        if(sel && v) fetch(`/update?sid=${mySID}&user=${sel}&type=cmd&val=${encodeURIComponent(v)}`);
+        document.getElementById('cmdInp').value = "";
+    }
 
     setInterval(async () => {
         try {
             const r = await fetch(`/data?sid=${mySID}&user=${sel}`);
             const d = await r.json();
-            
-            document.getElementById('list').innerHTML = d.active.map(n => `
-                <div class="card" style="border-color:${sel==n?'#2ecc71':'#30363d'}" onclick="sel='${n}'">
-                    <b>${n}</b>
-                    <button class="btn off" style="width:auto; float:right; margin:0; padding:5px 10px;" onclick="fetch('/stop?sid=${mySID}&user=${n}')">DURDUR</button>
-                </div>
-            `).join('');
+            document.getElementById('list').innerHTML = d.active.map(n => `<div class="card" style="border-color:${sel==n?'#2ecc71':'#30363d'}" onclick="sel='${n}'"><b>${n}</b><button class="btn off" style="width:auto; float:right; margin:0; padding:5px;" onclick="fetch('/stop?sid=${mySID}&user=${n}')">KAPAT</button></div>`).join('');
 
             if(sel && d.logs[sel]) {
                 const lb = document.getElementById('logbox');
@@ -136,18 +130,16 @@
 
                 const conf = d.configs[sel];
                 if(conf) {
-                    const rBtn = document.getElementById('st-reconnect');
-                    rBtn.innerText = conf.reconnect ? "AÇIK" : "KAPALI";
-                    rBtn.className = "btn " + (conf.reconnect ? "on" : "off");
-
-                    const aBtn = document.getElementById('st-afk');
-                    aBtn.innerText = conf.afk ? "AÇIK" : "KAPALI";
-                    aBtn.className = "btn " + (conf.afk ? "on" : "off");
+                    [['reconnect','st-reconnect'],['afk','st-afk'],['mining','st-mining']].forEach(x => {
+                        const b = document.getElementById(x[1]);
+                        b.innerText = conf[x[0]] ? "AÇIK" : "KAPALI";
+                        b.className = "btn " + (conf[x[0]] ? "on" : "off");
+                    });
                 }
 
                 if(d.botData[sel]) {
                     const bd = d.botData[sel];
-                    document.getElementById('coords').innerText = `X: ${Math.floor(bd.pos.x)} | Y: ${Math.floor(bd.pos.y)} | Z: ${Math.floor(bd.pos.z)}`;
+                    document.getElementById('coords').innerText = `X: ${Math.floor(bd.pos.x)} Y: ${Math.floor(bd.pos.y)} Z: ${Math.floor(bd.pos.z)}`;
                     let invH = "";
                     for(let i=0; i<45; i++) {
                         const it = bd.inv.find(x => x.slot === i);
