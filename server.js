@@ -11,66 +11,76 @@ let bot = null;
 let autoMsgTimer = null;
 const moves = { forward: false, back: false, left: false, right: false, jump: false };
 
-app.use(express.static(__dirname));
 app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 
 io.on('connection', (socket) => {
-    // SUNUCUYA BOT SOKMA
     socket.on('login', (data) => {
         if (bot) { bot.quit(); }
-        
-        io.emit('log', `${data.host} adresine bağlanılıyor...`);
+        io.emit('log', `[SİSTEM] ${data.host} adresine bağlanılıyor...`);
         
         bot = mineflayer.createBot({
             host: data.host,
             port: parseInt(data.port) || 25565,
-            username: data.user || 'PanelBot'
+            username: data.user || 'SüperBot',
+            version: false // Sunucu versiyonunu otomatik algılar
         });
 
-        bot.on('spawn', () => io.emit('log', 'Bot sunucuya girdi!'));
-        bot.on('chat', (u, m) => io.emit('log', `[Chat] ${u}: ${m}`));
-        bot.on('kicked', (r) => io.emit('log', 'Atıldı: ' + r));
-        bot.on('error', (e) => io.emit('log', 'Hata: ' + e.message));
+        // TÜM MESAJLARI YAKALAMA (Sunucu mesajları dahil)
+        bot.on('message', (jsonMsg) => {
+            const message = jsonMsg.toString();
+            io.emit('log', message); // Her türlü mesajı konsola gönderir
+        });
 
-        // Veri gönderimi
-        setInterval(() => {
-            if (bot && bot.entity) {
-                socket.emit('stats', {
-                    x: Math.round(bot.entity.position.x),
-                    y: Math.round(bot.entity.position.y),
-                    z: Math.round(bot.entity.position.z)
-                });
-            }
-        }, 1000);
+        bot.on('spawn', () => io.emit('log', '[BİLGİ] Bot sunucuya başarıyla girdi!'));
+        bot.on('error', (e) => io.emit('log', '[HATA] ' + e.message));
+        bot.on('kicked', (r) => io.emit('log', '[SİSTEM] Atıldı: ' + r));
     });
 
-    // HAREKET
+    // MESAJ GÖNDERME KUTUSU İÇİN
+    socket.on('sendMessage', (msg) => {
+        if (bot) {
+            bot.chat(msg);
+        } else {
+            socket.emit('log', '[HATA] Bot bağlı değil!');
+        }
+    });
+
     socket.on('move', (dir) => {
-        if (!bot) return;
-        moves[dir] = !moves[dir];
-        bot.setControlState(dir, moves[dir]);
+        if (bot) {
+            moves[dir] = !moves[dir];
+            bot.setControlState(dir, moves[dir]);
+        }
     });
 
-    // ENVANTER
     socket.on('getInv', () => {
-        if (!bot) return;
-        const items = bot.inventory.items().map(i => `${i.name} x${i.count}`);
-        socket.emit('invData', items);
+        if (bot) {
+            const items = bot.inventory.items().map(i => `${i.name} x${i.count}`);
+            socket.emit('invData', items);
+        }
     });
 
-    // OTO MESAJ
-    socket.on('toggleAuto', (msg) => {
+    socket.on('toggleAuto', (data) => {
         if (!bot) return;
         if (autoMsgTimer) {
             clearInterval(autoMsgTimer);
             autoMsgTimer = null;
-            socket.emit('log', 'Oto-mesaj durdu.');
+            io.emit('log', '[SİSTEM] Oto-mesaj durduruldu.');
         } else {
-            autoMsgTimer = setInterval(() => bot.chat(msg || "Aktif!"), 30000);
-            socket.emit('log', 'Oto-mesaj başladı.');
+            autoMsgTimer = setInterval(() => bot.chat(data.text), data.time * 1000);
+            io.emit('log', `[SİSTEM] ${data.time} saniyede bir mesaj gönderiliyor.`);
         }
     });
+
+    setInterval(() => {
+        if (bot && bot.entity) {
+            socket.emit('stats', {
+                x: Math.round(bot.entity.position.x),
+                y: Math.round(bot.entity.position.y),
+                z: Math.round(bot.entity.position.z)
+            });
+        }
+    }, 1000);
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`Panel aktif: ${PORT}`));
