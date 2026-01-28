@@ -2,56 +2,71 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Bot Kontrol Paneli</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Paneli</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; }
-        .panel { background: #2a2a2a; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; margin-top: 20px; }
-        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: #00ff00; }
-        .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        button { padding: 15px; cursor: pointer; border: none; border-radius: 5px; background: #444; color: white; font-weight: bold; }
-        button:active { background: #666; }
-        button.active { background: #ff4444; }
-        #console { background: black; color: #00ff00; height: 200px; overflow-y: scroll; padding: 10px; font-family: monospace; font-size: 12px; border: 1px solid #444; }
+        body { background: #121212; color: #e0e0e0; font-family: monospace; margin: 0; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .section { border: 1px solid #333; padding: 10px; background: #1e1e1e; }
+        h3 { margin: 0 0 10px 0; color: #ffca28; font-size: 14px; text-transform: uppercase; }
+        
+        /* Hareket Tuşları */
+        .grid-move { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 150px; margin: 0 auto; }
+        button { background: #333; color: white; border: 1px solid #444; padding: 10px; cursor: pointer; }
+        button:active { background: #555; }
+        button.active { background: #4caf50; border-color: #81c784; }
+
+        /* Konsol */
+        #console { height: 150px; overflow-y: auto; font-size: 12px; background: #000; padding: 5px; color: #00ff00; }
+        
+        /* Alt Menü */
+        .menu-row { display: flex; gap: 5px; margin-top: 5px; }
+        .menu-row button { flex: 1; font-size: 12px; }
+        
+        .coords { font-size: 13px; color: #03a9f4; margin-bottom: 5px; text-align: center; }
     </style>
 </head>
 <body>
-    <h2>BOT KONTROL MERKEZİ</h2>
-    
-    <div class="panel">
-        <div class="stats">
-            <div>Koordinat: <span id="pos">0, 0, 0</span></div>
-            <div>Oto-Mesaj: <span id="autoMsgStatus">KAPALI</span></div>
-        </div>
 
-        <div class="controls">
-            <div></div><button onclick="sendMove('forward')">W (İleri)</button><div></div>
-            <button onclick="sendMove('left')">A (Sol)</button>
-            <button onclick="sendMove('back')">S (Geri)</button>
-            <button onclick="sendMove('right')">D (Sağ)</button>
-            <button onclick="toggleAutoMsg()" style="grid-column: span 3; background: #2196F3;">Oto-Mesaj Aç/Kapat</button>
-            <button onclick="getInventory()" style="grid-column: span 3; background: #4CAF50;">Envanteri Gör</button>
+    <div class="section">
+        <h3>Hizki Hareket</h3>
+        <div class="coords">XYZ: <span id="pos">0 / 0 / 0</span></div>
+        <div class="grid-move">
+            <button></button><button id="btn-forward" onclick="move('forward')">W</button><button></button>
+            <button id="btn-left" onclick="move('left')">A</button><button id="btn-back" onclick="move('back')">S</button><button id="btn-right" onclick="move('right')">D</button>
         </div>
+    </div>
 
-        <div id="console">Bot başlatılıyor...<br></div>
+    <div class="section">
+        <h3>İşlemler</h3>
+        <div class="menu-row">
+            <button onclick="socket.emit('getInv')">📦 ENVANTER</button>
+            <button id="btn-auto" onclick="socket.emit('toggleAuto')">🤖 OTO-MESAJ</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Sunucu Mesajlari</h3>
+        <div id="console">Bağlanıyor...</div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        const consoleDiv = document.getElementById('console');
-
-        function sendMove(dir) { socket.emit('move', dir); }
-        function toggleAutoMsg() { socket.emit('toggleAuto'); }
-        function getInventory() { socket.emit('getInv'); }
+        const logs = document.getElementById('console');
+        
+        function move(dir) {
+            socket.emit('move', dir);
+            document.getElementById('btn-'+dir).classList.toggle('active');
+        }
 
         socket.on('log', (msg) => {
-            consoleDiv.innerHTML += `> ${msg}<br>`;
-            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            logs.innerHTML += `<div>> ${msg}</div>`;
+            logs.scrollTop = logs.scrollHeight;
         });
 
         socket.on('stats', (data) => {
-            document.getElementById('pos').innerText = `${data.x}, ${data.y}, ${data.z}`;
-            document.getElementById('autoMsgStatus').innerText = data.autoMsg ? "AÇIK" : "KAPALI";
+            document.getElementById('pos').innerText = `${data.x} / ${data.y} / ${data.z}`;
+            document.getElementById('btn-auto').style.background = data.autoMsg ? "#4caf50" : "#333";
         });
     </script>
 </body>
