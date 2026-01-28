@@ -2,71 +2,109 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bot Paneli</title>
+    <title>Gelişmiş Bot Kontrolü</title>
     <style>
-        body { background: #121212; color: #e0e0e0; font-family: monospace; margin: 0; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
-        .section { border: 1px solid #333; padding: 10px; background: #1e1e1e; }
-        h3 { margin: 0 0 10px 0; color: #ffca28; font-size: 14px; text-transform: uppercase; }
+        body { background: #0f0f0f; color: #eee; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; display: grid; grid-template-columns: 300px 1fr; gap: 15px; }
+        .card { background: #1e1e1e; border: 1px solid #333; padding: 15px; border-radius: 8px; }
+        h3 { margin-top: 0; color: #00bcd4; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
-        /* Hareket Tuşları */
-        .grid-move { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 150px; margin: 0 auto; }
-        button { background: #333; color: white; border: 1px solid #444; padding: 10px; cursor: pointer; }
-        button:active { background: #555; }
-        button.active { background: #4caf50; border-color: #81c784; }
-
+        /* Hareket Sistemi */
+        .movement-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 150px; margin: 10px auto; }
+        button { background: #333; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #444; }
+        button.active { background: #f44336; } /* Hareket halindeyken kırmızı */
+        
         /* Konsol */
-        #console { height: 150px; overflow-y: auto; font-size: 12px; background: #000; padding: 5px; color: #00ff00; }
+        #console { background: #000; height: 300px; overflow-y: auto; padding: 10px; font-family: 'Courier New', monospace; font-size: 13px; color: #4af626; border-radius: 4px; }
         
-        /* Alt Menü */
-        .menu-row { display: flex; gap: 5px; margin-top: 5px; }
-        .menu-row button { flex: 1; font-size: 12px; }
-        
-        .coords { font-size: 13px; color: #03a9f4; margin-bottom: 5px; text-align: center; }
+        /* Envanter Listesi */
+        #inv-list { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; }
+        #inv-list li { padding: 5px; border-bottom: 1px solid #2a2a2a; font-size: 13px; }
+
+        /* Alt Araçlar */
+        .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .stats { font-size: 14px; background: #252525; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+        .coord-val { color: #ffeb3b; }
     </style>
 </head>
 <body>
 
-    <div class="section">
-        <h3>Hizki Hareket</h3>
-        <div class="coords">XYZ: <span id="pos">0 / 0 / 0</span></div>
-        <div class="grid-move">
-            <button></button><button id="btn-forward" onclick="move('forward')">W</button><button></button>
-            <button id="btn-left" onclick="move('left')">A</button><button id="btn-back" onclick="move('back')">S</button><button id="btn-right" onclick="move('right')">D</button>
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="card">
+            <h3>📍 DURUM VE HAREKET</h3>
+            <div class="stats">
+                X: <span class="coord-val" id="x">0</span> 
+                Y: <span class="coord-val" id="y">0</span> 
+                Z: <span class="coord-val" id="z">0</span>
+            </div>
+            <div class="movement-grid">
+                <div></div><button id="w" onclick="sendMove('forward')">W</button><div></div>
+                <button id="a" onclick="sendMove('left')">A</button>
+                <button id="s" onclick="sendMove('back')">S</button>
+                <button id="d" onclick="sendMove('right')">D</button>
+                <div></div><button id="jump" onclick="sendMove('jump')" style="background:#555">Zıpla</button><div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📦 ENVANTER MENÜSÜ</h3>
+            <button onclick="socket.emit('getInv')" style="width:100%; background:#2196f3; margin-bottom:10px;">Envanteri Güncelle</button>
+            <ul id="inv-list"><li>Henüz veri yok...</li></ul>
         </div>
     </div>
 
-    <div class="section">
-        <h3>İşlemler</h3>
-        <div class="menu-row">
-            <button onclick="socket.emit('getInv')">📦 ENVANTER</button>
-            <button id="btn-auto" onclick="socket.emit('toggleAuto')">🤖 OTO-MESAJ</button>
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="card">
+            <h3>💬 SUNUCU KONSOLU</h3>
+            <div id="console">Bot başlatılıyor...</div>
+            <div class="tools">
+                <input type="text" id="chatMsg" placeholder="Mesaj gönder..." style="background:#333; color:white; border:1px solid #444; padding:10px;">
+                <button onclick="sendChat()" style="background:#4caf50">Gönder</button>
+            </div>
         </div>
-    </div>
 
-    <div class="section">
-        <h3>Sunucu Mesajlari</h3>
-        <div id="console">Bağlanıyor...</div>
+        <div class="card">
+            <h3>⚙️ AYARLAR</h3>
+            <div class="tools">
+                <button id="btn-auto" onclick="socket.emit('toggleAuto')">Oto-Mesaj: KAPALI</button>
+                <button onclick="socket.emit('respawn')" style="background:#ff9800">Yeniden Doğ (Respawn)</button>
+            </div>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        const logs = document.getElementById('console');
         
-        function move(dir) {
+        function sendMove(dir) {
             socket.emit('move', dir);
-            document.getElementById('btn-'+dir).classList.toggle('active');
+            document.getElementById(dir).classList.toggle('active');
+        }
+
+        function sendChat() {
+            const msg = document.getElementById('chatMsg').value;
+            socket.emit('sendChat', msg);
+            document.getElementById('chatMsg').value = '';
         }
 
         socket.on('log', (msg) => {
-            logs.innerHTML += `<div>> ${msg}</div>`;
-            logs.scrollTop = logs.scrollHeight;
+            const c = document.getElementById('console');
+            c.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            c.scrollTop = c.scrollHeight;
         });
 
         socket.on('stats', (data) => {
-            document.getElementById('pos').innerText = `${data.x} / ${data.y} / ${data.z}`;
-            document.getElementById('btn-auto').style.background = data.autoMsg ? "#4caf50" : "#333";
+            document.getElementById('x').innerText = data.x;
+            document.getElementById('y').innerText = data.y;
+            document.getElementById('z').innerText = data.z;
+            const autoBtn = document.getElementById('btn-auto');
+            autoBtn.innerText = data.autoMsg ? "Oto-Mesaj: AÇIK" : "Oto-Mesaj: KAPALI";
+            autoBtn.style.background = data.autoMsg ? "#4caf50" : "#333";
+        });
+
+        socket.on('invData', (items) => {
+            const list = document.getElementById('inv-list');
+            list.innerHTML = items.length ? items.map(i => `<li>${i.name} x${i.count}</li>`).join('') : '<li>Boş</li>';
         });
     </script>
 </body>
