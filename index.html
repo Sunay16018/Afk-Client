@@ -3,74 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AFK PRO v11 - SPAM & INV</title>
+    <title>AFK ULTIMATE FIX</title>
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; user-select: none; }
+        * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         nav { display: flex; background: #161b22; border-bottom: 1px solid #30363d; height: 50px; flex-shrink: 0; }
         nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
         nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; }
         .tab { display: none; flex: 1; padding: 10px; overflow-y: auto; flex-direction: column; }
         .active-tab { display: flex; }
-        #logbox { height: 200px; background: #000; padding: 10px; overflow-y: auto; border: 1px solid #333; user-select: text; margin-bottom: 5px; }
-        .card { background: #161b22; padding: 10px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 8px; }
-        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 8px; border-radius: 4px; }
-        .btn { padding: 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
+        #logbox { height: 220px; background: #000; padding: 10px; overflow-y: auto; border: 1px solid #333; margin-bottom: 5px; }
+        .card { background: #161b22; padding: 12px; border-radius: 8px; border: 1px solid #30363d; margin-bottom: 10px; }
+        input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 6px; }
+        .btn { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
         .on { background: #238636; } .off { background: #da3633; } .blue { background: #1f6feb; }
-        
-        /* GÖREV LİSTESİ */
-        .task-item { display: flex; justify-content: space-between; align-items: center; background: #0d1117; padding: 8px; margin-top: 5px; border-radius: 4px; border-left: 3px solid #2ecc71; }
-        .task-info { display: flex; flex-direction: column; }
-        .task-info b { color: #58a6ff; }
-        
-        .control-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 150px; margin: 5px auto; }
-        .ctrl { padding: 12px; background: #21262d; border: 1px solid #30363d; text-align: center; border-radius: 8px; cursor: pointer; }
-        
-        /* ENVANTER */
-        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; margin-top: 5px; }
-        .slot { width: 34px; height: 34px; background: #333; border: 1px solid #444; position: relative; cursor: pointer; }
+        .task-box { display: flex; justify-content: space-between; align-items: center; background: #010409; padding: 10px; margin-top: 8px; border-radius: 6px; border: 1px solid #30363d; }
+        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; }
+        .slot { width: 34px; height: 34px; background: #333; border: 1px solid #444; position: relative; }
         .slot img { width: 100%; image-rendering: pixelated; }
-        .slot span { position: absolute; bottom: 0; right: 0; font-size: 9px; background: rgba(0,0,0,0.8); padding: 1px; color: white; }
     </style>
 </head>
 <body>
     <nav>
-        <button onclick="tab('bots')" id="b-bots" class="active">BOTLAR</button>
+        <button onclick="tab('bots')" id="b-bots" class="active">BOT LİSTESİ</button>
         <button onclick="tab('term')" id="b-term">KONSOL</button>
-        <button onclick="tab('settings')" id="b-settings">GÖREV & ENV</button>
+        <button onclick="tab('settings')" id="b-settings">AYARLAR / ENV</button>
     </nav>
 
     <div id="t-bots" class="tab active-tab">
         <div class="card">
-            <input id="h" placeholder="IP:Port" style="width:100%">
-            <input id="u" placeholder="İsim" style="width:100%; margin:5px 0;">
-            <input id="v" placeholder="Sürüm (1.16.5 vb.)" style="width:100%; margin-bottom:5px;">
-            <button class="btn blue" style="width:100%" onclick="add()">BAĞLAN</button>
+            <input id="h" placeholder="Sunucu IP:Port" style="width:100%">
+            <input id="u" placeholder="Bot Kullanıcı Adı" style="width:100%; margin:8px 0;">
+            <input id="v" placeholder="Sürüm (Örn: 1.16.5)" style="width:100%; margin-bottom:8px;">
+            <button class="btn blue" style="width:100%" onclick="add()">BOTU BAŞLAT</button>
         </div>
         <div id="list"></div>
     </div>
 
     <div id="t-term" class="tab">
         <div id="logbox"></div>
-        <input id="m" placeholder="Hızlı mesaj gönder..." style="width:100%; margin-bottom:5px;" onkeypress="if(event.key==='Enter')send()">
-        <div class="control-pad">
-            <div></div><div class="ctrl" onmousedown="move('forward',true)" onmouseup="move('forward',false)">↑</div><div></div>
-            <div class="ctrl" onmousedown="move('left',true)" onmouseup="move('left',false)">←</div>
-            <div class="ctrl" onclick="move('jump',true)">Zıpla</div>
-            <div class="ctrl" onmousedown="move('right',true)" onmouseup="move('right',false)">→</div>
-            <div></div><div class="ctrl" onmousedown="move('back',true)" onmouseup="move('back',false)">↓</div><div></div>
-        </div>
+        <input id="m" placeholder="Sohbete mesaj yaz..." style="width:100%;" onkeypress="if(event.key==='Enter')send()">
     </div>
 
     <div id="t-settings" class="tab">
-        <div id="coords" class="card" style="text-align:center; font-weight:bold; color:#58a6ff;">X: 0 Y: 0 Z: 0</div>
+        <div id="coords" class="card" style="text-align:center; color:#58a6ff; font-weight:bold;">X: 0 Y: 0 Z: 0</div>
         
         <div class="card">
-            <b>SPAM / KOMUT EKLE</b><br>
-            <input id="ti" placeholder="Mesaj veya /komut" style="width:100%; margin:5px 0;">
-            Tekrar (Saniye): <input id="ts" type="number" value="60" style="width:60px;">
-            <button class="btn blue" onclick="addTask()" style="float:right">EKLE</button>
-            <div id="taskList" style="margin-top:10px;"></div>
+            <b>OTOMATİK SPAM / KOMUT EKLE</b>
+            <div style="display:flex; gap:5px; margin-top:8px;">
+                <input id="ti" placeholder="Mesaj veya Komut" style="flex:2">
+                <input id="ts" type="number" value="60" style="width:60px;" placeholder="Sn">
+                <button class="btn blue" onclick="addTask()">EKLE</button>
+            </div>
+            <div id="taskList"></div>
         </div>
 
         <div class="card">
@@ -78,10 +63,10 @@
             <div class="inv-grid" id="inv"></div>
         </div>
 
-        <div class="card" style="display:flex; gap:5px;">
-            <button id="s-afk" class="btn" style="flex:1" onclick="tog('afk')">AFK</button>
-            <button id="s-mining" class="btn" style="flex:1" onclick="tog('mining')">KAZMA</button>
-            <button id="s-reconnect" class="btn" style="flex:1" onclick="tog('reconnect')">OTO-B</button>
+        <div class="card" style="display:flex; flex-direction:column; gap:8px;">
+            <button id="s-afk" class="btn off" onclick="tog('afk')">ANTİ-AFK (ZIPLAMA): KAPALI</button>
+            <button id="s-mining" class="btn off" onclick="tog('mining')">OTOMATİK KAZMA: KAPALI</button>
+            <button id="s-reconnect" class="btn off" onclick="tog('reconnect')">OTOMATİK YENİDEN BAĞLAN: KAPALI</button>
         </div>
     </div>
 
@@ -99,17 +84,18 @@
 
     async function add() {
         const h=document.getElementById('h').value, u=document.getElementById('u').value, v=document.getElementById('v').value;
+        if(!h || !u) return alert("Bilgileri doldur!");
         await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
         sel = u; tab('term');
     }
 
     function send() { 
         const i=document.getElementById('m'); 
+        if(!sel || !i.value) return;
         fetch(`/send?sid=${mySID}&user=${sel}&msg=${encodeURIComponent(i.value)}`); 
         i.value=""; 
     }
 
-    function move(d, s) { if(sel) fetch(`/move?sid=${mySID}&user=${sel}&dir=${d}&state=${s}`); }
     function tog(t) { if(sel) fetch(`/update?sid=${mySID}&user=${sel}&type=${t}`); }
     
     function addTask() {
@@ -125,11 +111,11 @@
             const d = await r.json();
             
             if(!sel && d.active.length > 0) sel = d.active[0];
-            
+
             document.getElementById('list').innerHTML = d.active.map(n => `
-                <div class="card" style="border-color:${sel==n?'#2ecc71':'#333'}">
-                    <b onclick="sel='${n}'">${n}</b>
-                    <button class="btn off" style="float:right; padding:2px 8px" onclick="fetch('/stop?sid=${mySID}&user=${n}')">KAPAT</button>
+                <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-color:${sel==n?'#2ecc71':'#30363d'}">
+                    <b onclick="sel='${n}'" style="cursor:pointer">${n}</b>
+                    <button class="btn off" style="padding:4px 10px" onclick="fetch('/stop?sid=${mySID}&user=${n}')">DURDUR</button>
                 </div>
             `).join('');
 
@@ -140,19 +126,21 @@
 
                 const c = d.configs[sel];
                 if(c) {
-                    document.getElementById('s-afk').className = "btn " + (c.afk?"on":"off");
-                    document.getElementById('s-mining').className = "btn " + (c.mining?"on":"off");
-                    document.getElementById('s-reconnect').className = "btn " + (c.reconnect?"on":"off");
+                    const btnMap = {afk:'s-afk', mining:'s-mining', reconnect:'s-reconnect'};
+                    const nameMap = {afk:'ANTİ-AFK (ZIPLAMA)', mining:'OTOMATİK KAZMA', reconnect:'OTOMATİK YENİDEN BAĞLAN'};
                     
+                    Object.keys(btnMap).forEach(key => {
+                        const el = document.getElementById(btnMap[key]);
+                        el.className = "btn " + (c[key] ? "on" : "off");
+                        el.innerText = nameMap[key] + ": " + (c[key] ? "AÇIK" : "KAPALI");
+                    });
+
                     document.getElementById('taskList').innerHTML = c.tasks.map((t, i) => `
-                        <div class="task-item">
-                            <div class="task-info">
-                                <b>${t.text}</b>
-                                <small>Süre: ${t.time} sn</small>
-                            </div>
+                        <div class="task-box">
+                            <span><b>${t.text}</b> (${t.time}s)</span>
                             <div>
-                                <button class="btn blue" style="padding:2px 6px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=edit_task&val=${i}&amt=10')">+10</button>
-                                <button class="btn blue" style="padding:2px 6px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=edit_task&val=${i}&amt=-10')">-10</button>
+                                <button class="btn blue" style="padding:2px 6px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=edit_task&val=${i}&amt=10')">+</button>
+                                <button class="btn blue" style="padding:2px 6px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=edit_task&val=${i}&amt=-10')">-</button>
                                 <button class="btn off" style="padding:2px 6px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=del_task&val=${i}')">SİL</button>
                             </div>
                         </div>
@@ -163,9 +151,8 @@
                     const bd = d.botData[sel];
                     document.getElementById('coords').innerText = `X: ${Math.floor(bd.pos.x)} Y: ${Math.floor(bd.pos.y)} Z: ${Math.floor(bd.pos.z)}`;
                     document.getElementById('inv').innerHTML = bd.inv.map(i => `
-                        <div class="slot" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=inv&val=${i.slot}')">
+                        <div class="slot" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=inv&val=${i.slot}')" title="Atmak için tıkla">
                             <img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${i.name}.png">
-                            <span>${i.count > 1 ? i.count : ''}</span>
                         </div>
                     `).join('');
                 }
