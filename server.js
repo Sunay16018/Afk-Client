@@ -3,37 +3,30 @@ const http = require('http');
 const url = require('url');
 const fs = require('fs');
 const path = require('path');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 let userSessions = {}; 
-const HF_TOKEN = "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"; 
+
+// Render paneline eklediğin keyi buradan okur
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 function getSession(sid) {
     if (!userSessions[sid]) userSessions[sid] = { bots: {}, logs: {}, configs: {} };
     return userSessions[sid];
 }
 
-async function askAI(message) {
+async function askGemini(message, botName) {
     try {
-        const response = await fetch("https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill", {
-            headers: { "Authorization": `Bearer ${HF_TOKEN}`, "Content-Type": "application/json" },
-            method: "POST",
-            body: JSON.stringify({ 
-                inputs: `User: ${message}. Reply as a Minecraft player in 3-4 words.`,
-                parameters: { max_new_tokens: 20, temperature: 0.7 } 
-            }),
-        });
-        const result = await response.json();
-        let reply = result[0]?.generated_text || result.generated_text || "";
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const prompt = `Sen bir Minecraft oyuncususun. Oyun adın: ${botName}. Mesaj: "${message}". Bir Minecraft oyuncusu gibi çok kısa, doğal ve Türkçe cevap ver. Robot gibi konuşma, samimi ol. Tek cümle olsun.`;
         
-        // Gereksiz kısımları temizle
-        reply = reply.replace(/User:.*words\./gi, "").trim();
-        // Eğer AI boş dönerse rastgele bir cevap ver
-        const fallbacks = ["Efendim?", "Buradayım kanka", "Noldu?", "He canım"];
-        if (!reply || reply.length < 2) return fallbacks[Math.floor(Math.random() * fallbacks.length)];
-        
-        return reply.split('.')[0].substring(0, 50);
-    } catch (e) { return "Efendim?"; }
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        let text = response.text().trim();
+        return text.length > 60 ? text.substring(0, 60) : text.replace(/"/g, "");
+    } catch (e) {
+        return "Efendim kanka?";
+    }
 }
 
 function startBot(sid, host, user, ver) {
@@ -50,34 +43,29 @@ function startBot(sid, host, user, ver) {
     });
 
     s.bots[user] = bot;
-    s.logs[user] = ["<b style='color:gray'>Sistem: Bağlanıyor...</b>"];
+    s.logs[user] = ["<b style='color:gray'>Sistem: Gemini bağlandı, giriş yapılıyor...</b>"];
 
     bot.on('login', () => {
-        s.logs[user].push("<b style='color:#2ecc71'>[BAŞARILI] " + user + " girdi!</b>");
+        s.logs[user].push("<b style='color:#2ecc71'>[BAŞARILI] " + user + " oyuna girdi!</b>");
         s.configs[user].tasks.forEach(t => {
             if(t.time > 0) t.timer = setInterval(() => { if(s.bots[user]) s.bots[user].chat(t.text) }, t.time * 1000);
         });
     });
 
-    // GELİŞTİRİLMİŞ AI TETİKLEYİCİ (Harf Duyarlılığı Çözüldü)
     bot.on('chat', async (username, message) => {
         if (username === user) return;
+        const msg = message.toLocaleLowerCase('tr-TR');
+        const myName = user.toLocaleLowerCase('tr-TR');
 
-        // Türkçe karakterleri ve büyük/küçük harfi normalize et
-        const cleanMsg = message.toLocaleLowerCase('tr-TR');
-        const cleanName = user.toLocaleLowerCase('tr-TR');
-
-        if (cleanMsg.includes(cleanName)) {
-            s.logs[user].push(`<i style="color:orange">AI Düşünüyor: ${message}</i>`);
-            const reply = await askAI(message);
-            
-            // Daha insansı görünmesi için 2 saniye bekle
+        if (msg.includes(myName)) {
+            s.logs[user].push(`<i style="color:orange">Gemini cevap hazırlıyor...</i>`);
+            const reply = await askGemini(message, user);
             setTimeout(() => { 
                 if (s.bots[user]) {
                     s.bots[user].chat(reply); 
-                    s.logs[user].push(`<b style="color:cyan">AI Cevap:</b> ${reply}`);
+                    s.logs[user].push(`<b style="color:cyan">Gemini:</b> ${reply}`);
                 }
-            }, 2000);
+            }, 1500);
         }
     });
 
@@ -93,9 +81,9 @@ function startBot(sid, host, user, ver) {
         }
     }, 1200);
 
-    bot.on('end', (reason) => {
+    bot.on('end', () => {
         clearInterval(mineInt);
-        s.configs[user].tasks.forEach(t => clearInterval(t.timer));
+        if(s.configs[user]) s.configs[user].tasks.forEach(t => clearInterval(t.timer));
         delete s.bots[user];
         if (s.configs[user]?.reconnect) setTimeout(() => startBot(sid, host, user, ver), 5000);
     });
@@ -113,7 +101,6 @@ const server = http.createServer((req, res) => {
     if (p === '/start') { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
     if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
     if (p === '/stop') { if(s.configs[q.user]) s.configs[q.user].reconnect = false; if(bot) bot.quit(); return res.end("ok"); }
-
     if (p === '/update') {
         const conf = s.configs[q.user];
         if (q.type === 'add_task') {
@@ -129,7 +116,6 @@ const server = http.createServer((req, res) => {
         } else { conf[q.type] = !conf[q.type]; }
         return res.end("ok");
     }
-
     if (p === '/data') {
         const botData = {};
         if (q.user && s.bots[q.user]) {
@@ -144,4 +130,3 @@ const server = http.createServer((req, res) => {
     }
 });
 server.listen(process.env.PORT || 10000);
-        
