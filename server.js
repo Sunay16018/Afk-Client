@@ -16,19 +16,18 @@ app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 io.on('connection', (socket) => {
     socket.on('login', (data) => {
         if (bot) { bot.quit(); }
-        io.emit('log', `[SİSTEM] ${data.host} adresine bağlanılıyor...`);
+        io.emit('log', `[SİSTEM] ${data.host} adresine ${data.version} sürümü ile bağlanılıyor...`);
         
         bot = mineflayer.createBot({
             host: data.host,
             port: parseInt(data.port) || 25565,
             username: data.user || 'SüperBot',
-            version: false // Sunucu versiyonunu otomatik algılar
+            version: data.version === 'auto' ? false : data.version // Sürüm ayarı burada
         });
 
-        // TÜM MESAJLARI YAKALAMA (Sunucu mesajları dahil)
         bot.on('message', (jsonMsg) => {
             const message = jsonMsg.toString();
-            io.emit('log', message); // Her türlü mesajı konsola gönderir
+            io.emit('log', message);
         });
 
         bot.on('spawn', () => io.emit('log', '[BİLGİ] Bot sunucuya başarıyla girdi!'));
@@ -36,13 +35,9 @@ io.on('connection', (socket) => {
         bot.on('kicked', (r) => io.emit('log', '[SİSTEM] Atıldı: ' + r));
     });
 
-    // MESAJ GÖNDERME KUTUSU İÇİN
     socket.on('sendMessage', (msg) => {
-        if (bot) {
-            bot.chat(msg);
-        } else {
-            socket.emit('log', '[HATA] Bot bağlı değil!');
-        }
+        if (bot) bot.chat(msg);
+        else socket.emit('log', '[HATA] Bot bağlı değil!');
     });
 
     socket.on('move', (dir) => {
@@ -67,7 +62,7 @@ io.on('connection', (socket) => {
             io.emit('log', '[SİSTEM] Oto-mesaj durduruldu.');
         } else {
             autoMsgTimer = setInterval(() => bot.chat(data.text), data.time * 1000);
-            io.emit('log', `[SİSTEM] ${data.time} saniyede bir mesaj gönderiliyor.`);
+            io.emit('log', `[SİSTEM] Başlatıldı.`);
         }
     });
 
