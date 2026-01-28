@@ -30,39 +30,37 @@ function startBot(sid, host, user, ver) {
     bot.on('login', () => {
         s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " bağlandı!</b>");
         
-        // ANTI-AFK SİSTEMİ
+        // ANTI-AFK SİSTEMİ (ATILMAMA)
         s.configs[user].antiAfkT = setInterval(() => {
             if (!s.bots[user] || !bot.entity) return;
             const chance = Math.random();
-            if (chance < 0.3) {
+            if (chance < 0.4) {
                 bot.setControlState('jump', true);
-                setTimeout(() => { if(bot.setControlState) bot.setControlState('jump', false) }, 300);
-            } else if (chance < 0.6) {
-                bot.look(bot.entity.yaw + (Math.random()-0.5), (Math.random()-0.5)*0.3, false);
+                setTimeout(() => { if(bot.setControlState) bot.setControlState('jump', false) }, 400);
+            } else if (chance < 0.7) {
+                const y = bot.entity.yaw + (Math.random()-0.5)*0.8;
+                const p = (Math.random()-0.5)*0.4;
+                bot.look(y, p, false);
             }
         }, Math.floor(Math.random() * 15000) + 20000);
     });
     
-    // HER TÜRLÜ MESAJI VE İSMİ YAKALAMA MANTIĞI
-    bot.on('message', (jsonMsg, position) => {
-        // Towny ve özel chat formatları için tüm satırı HTML olarak al
-        let formattedMsg = jsonMsg.toHTML();
+    // CHATCRAFT MANTIĞI: HER TÜRLÜ VERİYİ OKU
+    bot.on('message', (jsonMsg) => {
+        // Sunucudan gelen ham JSON verisini HTML'e çevir (Hiçbir parçayı atlamaz)
+        const html = jsonMsg.toHTML();
         
-        // Eğer mesaj boş değilse loglara ekle
-        if (jsonMsg.toString().trim().length > 0) {
-            s.logs[user].push(formattedMsg);
+        // Boş satırları engelle ama her veriyi ilet
+        if (jsonMsg.toString().trim() !== "") {
+            s.logs[user].push(html);
         }
 
-        if(s.logs[user].length > 120) s.logs[user].shift();
-    });
-
-    // Chat event'i ile ismi ayrıca kontrol et (Yedek mekanizma)
-    bot.on('chat', (username, message) => {
-        console.log(`[CHAT] ${username}: ${message}`);
+        // Konsol limitini aşma
+        if(s.logs[user].length > 150) s.logs[user].shift();
     });
 
     bot.on('end', (r) => {
-        s.logs[user].push("<b style='color:#ff4757'>[KESİLDİ] " + r + "</b>");
+        s.logs[user].push("<b style='color:#ff4757'>[BAĞLANTI KESİLDİ] " + r + "</b>");
         clearInterval(s.configs[user].antiAfkT);
         delete s.bots[user];
     });
