@@ -16,32 +16,42 @@ function startBot(sid, host, user, ver) {
     if (s.bots[user]) return;
 
     const [ip, port] = host.split(':');
-    s.logs[user] = ["<b style='color:gray'>[SİSTEM] " + user + " hazırlanıyor...</b>"];
+    s.logs[user] = ["<b style='color:gray'>[SİSTEM] " + user + " bağlanıyor...</b>"];
 
     const bot = mineflayer.createBot({
         host: ip, port: parseInt(port) || 25565, 
-        username: user, version: ver, auth: 'offline'
+        username: user, version: ver, auth: 'offline',
+        checkTimeoutInterval: 90000
     });
 
     s.bots[user] = bot;
-    s.configs[user] = { msgT: null, antiAfkT: null };
+    s.configs[user] = { antiAfkT: null };
 
     bot.on('login', () => {
-        s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " bağlandı!</b>");
+        s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " başarıyla bağlandı!</b>");
         
-        // GELİŞMİŞ ATILMAMA SİSTEMİ (Anti-AFK)
+        // GELİŞMİŞ İNSANSI ANTI-AFK (Anti-Cheat Dostu)
         s.configs[user].antiAfkT = setInterval(() => {
-            if (!s.bots[user]) return;
-            // Rastgele hareketler: Zıpla, Sağa bak, Sola bak
-            const botInstance = s.bots[user];
-            botInstance.setControlState('jump', true);
-            setTimeout(() => botInstance.setControlState('jump', false), 500);
+            if (!s.bots[user] || !bot.entity) return;
             
-            // Rastgele ufak kafa hareketleri (Sunucu bot olduğunu anlamasın diye)
-            const yaw = (Math.random() - 0.5) * 2;
-            const pitch = (Math.random() - 0.5) * 2;
-            botInstance.look(botInstance.entity.yaw + yaw, botInstance.entity.pitch + pitch);
-        }, 30000); // Her 30 saniyede bir tetiklenir
+            const chance = Math.random();
+            if (chance < 0.25) {
+                // Zıpla
+                bot.setControlState('jump', true);
+                setTimeout(() => { if(bot.setControlState) bot.setControlState('jump', false) }, 300);
+            } else if (chance < 0.50) {
+                // Rastgele ve yumuşak kafa hareketi
+                const yaw = bot.entity.yaw + (Math.random() - 0.5) * 1.0;
+                const pitch = (Math.random() - 0.5) * 0.4;
+                bot.look(yaw, pitch, false); 
+            } else if (chance < 0.70) {
+                // Olduğu yerde ufak bir adım at
+                bot.setControlState('forward', true);
+                setTimeout(() => { if(bot.setControlState) bot.setControlState('forward', false) }, 150);
+            }
+            // Kalan %30 ihtimalle bot tamamen hareketsiz durur (Doğal görünüm)
+
+        }, Math.floor(Math.random() * 15000) + 15000); // 15-30 saniye arası rastgele tekrar
     });
     
     bot.on('message', (m) => {
@@ -49,8 +59,8 @@ function startBot(sid, host, user, ver) {
         if(s.logs[user].length > 100) s.logs[user].shift();
     });
 
-    bot.on('end', () => {
-        if(s.logs[user]) s.logs[user].push("<b style='color:#ff4757'>[BAĞLANTI] Bot düştü.</b>");
+    bot.on('end', (reason) => {
+        s.logs[user].push("<b style='color:#ff4757'>[BAĞLANTI] Kesildi: " + reason + "</b>");
         clearInterval(s.configs[user].antiAfkT);
         delete s.bots[user];
     });
@@ -69,11 +79,10 @@ http.createServer((req, res) => {
     if (!sid && p !== '/') return res.end("No SID");
 
     const s = getSession(sid);
-    const bot = s.bots[q.user];
 
     if (p === '/start') { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
-    if (p === '/stop' && bot) { bot.quit(); return res.end("ok"); }
-    if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
+    if (p === '/stop' && s.bots[q.user]) { s.bots[q.user].quit(); return res.end("ok"); }
+    if (p === '/send' && s.bots[q.user]) { s.bots[q.user].chat(decodeURIComponent(q.msg)); return res.end("ok"); }
     
     if (p === '/data' && sid) {
         const active = Object.keys(s.bots);
@@ -95,3 +104,4 @@ http.createServer((req, res) => {
     let f = path.join(__dirname, p === '/' ? 'index.html' : p);
     fs.readFile(f, (err, data) => res.end(data || "404"));
 }).listen(process.env.PORT || 10000);
+        
