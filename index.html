@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AFK Bot Multi-Manager</title>
+    <title>Gelişmiş Multi-Bot AFK</title>
     <style>
-        * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        nav { display: flex; background: #161b22; border-bottom: 1px solid #30363d; height: 45px; flex-shrink: 0; }
-        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
-        nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; }
-        .tab { display: none; flex: 1; padding: 10px; overflow-y: auto; flex-direction: column; }
+        nav { display: flex; background: #161b22; border-bottom: 1px solid #30363d; height: 50px; flex-shrink: 0; }
+        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; background: #1f242c; }
+        .tab { display: none; flex: 1; padding: 15px; overflow-y: auto; flex-direction: column; }
         .active-tab { display: flex; }
-        #logbox { height: 300px; background: #000; color: #2ecc71; padding: 10px; overflow-y: auto; font-family: monospace; border-radius: 5px; border: 1px solid #30363d; margin-bottom: 10px; }
-        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; background: #8b8b8b; padding: 10px; border: 3px solid #373737; width: fit-content; margin: 0 auto; }
-        .slot { width: 34px; height: 34px; background: #8b8b8b; border: 2px solid #373737; display: flex; align-items: center; justify-content: center; }
-        .bot-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #161b22; border: 1px solid #30363d; margin-top: 8px; border-radius: 8px; cursor: pointer; }
-        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #1f6feb; }
-        input, select { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 6px; width: 100%; margin-bottom: 5px; }
+        #logbox { flex: 1; background: #000; color: #2ecc71; padding: 12px; overflow-y: auto; font-family: 'Consolas', monospace; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; min-height: 250px; }
+        .bot-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #1c2128; border: 1px solid #30363d; margin-top: 10px; border-radius: 8px; cursor: pointer; }
+        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; background: #238636; }
+        input, select { background: #010409; border: 1px solid #30363d; color: #fff; padding: 12px; border-radius: 6px; width: 100%; margin-bottom: 8px; outline: none; }
+        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px; background: #8b8b8b; padding: 10px; border: 4px solid #333; width: fit-content; margin: 0 auto; }
+        .slot { width: 36px; height: 36px; background: #8b8b8b; border: 2px solid #555; display: flex; align-items: center; justify-content: center; position: relative; }
     </style>
 </head>
 <body>
@@ -28,34 +28,29 @@
     </nav>
 
     <div id="tab-bots" class="tab active-tab">
-        <div style="background: #161b22; padding: 15px; border-radius: 8px; border: 1px solid #30363d;">
-            <input id="h" placeholder="Sunucu IP:Port">
-            <input id="u" placeholder="Bot İsmi">
+        <div style="background: #161b22; padding: 20px; border-radius: 10px; border: 1px solid #30363d;">
+            <input id="h" placeholder="Sunucu IP:Port (örn: oyna.server.com)">
+            <input id="u" placeholder="Bot Kullanıcı Adı">
             <select id="v">
-                <option value="1.21.1">1.21.1</option>
-                <option value="1.20.1">1.20.1</option>
-                <option value="1.19.4">1.19.4</option>
-                <option value="1.18.2">1.18.2</option>
-                <option value="1.16.5">1.16.5</option>
-                <option value="1.12.2">1.12.2</option>
-                <option value="1.8.9">1.8.9</option>
+                <option value="1.21.1">1.21.1</option><option value="1.20.1">1.20.1</option><option value="1.19.4">1.19.4</option>
+                <option value="1.18.2">1.18.2</option><option value="1.16.5">1.16.5</option><option value="1.12.2">1.12.2</option><option value="1.8.9">1.8.9</option>
             </select>
-            <button class="btn" style="width:100%; background:#238636;" onclick="add()">BAĞLAN</button>
+            <button class="btn" style="width:100%;" onclick="add()">SUNUCUYA BAĞLAN</button>
         </div>
         <div id="list"></div>
     </div>
 
     <div id="tab-term" class="tab">
-        <div id="bot-title" style="margin-bottom:5px; font-weight:bold; color:#2ecc71;">Seçili Bot: Yok</div>
+        <div id="bot-status" style="margin-bottom:8px; font-weight:bold; color:#8b949e;">Seçili: Yok</div>
         <div id="logbox"></div>
-        <form onsubmit="doSend(event)" style="display:flex; gap:5px;">
-            <input id="m" placeholder="Mesaj gönder..." autocomplete="off">
-            <button type="submit" class="btn">GÖNDER</button>
+        <form onsubmit="doSend(event)" style="display:flex; gap:8px;">
+            <input id="m" style="margin:0" placeholder="Mesaj yaz veya komut gönder..." autocomplete="off">
+            <button type="submit" class="btn" style="background:#1f6feb">GÖNDER</button>
         </form>
     </div>
 
     <div id="tab-inv" class="tab">
-        <div id="stats" style="text-align:center; margin-bottom:10px;">❤️ - | 🍖 -</div>
+        <div id="stats" style="text-align:center; font-size:16px; margin-bottom:15px; font-weight:bold;">❤️ - | 🍖 -</div>
         <div class="inv-grid" id="inv-box"></div>
     </div>
 
@@ -73,7 +68,7 @@
 
         async function add() {
             const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
-            if(!h || !u) return alert("Bilgileri girin!");
+            if(!h || !u) return alert("Eksik bilgi!");
             await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
             sel = u; tab('term');
         }
@@ -93,13 +88,13 @@
                 
                 document.getElementById('list').innerHTML = d.active.map(n => `
                     <div class="bot-row" style="border-color:${sel==n?'#2ecc71':'#30363d'}" onclick="sel='${n}'">
-                        <span>${n} ${sel==n?'(SEÇİLİ)':''}</span>
-                        <button class="btn" style="background:#da3633;" onclick="fetch('/stop?sid=${mySID}&user=${n}')">KES</button>
+                        <span><b>${n}</b> ${sel==n?'<small>(Aktif)</small>':''}</span>
+                        <button class="btn" style="background:#da3633; padding:5px 10px;" onclick="fetch('/stop?sid=${mySID}&user=${n}')">DURDUR</button>
                     </div>
                 `).join('');
 
                 if(sel) {
-                    document.getElementById('bot-title').innerText = "Seçili Bot: " + sel;
+                    document.getElementById('bot-status').innerText = "Seçili Bot: " + sel;
                     if(d.logs[sel]) {
                         const lb = document.getElementById('logbox');
                         lb.innerHTML = d.logs[sel].join('<br>');
