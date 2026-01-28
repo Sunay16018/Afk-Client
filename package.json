@@ -1,6 +1,6 @@
 {
-  "name": "mc-afk-manager",
-  "version": "2.0.0",
+  "name": "mc-afk-stable-panel",
+  "version": "2.3.0",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "dependencies": {
