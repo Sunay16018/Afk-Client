@@ -7,75 +7,61 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-let bot = null;
-let autoMsgTimer = null;
-const moves = { forward: false, back: false, left: false, right: false, jump: false };
+let bots = {};
+let manualStop = {};
 
 app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 
-io.on('connection', (socket) => {
-    socket.on('login', (data) => {
-        if (bot) { bot.quit(); }
-        io.emit('log', `[SİSTEM] ${data.host} adresine ${data.version} sürümü ile bağlanılıyor...`);
+function startBot(data) {
+    const botId = data.user;
+    manualStop[botId] = false;
+
+    const bot = mineflayer.createBot({
+        host: data.host,
+        port: parseInt(data.port) || 25565,
+        username: botId,
+        version: data.version === 'auto' ? false : data.version,
+        checkTimeoutInterval: 90000
+    });
+
+    bots[botId] = bot;
+
+    bot.on('message', (jsonMsg) => {
+        io.emit('botLog', { id: botId, msg: jsonMsg.toAnsi() });
+    });
+
+    bot.on('spawn', () => {
+        io.emit('botUpdate', Object.keys(bots));
+        io.emit('log', `[BAŞARILI] ${botId} girdi.`);
         
-        bot = mineflayer.createBot({
-            host: data.host,
-            port: parseInt(data.port) || 25565,
-            username: data.user || 'SüperBot',
-            version: data.version === 'auto' ? false : data.version // Sürüm ayarı burada
-        });
-
-        bot.on('message', (jsonMsg) => {
-            const message = jsonMsg.toString();
-            io.emit('log', message);
-        });
-
-        bot.on('spawn', () => io.emit('log', '[BİLGİ] Bot sunucuya başarıyla girdi!'));
-        bot.on('error', (e) => io.emit('log', '[HATA] ' + e.message));
-        bot.on('kicked', (r) => io.emit('log', '[SİSTEM] Atıldı: ' + r));
+        // Oyuncu listesi değiştiğinde tarayıcıya haber ver
+        const updatePlayers = () => {
+            const players = Object.keys(bot.players);
+            io.emit('playerList', { id: botId, players });
+        };
+        bot.on('playerJoined', updatePlayers);
+        bot.on('playerLeft', updatePlayers);
+        updatePlayers();
     });
 
-    socket.on('sendMessage', (msg) => {
-        if (bot) bot.chat(msg);
-        else socket.emit('log', '[HATA] Bot bağlı değil!');
-    });
-
-    socket.on('move', (dir) => {
-        if (bot) {
-            moves[dir] = !moves[dir];
-            bot.setControlState(dir, moves[dir]);
-        }
-    });
-
-    socket.on('getInv', () => {
-        if (bot) {
-            const items = bot.inventory.items().map(i => `${i.name} x${i.count}`);
-            socket.emit('invData', items);
-        }
-    });
-
-    socket.on('toggleAuto', (data) => {
-        if (!bot) return;
-        if (autoMsgTimer) {
-            clearInterval(autoMsgTimer);
-            autoMsgTimer = null;
-            io.emit('log', '[SİSTEM] Oto-mesaj durduruldu.');
+    bot.on('end', (reason) => {
+        if (!manualStop[botId]) {
+            setTimeout(() => { if (!manualStop[botId]) startBot(data); }, 10000);
         } else {
-            autoMsgTimer = setInterval(() => bot.chat(data.text), data.time * 1000);
-            io.emit('log', `[SİSTEM] Başlatıldı.`);
+            delete bots[botId];
+            io.emit('botUpdate', Object.keys(bots));
         }
     });
 
-    setInterval(() => {
-        if (bot && bot.entity) {
-            socket.emit('stats', {
-                x: Math.round(bot.entity.position.x),
-                y: Math.round(bot.entity.position.y),
-                z: Math.round(bot.entity.position.z)
-            });
-        }
-    }, 1000);
+    bot.on('error', (err) => io.emit('log', `[HATA] ${botId}: ${err.message}`));
+}
+
+io.on('connection', (socket) => {
+    socket.on('login', (data) => startBot(data));
+    socket.on('stopBot', (id) => { manualStop[id] = true; if (bots[id]) bots[id].quit(); });
+    socket.on('sendMessage', (d) => { if (bots[d.id]) bots[d.id].chat(d.msg); });
+    socket.on('move', (d) => { if (bots[d.id]) bots[d.id].setControlState(d.dir, !bots[d.id].controlState[d.dir]); });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Panel aktif: ${PORT}`));
+server.listen(PORT, () => console.log(`Panel aktif port: ${PORT}`));
