@@ -1,11 +1,12 @@
 {
-  "name": "mc-afk-stable-panel",
-  "version": "2.3.0",
+  "name": "mc-afk-pro-panel",
+  "version": "2.6.0",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "dependencies": {
     "express": "^4.18.2",
-    "mineflayer": "^4.20.0",
+    "mineflayer": "^4.22.0",
+    "minecraft-protocol": "^1.49.0",
     "socket.io": "^4.7.2"
   }
 }
