@@ -1,98 +1,77 @@
-const mineflayer = require('mineflayer');
+const express = require('express');
 const http = require('http');
-const url = require('url');
-const fs = require('fs');
-const path = require('path');
+const { Server } = require('socket.io');
+const mineflayer = require('mineflayer');
 
-let userSessions = {}; 
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
-function getSession(sid) {
-    if (!userSessions[sid]) userSessions[sid] = { bots: {}, logs: {}, configs: {} };
-    return userSessions[sid];
-}
+let sessionBots = {}; 
+let manualStop = {};
 
-function startBot(sid, host, user, ver) {
-    const s = getSession(sid);
-    if (s.bots[user]) return;
+app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 
-    const [ip, port] = host.split(':');
-    s.logs[user] = ["<b style='color:gray'>[SİSTEM] Başlatılıyor...</b>"];
+io.on('connection', (socket) => {
+    const sid = socket.id;
+    sessionBots[sid] = {};
 
-    const bot = mineflayer.createBot({
-        host: ip, port: parseInt(port) || 25565, 
-        username: user, version: ver, auth: 'offline'
-    });
+    function startBot(data) {
+        const botName = data.user;
+        const botKey = `${sid}_${botName}`;
+        manualStop[botKey] = false;
 
-    s.bots[user] = bot;
-    s.configs[user] = { msgT: null, afkT: null };
+        const bot = mineflayer.createBot({
+            host: data.host,
+            port: parseInt(data.port) || 25565,
+            username: botName,
+            version: data.version === 'auto' ? false : data.version,
+            checkTimeoutInterval: 90000 // Akıllı Proxy: 90sn tolerans
+        });
 
-    bot.on('login', () => s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " oyuna girdi!</b>"));
-    
-    bot.on('message', (m) => {
-        s.logs[user].push(m.toHTML());
-        if(s.logs[user].length > 100) s.logs[user].shift();
-    });
+        sessionBots[sid][botName] = bot;
 
-    // BOT DÜŞÜNCE TEMİZLİK VE UYARI
-    bot.on('end', () => {
-        if(s.logs[user]) s.logs[user].push("<b style='color:#ff4757'>[BAĞLANTI] Bağlantı kesildi.</b>");
-        delete s.bots[user];
-    });
+        bot.on('message', (jsonMsg) => {
+            socket.emit('botLog', { id: botName, msg: jsonMsg.toAnsi() });
+        });
 
-    bot.on('kicked', (reason) => {
-        s.logs[user].push("<b style='color:#ff4757'>[ATILDI] Sunucu bağlantıyı kesti.</b>");
-        delete s.bots[user];
-    });
-
-    bot.on('error', (e) => { 
-        s.logs[user].push("<b style='color:#ff4757'>[HATA] " + e.message + "</b>"); 
-        delete s.bots[user]; 
-    });
-}
-
-http.createServer((req, res) => {
-    const q = url.parse(req.url, true).query;
-    const p = url.parse(req.url, true).pathname;
-    const sid = q.sid;
-    if (!sid && p !== '/') return res.end("No SID");
-
-    const s = getSession(sid);
-    const bot = s.bots[q.user];
-
-    if (p === '/start') { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
-    if (p === '/stop' && bot) { bot.quit(); delete s.bots[q.user]; return res.end("ok"); }
-    if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
-    
-    if (p === '/update' && bot) {
-        const conf = s.configs[q.user];
-        if (q.type === 'inv' && q.status === 'drop') {
-            const item = bot.inventory.slots[q.val];
-            if (item) bot.tossStack(item);
-        } else if (q.type === 'msg') {
-            clearInterval(conf.msgT);
-            if (q.status === 'on') conf.msgT = setInterval(() => bot.chat(decodeURIComponent(q.val)), q.sec * 1000);
-        }
-        return res.end("ok");
-    }
-
-    if (p === '/data' && sid) {
-        const active = Object.keys(s.bots);
-        const botData = {};
-        if (q.user && s.bots[q.user]) {
-            const b = s.bots[q.user];
-            botData[q.user] = {
-                hp: b.health || 0,
-                food: b.food || 0,
-                inv: b.inventory.slots.map((i, idx) => i ? {
-                    name: i.name, count: i.count, slot: idx, 
-                    display: i.displayName
-                } : null).filter(x => x !== null)
+        bot.on('spawn', () => {
+            socket.emit('log', { id: botName, msg: `[SİSTEM] ${botName} bağlandı.` });
+            
+            // Akıllı AFK Sistemi: 30-60 saniye arası rastgele mikro zıplama
+            const afk = () => {
+                if(!sessionBots[sid][botName]) return;
+                bot.setControlState('jump', true);
+                setTimeout(() => bot.setControlState('jump', false), 100);
+                setTimeout(afk, Math.random() * 30000 + 30000);
             };
-        }
-        res.setHeader('Content-Type', 'application/json');
-        return res.end(JSON.stringify({ active, logs: s.logs, botData }));
+            afk();
+        });
+
+        bot.on('end', (reason) => {
+            if (!manualStop[botKey]) {
+                socket.emit('log', { id: botName, msg: `[BAĞLANTI] Düştü (${reason}). Yeniden deneniyor...` });
+                setTimeout(() => { 
+                    if (!manualStop[botKey] && sessionBots[sid]) startBot(data); 
+                }, 10000);
+            } else {
+                delete sessionBots[sid][botName];
+                socket.emit('botUpdate', Object.keys(sessionBots[sid]));
+            }
+        });
+
+        bot.on('error', (err) => socket.emit('log', { id: botName, msg: `[HATA] ${err.message}` }));
     }
 
-    let f = path.join(__dirname, p === '/' ? 'index.html' : p);
-    fs.readFile(f, (err, data) => res.end(data || "404"));
-}).listen(process.env.PORT || 10000);
+    socket.on('login', (data) => { if (!sessionBots[sid][data.user]) startBot(data); });
+    socket.on('stopBot', (name) => { manualStop[`${sid}_${name}`] = true; if (sessionBots[sid][name]) sessionBots[sid][name].quit(); });
+    socket.on('chat', (d) => { if (sessionBots[sid][d.id]) sessionBots[sid][d.id].chat(d.msg); });
+    socket.on('disconnect', () => {
+        if (sessionBots[sid]) {
+            Object.keys(sessionBots[sid]).forEach(n => { manualStop[`${sid}_${n}`] = true; sessionBots[sid][n].quit(); });
+            delete sessionBots[sid];
+        }
+    });
+});
+
+server.listen(process.env.PORT || 3000);
