@@ -5,9 +5,7 @@ const mineflayer = require('mineflayer');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: { origin: "*" }
-});
+const io = new Server(server);
 
 let sessionBots = {}; 
 let manualStop = {};
@@ -17,58 +15,50 @@ app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 io.on('connection', (socket) => {
     const sid = socket.id;
     sessionBots[sid] = {};
-    console.log(`[BAĞLANTI] Yeni kullanıcı: ${sid}`);
 
     socket.on('login', (data) => {
         const botName = data.user;
-        if (!botName || !data.host) return;
-        
-        console.log(`[GİRİŞ] ${botName} -> ${data.host} bağlanıyor...`);
         const botKey = `${sid}_${botName}`;
         manualStop[botKey] = false;
 
-        try {
-            const bot = mineflayer.createBot({
-                host: data.host,
-                port: parseInt(data.port) || 25565,
-                username: botName,
-                version: data.version === 'auto' ? false : data.version,
-                checkTimeoutInterval: 60000
-            });
+        const bot = mineflayer.createBot({
+            host: data.host,
+            port: parseInt(data.port) || 25565,
+            username: botName,
+            version: data.version === 'auto' ? false : data.version,
+            checkTimeoutInterval: 90000 
+        });
 
-            sessionBots[sid][botName] = bot;
+        sessionBots[sid][botName] = bot;
 
-            bot.on('login', () => {
+        bot.on('message', (jsonMsg) => {
+            // toAnsi() kullanarak ham renk kodlarını tarayıcıya yolluyoruz
+            socket.emit('botLog', { id: botName, msg: jsonMsg.toAnsi() });
+        });
+
+        bot.on('spawn', () => {
+            socket.emit('botUpdate', Object.keys(sessionBots[sid]));
+            socket.emit('log', { id: botName, msg: `${botName} bağlandı.` });
+            
+            const afk = () => {
+                if(!sessionBots[sid][botName]) return;
+                bot.setControlState('jump', true);
+                setTimeout(() => bot.setControlState('jump', false), 200);
+                setTimeout(afk, Math.random() * 20000 + 40000); 
+            };
+            afk();
+        });
+
+        bot.on('end', (reason) => {
+            if (!manualStop[botKey]) {
+                setTimeout(() => { if (!manualStop[botKey] && sessionBots[sid]) socket.emit('login', data); }, 10000);
+            } else {
+                delete sessionBots[sid][botName];
                 socket.emit('botUpdate', Object.keys(sessionBots[sid]));
-            });
+            }
+        });
 
-            bot.on('message', (jsonMsg) => {
-                socket.emit('botLog', { id: botName, msg: jsonMsg.toAnsi() });
-            });
-
-            bot.on('spawn', () => {
-                socket.emit('log', { id: botName, msg: `[SİSTEM] ${botName} başarıyla spawn oldu.` });
-                socket.emit('botUpdate', Object.keys(sessionBots[sid]));
-            });
-
-            bot.on('end', (reason) => {
-                if (!manualStop[botKey]) {
-                    socket.emit('log', { id: botName, msg: `[UYARI] Düştü: ${reason}. Tekrar deneniyor...` });
-                    setTimeout(() => { if (!manualStop[botKey] && sessionBots[sid]) startBot(data); }, 10000);
-                } else {
-                    delete sessionBots[sid][botName];
-                    socket.emit('botUpdate', Object.keys(sessionBots[sid]));
-                }
-            });
-
-            bot.on('error', (err) => {
-                console.error(err);
-                socket.emit('log', { id: botName, msg: `[HATA] ${err.message}` });
-            });
-
-        } catch (e) {
-            socket.emit('log', { id: botName, msg: `[KRİTİK HATA] ${e.message}` });
-        }
+        bot.on('error', (err) => socket.emit('log', { id: botName, msg: `Hata: ${err.message}` }));
     });
 
     socket.on('stopBot', (name) => {
@@ -79,17 +69,6 @@ io.on('connection', (socket) => {
     socket.on('chat', (d) => {
         if (sessionBots[sid] && sessionBots[sid][d.id]) sessionBots[sid][d.id].chat(d.msg);
     });
-
-    socket.on('disconnect', () => {
-        if (sessionBots[sid]) {
-            Object.keys(sessionBots[sid]).forEach(n => {
-                manualStop[`${sid}_${n}`] = true;
-                sessionBots[sid][n].quit();
-            });
-            delete sessionBots[sid];
-        }
-    });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Sunucu ${PORT} portunda aktif.`));
+server.listen(process.env.PORT || 3000);
