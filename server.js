@@ -1,103 +1,94 @@
 const mineflayer = require('mineflayer');
-const http = require('http');
-const url = require('url');
-const fs = require('fs');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const readline = require('readline');
 
-let userSessions = {}; 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// --- AYARLAR ---
+const botOptions = {
+    host: 'localhost', // Sunucu IP adresi
+    port: 25565,       // Sunucu portu
+    username: 'Kontrol_Botu'
+};
 
-function getSession(sid) {
-    if (!userSessions[sid]) userSessions[sid] = { bots: {}, logs: {}, configs: {} };
-    return userSessions[sid];
+const bot = mineflayer.createBot(botOptions);
+
+// Değişkenler
+let autoMessageActive = false;
+let autoMessageTimer = null;
+const moveStates = { forward: false, back: false, left: false, right: false, jump: false };
+
+// --- ARAYÜZ ÇİZİMİ ---
+function updateUI() {
+    console.clear();
+    const pos = bot.entity ? bot.entity.position : { x: 0, y: 0, z: 0 };
+    
+    console.log("==================================================");
+    console.log(` BOT ADI: ${bot.username} | DURUM: Bağlı`);
+    console.log(` KOORDİNAT: X: ${pos.x.toFixed(1)} Y: ${pos.y.toFixed(1)} Z: ${pos.z.toFixed(1)}`);
+    console.log("==================================================");
+    console.log(" [W-A-S-D] Hareket (Basınca başlar, tekrar basınca durur)");
+    console.log(" [SPACE]   Zıplama Aç/Kapat");
+    console.log(" [E]       Envanteri Listele");
+    console.log(" [M]       Oto-Mesaj Aç/Kapat (60sn)");
+    console.log(" [Q]       Çıkış Yap");
+    console.log("--------------------------------------------------");
+    console.log(" KONSOL AKIŞI:");
 }
 
-async function askGemini(message, botName) {
-    try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        // Hız için model parametreleri optimize edildi
-        const result = await model.generateContent({
-            contents: [{ role: "user", parts: [{ text: `Sen Minecraft oyuncusu ${botName}sin. Kısa cevap ver: ${message}` }]}],
-            generationConfig: { maxOutputTokens: 20, temperature: 0.7 }
-        });
-        return result.response.text().trim().replace(/"/g, "");
-    } catch (e) { return "Efendim?"; }
-}
+// --- KLAVYE KONTROLÜ ---
+readline.emitKeypressEvents(process.stdin);
+if (process.stdin.isTTY) process.stdin.setRawMode(true);
 
-function startBot(sid, host, user, ver) {
-    const s = getSession(sid);
-    if (s.bots[user]) return;
-    const [ip, port] = host.split(':');
+process.stdin.on('keypress', (str, key) => {
+    if (!key) return;
+
+    // Hareket Kontrolleri
+    const controls = { 'w': 'forward', 's': 'back', 'a': 'left', 'd': 'right', 'space': 'jump' };
     
-    s.configs[user] = s.configs[user] || { afk: false, reconnect: true, mining: false, tasks: [] };
-
-    const bot = mineflayer.createBot({
-        host: ip, port: parseInt(port) || 25565, 
-        username: user, version: ver, auth: 'offline',
-        checkTimeoutInterval: 30000, // Daha hızlı kopma tespiti
-        hideErrors: true 
-    });
-
-    s.bots[user] = bot;
-    s.logs[user] = ["<b>Sistem: Başlatıldı...</b>"];
-
-    bot.on('message', (jsonMsg) => {
-        s.logs[user].push(jsonMsg.toHTML());
-        if(s.logs[user].length > 40) s.logs[user].shift(); // Veri hafifletme
-    });
-
-    bot.on('chat', async (username, message) => {
-        if (username === user) return;
-        if (message.toLocaleLowerCase('tr-TR').includes(user.toLocaleLowerCase('tr-TR'))) {
-            const reply = await askGemini(message, user);
-            if (s.bots[user]) s.bots[user].chat(reply);
-        }
-    });
-
-    bot.on('end', () => {
-        if(s.configs[user]?.reconnect) setTimeout(() => startBot(sid, host, user, ver), 3000);
-        delete s.bots[user];
-    });
-    
-    bot.on('error', (err) => console.log("Bot Hatası: " + err.message));
-}
-
-const server = http.createServer((req, res) => {
-    const q = url.parse(req.url, true).query;
-    const p = url.parse(req.url, true).pathname;
-    const s = getSession(q.sid);
-
-    if (p === '/') return res.end(fs.readFileSync('./index.html'));
-
-    // GECİKMEYİ SIFIRLAYAN HEADERLAR
-    res.writeHead(200, {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
-    });
-
-    if (p === '/start') startBot(q.sid, q.host, q.user, q.ver);
-    if (p === '/send' && s.bots[q.user]) s.bots[q.user].chat(decodeURIComponent(q.msg));
-    if (p === '/stop' && q.user) { if(s.configs[q.user]) s.configs[q.user].reconnect = false; s.bots[q.user]?.quit(); }
-    
-    if (p === '/update') {
-        const conf = s.configs[q.user];
-        if (q.type === 'add_task') {
-            const t = { text: decodeURIComponent(q.val), time: parseInt(q.sec), timer: setInterval(() => s.bots[q.user]?.chat(decodeURIComponent(q.val)), parseInt(q.sec)*1000) };
-            conf.tasks.push(t);
-        } else if (q.type === 'del_task') {
-            clearInterval(conf.tasks[q.val].timer);
-            conf.tasks.splice(q.val, 1);
-        } else { conf[q.type] = !conf[q.type]; }
+    if (controls[key.name]) {
+        const dir = controls[key.name];
+        moveStates[dir] = !moveStates[dir];
+        bot.setControlState(dir, moveStates[dir]);
+        updateUI();
+        console.log(`>> ${dir.toUpperCase()} durumu: ${moveStates[dir] ? 'AKTİF' : 'DURDURULDU'}`);
     }
 
-    if (p === '/data') {
-        const botData = {};
-        if (q.user && s.bots[q.user]) {
-            const b = s.bots[q.user];
-            botData[q.user] = { pos: b.entity?.position || {x:0,y:0,z:0} };
-        }
-        return res.end(JSON.stringify({ active: Object.keys(s.bots), logs: s.logs, configs: s.configs, botData }));
+    // Envanter Listesi
+    if (key.name === 'e') {
+        const items = bot.inventory.items();
+        console.log("\n--- ENVANTER ---");
+        if (items.length === 0) console.log("Envanter boş.");
+        else items.forEach(item => console.log(`- ${item.name} x${item.count}`));
+        console.log("----------------\n");
     }
-    res.end();
+
+    // Oto-Mesaj
+    if (key.name === 'm') {
+        autoMessageActive = !autoMessageActive;
+        if (autoMessageActive) {
+            autoMessageTimer = setInterval(() => bot.chat("Bot aktif!"), 60000);
+            console.log(">> Oto-mesaj sistemi AÇILDI.");
+        } else {
+            clearInterval(autoMessageTimer);
+            console.log(">> Oto-mesaj sistemi KAPATILDI.");
+        }
+    }
+
+    // Çıkış
+    if (key.name === 'q' || (key.ctrl && key.name === 'c')) {
+        console.log("Ayrılıyor...");
+        process.exit();
+    }
 });
-server.listen(process.env.PORT || 10000);
+
+// --- BOT OLAYLARI ---
+bot.on('chat', (username, message) => {
+    if (username === bot.username) return;
+    console.log(`[MESAJ] ${username}: ${message}`);
+});
+
+bot.on('spawn', () => {
+    updateUI();
+    setInterval(updateUI, 2000); // Ekranı 2 saniyede bir güncelle (koordinatlar için)
+});
+
+bot.on('error', (err) => console.log(`Hata: ${err.message}`));
+bot.on('kicked', (reason) => console.log(`Sunucudan atıldı: ${reason}`));
