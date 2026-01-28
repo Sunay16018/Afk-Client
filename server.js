@@ -2,12 +2,9 @@ const mineflayer = require('mineflayer');
 const http = require('http');
 const url = require('url');
 const fs = require('fs');
-const path = require('path');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 let userSessions = {}; 
-
-// Render paneline eklediğin keyi buradan okur
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 function getSession(sid) {
@@ -18,15 +15,13 @@ function getSession(sid) {
 async function askGemini(message, botName) {
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const prompt = `Sen bir Minecraft oyuncususun. Oyun adın: ${botName}. Mesaj: "${message}". Bir Minecraft oyuncusu gibi çok kısa, doğal ve Türkçe cevap ver. Robot gibi konuşma, samimi ol. Tek cümle olsun.`;
-        
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let text = response.text().trim();
-        return text.length > 60 ? text.substring(0, 60) : text.replace(/"/g, "");
-    } catch (e) {
-        return "Efendim kanka?";
-    }
+        // Hız için model parametreleri optimize edildi
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: `Sen Minecraft oyuncusu ${botName}sin. Kısa cevap ver: ${message}` }]}],
+            generationConfig: { maxOutputTokens: 20, temperature: 0.7 }
+        });
+        return result.response.text().trim().replace(/"/g, "");
+    } catch (e) { return "Efendim?"; }
 }
 
 function startBot(sid, host, user, ver) {
@@ -34,99 +29,75 @@ function startBot(sid, host, user, ver) {
     if (s.bots[user]) return;
     const [ip, port] = host.split(':');
     
-    if (!s.configs[user]) s.configs[user] = { afk: false, reconnect: true, mining: false, tasks: [] };
+    s.configs[user] = s.configs[user] || { afk: false, reconnect: true, mining: false, tasks: [] };
 
     const bot = mineflayer.createBot({
         host: ip, port: parseInt(port) || 25565, 
         username: user, version: ver, auth: 'offline',
-        checkTimeoutInterval: 90000, keepAlive: true 
+        checkTimeoutInterval: 30000, // Daha hızlı kopma tespiti
+        hideErrors: true 
     });
 
     s.bots[user] = bot;
-    s.logs[user] = ["<b style='color:gray'>Sistem: Gemini bağlandı, giriş yapılıyor...</b>"];
+    s.logs[user] = ["<b>Sistem: Başlatıldı...</b>"];
 
-    bot.on('login', () => {
-        s.logs[user].push("<b style='color:#2ecc71'>[BAŞARILI] " + user + " oyuna girdi!</b>");
-        s.configs[user].tasks.forEach(t => {
-            if(t.time > 0) t.timer = setInterval(() => { if(s.bots[user]) s.bots[user].chat(t.text) }, t.time * 1000);
-        });
+    bot.on('message', (jsonMsg) => {
+        s.logs[user].push(jsonMsg.toHTML());
+        if(s.logs[user].length > 40) s.logs[user].shift(); // Veri hafifletme
     });
 
     bot.on('chat', async (username, message) => {
         if (username === user) return;
-        const msg = message.toLocaleLowerCase('tr-TR');
-        const myName = user.toLocaleLowerCase('tr-TR');
-
-        if (msg.includes(myName)) {
-            s.logs[user].push(`<i style="color:orange">Gemini cevap hazırlıyor...</i>`);
+        if (message.toLocaleLowerCase('tr-TR').includes(user.toLocaleLowerCase('tr-TR'))) {
             const reply = await askGemini(message, user);
-            setTimeout(() => { 
-                if (s.bots[user]) {
-                    s.bots[user].chat(reply); 
-                    s.logs[user].push(`<b style="color:cyan">Gemini:</b> ${reply}`);
-                }
-            }, 1500);
+            if (s.bots[user]) s.bots[user].chat(reply);
         }
     });
-
-    bot.on('message', (m) => {
-        s.logs[user].push(m.toHTML());
-        if(s.logs[user].length > 50) s.logs[user].shift();
-    });
-
-    const mineInt = setInterval(() => {
-        if (s.configs[user]?.mining && bot.entity) {
-            const block = bot.blockAtCursor(4);
-            if (block) bot.dig(block, true, () => {});
-        }
-    }, 1200);
 
     bot.on('end', () => {
-        clearInterval(mineInt);
-        if(s.configs[user]) s.configs[user].tasks.forEach(t => clearInterval(t.timer));
+        if(s.configs[user]?.reconnect) setTimeout(() => startBot(sid, host, user, ver), 3000);
         delete s.bots[user];
-        if (s.configs[user]?.reconnect) setTimeout(() => startBot(sid, host, user, ver), 5000);
     });
+    
+    bot.on('error', (err) => console.log("Bot Hatası: " + err.message));
 }
 
 const server = http.createServer((req, res) => {
     const q = url.parse(req.url, true).query;
     const p = url.parse(req.url, true).pathname;
-    const sid = q.sid;
-    if (p === '/') return fs.readFile(path.join(__dirname, 'index.html'), (err, data) => res.end(data));
-    
-    const s = getSession(sid);
-    const bot = s.bots[q.user];
+    const s = getSession(q.sid);
 
-    if (p === '/start') { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
-    if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
-    if (p === '/stop') { if(s.configs[q.user]) s.configs[q.user].reconnect = false; if(bot) bot.quit(); return res.end("ok"); }
+    if (p === '/') return res.end(fs.readFileSync('./index.html'));
+
+    // GECİKMEYİ SIFIRLAYAN HEADERLAR
+    res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+    });
+
+    if (p === '/start') startBot(q.sid, q.host, q.user, q.ver);
+    if (p === '/send' && s.bots[q.user]) s.bots[q.user].chat(decodeURIComponent(q.msg));
+    if (p === '/stop' && q.user) { if(s.configs[q.user]) s.configs[q.user].reconnect = false; s.bots[q.user]?.quit(); }
+    
     if (p === '/update') {
         const conf = s.configs[q.user];
         if (q.type === 'add_task') {
-            const t = { text: decodeURIComponent(q.val), time: parseInt(q.sec), timer: null };
-            if(t.time > 0) t.timer = setInterval(() => { if(s.bots[q.user]) s.bots[q.user].chat(t.text) }, t.time * 1000);
+            const t = { text: decodeURIComponent(q.val), time: parseInt(q.sec), timer: setInterval(() => s.bots[q.user]?.chat(decodeURIComponent(q.val)), parseInt(q.sec)*1000) };
             conf.tasks.push(t);
         } else if (q.type === 'del_task') {
             clearInterval(conf.tasks[q.val].timer);
             conf.tasks.splice(q.val, 1);
-        } else if (q.type === 'inv' && bot) {
-            const item = bot.inventory.slots[q.val];
-            if (item) bot.tossStack(item);
         } else { conf[q.type] = !conf[q.type]; }
-        return res.end("ok");
     }
+
     if (p === '/data') {
         const botData = {};
         if (q.user && s.bots[q.user]) {
             const b = s.bots[q.user];
-            botData[q.user] = {
-                pos: b.entity ? b.entity.position : {x:0, y:0, z:0},
-                inv: b.inventory.slots.map((i, idx) => i ? { name: i.name, slot: idx, count: i.count } : null).filter(x => x)
-            };
+            botData[q.user] = { pos: b.entity?.position || {x:0,y:0,z:0} };
         }
-        res.setHeader('Content-Type', 'application/json');
-        return res.end(JSON.stringify({ active: Object.keys(s.bots), logs: s.logs, botData, configs: s.configs }));
+        return res.end(JSON.stringify({ active: Object.keys(s.bots), logs: s.logs, configs: s.configs, botData }));
     }
+    res.end();
 });
 server.listen(process.env.PORT || 10000);
