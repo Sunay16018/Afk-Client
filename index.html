@@ -1,44 +1,166 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>7/24 Bot Console</title>
+    <title>MC AFK Manager v2.3</title>
     <style>
-        body { background: #050505; color: #ccc; font-family: monospace; margin: 0; display: flex; height: 100vh; }
-        #sidebar { width: 260px; background: #0f0f0f; border-right: 1px solid #222; padding: 15px; display: flex; flex-direction: column; }
-        #main { flex: 1; display: flex; flex-direction: column; }
-        .bot-tab { padding: 12px; background: #1a1a1a; margin-bottom: 5px; cursor: pointer; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid transparent; }
-        .bot-tab.active { border-left: 3px solid #00ff88; background: #222; color: #fff; }
-        .console-box { flex: 1; padding: 15px; overflow-y: auto; display: none; background: #000; color: #00ff88; line-height: 1.4; font-size: 13px; }
+        body { 
+            background: #050505; 
+            color: #ddd; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+        }
+        
+        /* Ana Panel Konteynırı */
+        #panel-container {
+            display: flex;
+            width: 95%;
+            max-width: 1200px;
+            height: 80vh; /* Ekranın %80'i kadar sabit yükseklik */
+            background: #0f0f0f;
+            border: 1px solid #222;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* Sol Taraf: Ayarlar ve Bot Listesi */
+        #sidebar { 
+            width: 300px; 
+            background: #121212; 
+            border-right: 1px solid #222; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px;
+        }
+
+        #botList { 
+            flex: 1; 
+            overflow-y: auto; 
+            margin-bottom: 20px;
+            padding-right: 5px;
+        }
+
+        /* Sağ Taraf: Konsol ve Mesaj Alanı */
+        #main { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background: #000; 
+        }
+
+        #consoles { 
+            flex: 1; 
+            overflow: hidden; /* İçerideki console-box'lar yönetecek */
+            position: relative;
+        }
+
+        .console-box { 
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            padding: 20px; 
+            overflow-y: auto; 
+            display: none; 
+            font-family: 'Consolas', monospace;
+            font-size: 13px; 
+            line-height: 1.6; 
+            white-space: pre-wrap;
+            color: #00ff88;
+        }
+        
         .console-box.active { display: block; }
-        .input-area { padding: 15px; background: #0f0f0f; display: flex; gap: 10px; }
-        input, select, button { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 8px; border-radius: 4px; outline: none; width: 100%; }
-        button { background: #00ff88; color: #000; font-weight: bold; cursor: pointer; border: none; }
-        .stop-btn { background: #ff4757; width: auto; font-size: 9px; padding: 2px 5px; }
+
+        /* Form Elemanları */
+        .input-group { border-top: 1px solid #222; padding-top: 15px; }
+        input, select, button { 
+            background: #1a1a1a; 
+            border: 1px solid #333; 
+            color: #fff; 
+            padding: 10px; 
+            border-radius: 6px; 
+            outline: none; 
+            width: 100%; 
+            margin-bottom: 8px;
+            box-sizing: border-box;
+        }
+        
+        button { 
+            background: #00ff88; 
+            color: #000; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border: none; 
+            transition: 0.2s;
+        }
+        button:hover { background: #00cc6e; }
+
+        .bot-tab { 
+            padding: 10px; 
+            background: #1a1a1a; 
+            margin-bottom: 8px; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 1px solid #333;
+            font-size: 13px;
+        }
+        .bot-tab.active { border-color: #00ff88; background: #222; }
+        
+        .stop-btn { background: #ff4757; color: white; width: auto; padding: 2px 6px; font-size: 10px; margin: 0; }
+
+        .chat-area { 
+            padding: 15px; 
+            background: #0f0f0f; 
+            border-top: 1px solid #222; 
+            display: flex; 
+            gap: 10px; 
+        }
+
+        /* Kaydırma Çubuğu Güzelleştirme */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <h4 style="color:#00ff88; margin:0 0 10px 0;">BOT LİSTESİ</h4>
-    <div id="botList"></div>
-    <div style="margin-top:auto; border-top:1px solid #222; padding-top:10px;">
-        <input id="host" placeholder="Sunucu IP">
-        <input id="user" placeholder="Kullanıcı Adı">
-        <select id="ver">
-            <option value="auto">Otomatik Sürüm</option>
-            <option value="1.21.8">1.21.8</option><option value="1.21.4">1.21.4</option>
-            <option value="1.20.1">1.20.1</option><option value="1.16.5">1.16.5</option>
-            <option value="1.12.2">1.12.2</option><option value="1.8.9">1.8.9</option>
-        </select>
-        <button onclick="login()">BAĞLAN</button>
+<div id="panel-container">
+    <div id="sidebar">
+        <h3 style="color:#00ff88; margin:0 0 15px 0; font-size: 18px;">BOT YÖNETİMİ</h3>
+        <div id="botList">
+            <div style="color: #555; font-size: 12px; text-align: center; margin-top: 20px;">Henüz bot eklenmedi.</div>
+        </div>
+        
+        <div class="input-group">
+            <input id="host" placeholder="Sunucu IP:Port">
+            <input id="user" placeholder="Bot İsmi">
+            <select id="ver">
+                <option value="auto">Otomatik Sürüm</option>
+                <option value="1.21.8">1.21.8</option>
+                <option value="1.21.4">1.21.4</option>
+                <option value="1.20.1">1.20.1</option>
+                <option value="1.16.5">1.16.5</option>
+                <option value="1.8.9">1.8.9</option>
+            </select>
+            <button onclick="login()">BOTU BAŞLAT</button>
+        </div>
     </div>
-</div>
 
-<div id="main">
-    <div id="consoles"></div>
-    <div class="input-area">
-        <input id="chat" placeholder="Sohbet mesajı gönder..." onkeydown="if(event.key==='Enter') send()">
-        <button onclick="send()" style="width:100px;">GÖNDER</button>
+    <div id="main">
+        <div id="consoles">
+            <div id="default-msg" style="padding:40px; color:#444; text-align:center;">
+                Soldan bir bot seçerek konsolunu görüntüleyin.
+            </div>
+        </div>
+        <div class="chat-area">
+            <input id="chat" style="flex:1; margin:0;" placeholder="Mesaj gönder (Enter)..." onkeydown="if(event.key==='Enter') send()">
+            <button onclick="send()" style="width:100px; margin:0;">GÖNDER</button>
+        </div>
     </div>
 </div>
 
@@ -48,36 +170,48 @@
     let selectedBot = null;
 
     function login() {
-        socket.emit('login', { host: document.getElementById('host').value, user: document.getElementById('user').value, version: document.getElementById('ver').value });
+        const h = document.getElementById('host').value;
+        const u = document.getElementById('user').value;
+        if(h && u) socket.emit('login', { host: h, user: u, version: document.getElementById('ver').value });
     }
 
     socket.on('botUpdate', ids => {
         const list = document.getElementById('botList');
         list.innerHTML = '';
+        if(ids.length === 0) {
+            list.innerHTML = '<div style="color: #555; font-size: 12px; text-align: center; margin-top: 20px;">Bot kalmadı.</div>';
+            document.getElementById('default-msg').style.display = 'block';
+        } else {
+            document.getElementById('default-msg').style.display = 'none';
+        }
+
         ids.forEach(id => {
-            if(!document.getElementById(`con_${id}`)) createConsole(id);
+            if(!document.getElementById(`con_${id}`)) {
+                const con = document.createElement('div');
+                con.id = `con_${id}`;
+                con.className = 'console-box';
+                document.getElementById('consoles').appendChild(con);
+            }
             const div = document.createElement('div');
             div.className = `bot-tab ${selectedBot === id ? 'active' : ''}`;
             div.onclick = () => selectBot(id);
-            div.innerHTML = `<span>${id}</span><button class="stop-btn" onclick="socket.emit('stopBot','${id}')">X</button>`;
+            div.innerHTML = `<span>${id}</span><button class="stop-btn" onclick="event.stopPropagation(); socket.emit('stopBot','${id}')">DURDUR</button>`;
             list.appendChild(div);
         });
         if(ids.length > 0 && !selectedBot) selectBot(ids[0]);
     });
 
-    function createConsole(id) {
-        const con = document.createElement('div');
-        con.id = `con_${id}`;
-        con.className = 'console-box';
-        document.getElementById('consoles').appendChild(con);
-    }
-
     function selectBot(id) {
         selectedBot = id;
         document.querySelectorAll('.console-box').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.bot-tab').forEach(t => t.classList.remove('active'));
-        if(document.getElementById(`con_${id}`)) document.getElementById(`con_${id}`).classList.add('active');
-        socket.emit('botUpdate', Object.keys(sessionBots || {})); // Görsel güncelleme için
+        
+        const targetCon = document.getElementById(`con_${id}`);
+        if(targetCon) targetCon.classList.add('active');
+        
+        document.querySelectorAll('.bot-tab').forEach(t => {
+            if(t.querySelector('span').innerText === id) t.classList.add('active');
+        });
     }
 
     socket.on('botLog', d => {
@@ -90,7 +224,10 @@
 
     socket.on('log', d => {
         const c = document.getElementById(`con_${d.id}`);
-        if(c) c.innerHTML += `<div style="color:#aaa;">${d.msg}</div>`;
+        if(c) {
+            c.innerHTML += `<div style="color:#777; font-style:italic;">> ${d.msg}</div>`;
+            c.scrollTop = c.scrollHeight;
+        }
     });
 
     function send() {
@@ -102,8 +239,9 @@
     }
 
     function ansiToHtml(ansi) {
-        const colors = {'0':'#000','1':'#00a','2':'#0a0','3':'#0aa','4':'#a00','5':'#a0a','6':'#fa0','7':'#aaa','8':'#555','9':'#55f','a':'#5f5','b':'#5ff','c':'#f55','d':'#f5f','e':'#ff5','f':'#fff'};
-        return ansi.replace(/§([0-9a-f])/g, (m, c) => `</span><span style="color:${colors[c]}">`) + '</span>';
+        const colors = {'0':'#000','1':'#00A','2':'#0A0','3':'#0AA','4':'#A00','5':'#A0A','6':'#FA0','7':'#AAA','8':'#555','9':'#55F','a':'#5F5','b':'#5FF','c':'#F55','d':'#F5F','e':'#FF5','f':'#FFF'};
+        let res = ansi.replace(/§([0-9a-f])/gi, (m, c) => `</span><span style="color:${colors[c.toLowerCase()] || '#fff'}">`);
+        return `<span>${res.replace(/§[k-or]/gi, '')}</span>`;
     }
 </script>
 </body>
