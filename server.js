@@ -19,13 +19,20 @@ async function askAI(message) {
             headers: { "Authorization": `Bearer ${HF_TOKEN}`, "Content-Type": "application/json" },
             method: "POST",
             body: JSON.stringify({ 
-                inputs: `Player says: "${message}". Reply as a cool Minecraft player with a very short sentence.`,
-                parameters: { max_new_tokens: 30 } 
+                inputs: `User: ${message}. Reply as a Minecraft player in 3-4 words.`,
+                parameters: { max_new_tokens: 20, temperature: 0.7 } 
             }),
         });
         const result = await response.json();
-        let reply = result[0]?.generated_text || "Efendim?";
-        return reply.split('.')[0].substring(0, 60);
+        let reply = result[0]?.generated_text || result.generated_text || "";
+        
+        // Gereksiz kısımları temizle
+        reply = reply.replace(/User:.*words\./gi, "").trim();
+        // Eğer AI boş dönerse rastgele bir cevap ver
+        const fallbacks = ["Efendim?", "Buradayım kanka", "Noldu?", "He canım"];
+        if (!reply || reply.length < 2) return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        
+        return reply.split('.')[0].substring(0, 50);
     } catch (e) { return "Efendim?"; }
 }
 
@@ -43,20 +50,34 @@ function startBot(sid, host, user, ver) {
     });
 
     s.bots[user] = bot;
-    s.logs[user] = ["<b style='color:gray'>Bağlanıyor...</b>"];
+    s.logs[user] = ["<b style='color:gray'>Sistem: Bağlanıyor...</b>"];
 
     bot.on('login', () => {
-        s.logs[user].push("<b style='color:#2ecc71'>Giriş yapıldı!</b>");
-        // Görevleri başlat
+        s.logs[user].push("<b style='color:#2ecc71'>[BAŞARILI] " + user + " girdi!</b>");
         s.configs[user].tasks.forEach(t => {
             if(t.time > 0) t.timer = setInterval(() => { if(s.bots[user]) s.bots[user].chat(t.text) }, t.time * 1000);
         });
     });
 
+    // GELİŞTİRİLMİŞ AI TETİKLEYİCİ (Harf Duyarlılığı Çözüldü)
     bot.on('chat', async (username, message) => {
-        if (message.toLowerCase().includes(user.toLowerCase()) && username !== user) {
+        if (username === user) return;
+
+        // Türkçe karakterleri ve büyük/küçük harfi normalize et
+        const cleanMsg = message.toLocaleLowerCase('tr-TR');
+        const cleanName = user.toLocaleLowerCase('tr-TR');
+
+        if (cleanMsg.includes(cleanName)) {
+            s.logs[user].push(`<i style="color:orange">AI Düşünüyor: ${message}</i>`);
             const reply = await askAI(message);
-            setTimeout(() => { if (s.bots[user]) s.bots[user].chat(reply); }, 2000);
+            
+            // Daha insansı görünmesi için 2 saniye bekle
+            setTimeout(() => { 
+                if (s.bots[user]) {
+                    s.bots[user].chat(reply); 
+                    s.logs[user].push(`<b style="color:cyan">AI Cevap:</b> ${reply}`);
+                }
+            }, 2000);
         }
     });
 
@@ -123,4 +144,4 @@ const server = http.createServer((req, res) => {
     }
 });
 server.listen(process.env.PORT || 10000);
-                
+        
