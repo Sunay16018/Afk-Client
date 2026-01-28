@@ -7,61 +7,95 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-let bots = {};
+let sessionBots = {}; 
 let manualStop = {};
 
 app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 
-function startBot(data) {
-    const botId = data.user;
-    manualStop[botId] = false;
+io.on('connection', (socket) => {
+    const sid = socket.id;
+    sessionBots[sid] = {};
 
-    const bot = mineflayer.createBot({
-        host: data.host,
-        port: parseInt(data.port) || 25565,
-        username: botId,
-        version: data.version === 'auto' ? false : data.version,
-        checkTimeoutInterval: 90000
+    function startBot(data) {
+        const botName = data.user;
+        const botKey = `${sid}_${botName}`;
+        manualStop[botKey] = false;
+
+        const bot = mineflayer.createBot({
+            host: data.host,
+            port: parseInt(data.port) || 25565,
+            username: botName,
+            version: data.version === 'auto' ? false : data.version,
+            checkTimeoutInterval: 90000
+        });
+
+        sessionBots[sid][botName] = bot;
+
+        bot.on('message', (jsonMsg) => {
+            socket.emit('botLog', { id: botName, msg: jsonMsg.toAnsi() });
+        });
+
+        bot.on('spawn', () => {
+            socket.emit('botUpdate', Object.keys(sessionBots[sid]));
+            socket.emit('log', `[SİSTEM] ${botName} başarıyla bağlandı.`);
+            
+            const updatePlayers = () => {
+                if(bot.players) {
+                    socket.emit('playerList', { id: botName, players: Object.keys(bot.players) });
+                }
+            };
+            bot.on('playerJoined', updatePlayers);
+            bot.on('playerLeft', updatePlayers);
+            updatePlayers();
+        });
+
+        bot.on('end', (reason) => {
+            if (!manualStop[botKey]) {
+                socket.emit('log', `[BAĞLANTI] ${botName} koptu: ${reason}. 10sn içinde tekrar deniyor...`);
+                setTimeout(() => { 
+                    if (!manualStop[botKey] && sessionBots[sid]) startBot(data); 
+                }, 10000);
+            } else {
+                if(sessionBots[sid]) delete sessionBots[sid][botName];
+                socket.emit('botUpdate', Object.keys(sessionBots[sid] || {}));
+            }
+        });
+
+        bot.on('error', (err) => socket.emit('log', `[HATA] ${botName}: ${err.message}`));
+    }
+
+    socket.on('login', (data) => {
+        if (sessionBots[sid][data.user]) return;
+        startBot(data);
     });
 
-    bots[botId] = bot;
-
-    bot.on('message', (jsonMsg) => {
-        io.emit('botLog', { id: botId, msg: jsonMsg.toAnsi() });
-    });
-
-    bot.on('spawn', () => {
-        io.emit('botUpdate', Object.keys(bots));
-        io.emit('log', `[BAŞARILI] ${botId} girdi.`);
-        
-        // Oyuncu listesi değiştiğinde tarayıcıya haber ver
-        const updatePlayers = () => {
-            const players = Object.keys(bot.players);
-            io.emit('playerList', { id: botId, players });
-        };
-        bot.on('playerJoined', updatePlayers);
-        bot.on('playerLeft', updatePlayers);
-        updatePlayers();
-    });
-
-    bot.on('end', (reason) => {
-        if (!manualStop[botId]) {
-            setTimeout(() => { if (!manualStop[botId]) startBot(data); }, 10000);
-        } else {
-            delete bots[botId];
-            io.emit('botUpdate', Object.keys(bots));
+    socket.on('stopBot', (botName) => {
+        manualStop[`${sid}_${botName}`] = true;
+        if (sessionBots[sid][botName]) {
+            sessionBots[sid][botName].quit();
         }
     });
 
-    bot.on('error', (err) => io.emit('log', `[HATA] ${botId}: ${err.message}`));
-}
+    socket.on('sendMessage', (d) => {
+        const bot = sessionBots[sid][d.id];
+        if (bot) bot.chat(d.msg);
+    });
 
-io.on('connection', (socket) => {
-    socket.on('login', (data) => startBot(data));
-    socket.on('stopBot', (id) => { manualStop[id] = true; if (bots[id]) bots[id].quit(); });
-    socket.on('sendMessage', (d) => { if (bots[d.id]) bots[d.id].chat(d.msg); });
-    socket.on('move', (d) => { if (bots[d.id]) bots[d.id].setControlState(d.dir, !bots[d.id].controlState[d.dir]); });
+    socket.on('move', (d) => {
+        const bot = sessionBots[sid][d.id];
+        if (bot) bot.setControlState(d.dir, !bot.controlState[d.dir]);
+    });
+
+    socket.on('disconnect', () => {
+        if (sessionBots[sid]) {
+            Object.keys(sessionBots[sid]).forEach(name => {
+                manualStop[`${sid}_${name}`] = true;
+                sessionBots[sid][name].quit();
+            });
+            delete sessionBots[sid];
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Panel aktif port: ${PORT}`));
+server.listen(PORT, () => console.log(`Panel Hazır: ${PORT}`));
