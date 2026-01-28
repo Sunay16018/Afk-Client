@@ -1,10 +1,8 @@
 {
-  "name": "mc-web-bot",
-  "version": "1.0.0",
+  "name": "mc-web-panel",
+  "version": "1.1.0",
   "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
+  "scripts": { "start": "node server.js" },
   "dependencies": {
     "express": "^4.18.2",
     "mineflayer": "^4.20.0",
