@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { background: #0a0a0a; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; }
-        .nav { display: flex; background: #151515; border-bottom: 2px solid #00ff88; position: sticky; top: 0; }
+        .nav { display: flex; background: #151515; border-bottom: 2px solid #00ff88; position: sticky; top: 0; z-index: 1000; }
         .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #888; transition: 0.3s; }
         .nav-item.active { color: #00ff88; background: #1a1a1a; }
         .content { padding: 20px; display: none; }
         .content.active { display: block; }
-        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; box-sizing: border-box; outline: none; }
-        input { background: #1a1a1a; color: #fff; }
+        input, button, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; box-sizing: border-box; outline: none; }
+        input, select { background: #1a1a1a; color: #fff; }
         button { background: #00ff88; color: #000; font-weight: bold; border: none; cursor: pointer; }
         button:hover { background: #00cc6e; }
         .move-btn { background: #222; color: #fff; }
@@ -31,9 +31,22 @@
 
     <div id="login" class="content active">
         <h2>Sunucu Bağlantısı</h2>
-        <input type="text" id="host" placeholder="Sunucu IP (Örn: mcsunucu.com)">
+        <input type="text" id="host" placeholder="Sunucu IP (Örn: oyna.sunucu.com)">
         <input type="text" id="port" value="25565">
         <input type="text" id="user" placeholder="Bot İsmi">
+        
+        <label style="font-size: 12px; color: #888;">Sunucu Sürümü Seçin:</label>
+        <select id="version">
+            <option value="auto">Otomatik Algıla</option>
+            <option value="1.20.1">1.20.1</option>
+            <option value="1.19.4">1.19.4</option>
+            <option value="1.18.2">1.18.2</option>
+            <option value="1.17.1">1.17.1</option>
+            <option value="1.16.5">1.16.5</option>
+            <option value="1.12.2">1.12.2</option>
+            <option value="1.8.9">1.8.9</option>
+        </select>
+        
         <button onclick="login()">BOTU BAĞLA</button>
     </div>
 
@@ -46,7 +59,7 @@
             <button class="move-btn" id="right" onclick="m('right')">SAĞ (D)</button>
         </div>
         <button class="move-btn" id="jump" onclick="m('jump')">ZIPLA</button>
-        <hr border="1">
+        <hr style="border: 0.5px solid #222; margin: 20px 0;">
         <button onclick="socket.emit('getInv')" style="background: #ffa500;">ENVANTERİ LİSTELE</button>
         <div id="inv-list" style="margin-top:10px;"></div>
     </div>
@@ -64,7 +77,7 @@
         
         <h3>Oto Mesaj</h3>
         <input type="text" id="autoT" placeholder="Mesaj içeriği...">
-        <input type="number" id="autoS" placeholder="Kaç saniyede bir? (Örn: 30)" value="30">
+        <input type="number" id="autoS" placeholder="Saniye" value="30">
         <button onclick="auto()" style="background: #0088ff; color: #fff;">OTO-MESAJ AÇ/KAPAT</button>
     </div>
 
@@ -75,14 +88,14 @@
             document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            event.currentTarget.classList.add('active');
         }
 
         function login() {
             socket.emit('login', {
                 host: document.getElementById('host').value,
                 port: document.getElementById('port').value,
-                user: document.getElementById('user').value
+                user: document.getElementById('user').value,
+                version: document.getElementById('version').value
             });
             tab('settings');
         }
@@ -111,7 +124,7 @@
             c.scrollTop = c.scrollHeight;
         });
         socket.on('invData', d => {
-            document.getElementById('inv-list').innerHTML = d.map(i => `• ${i}`).join('<br>');
+            document.getElementById('inv-list').innerHTML = d.length ? d.map(i => `• ${i}`).join('<br>') : 'Envanter boş.';
         });
     </script>
 </body>
