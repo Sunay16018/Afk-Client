@@ -1,120 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MYSUNAY FAST PANEL</title>
+    <title>Bot Kontrol Paneli</title>
     <style>
-        body { background: #0b0e14; color: #adbac7; font-family: monospace; margin: 0; height: 100vh; display: flex; flex-direction: column; }
-        nav { display: flex; background: #1c2128; border-bottom: 1px solid #444; }
-        nav button { flex: 1; padding: 15px; border: none; background: none; color: #768390; font-weight: bold; }
-        nav button.active { color: #57ab5a; border-bottom: 2px solid #57ab5a; }
-        .tab { display: none; flex: 1; padding: 10px; overflow-y: auto; }
-        .active-tab { display: flex; flex-direction: column; }
-        #logbox { flex: 1; background: #000; padding: 10px; overflow-y: auto; border-radius: 5px; border: 1px solid #333; margin-bottom: 5px; }
-        .card { background: #1c2128; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #444; }
-        input { background: #22272e; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 5px; width: 100%; margin: 4px 0; }
-        .btn { padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; color: white; margin-top: 5px; }
-        .on { background: #2e7d32; } .off { background: #c62828; } .blue { background: #24292e; border: 1px solid #444; }
+        body { font-family: sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; }
+        .panel { background: #2a2a2a; padding: 20px; border-radius: 10px; width: 80%; max-width: 600px; margin-top: 20px; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: #00ff00; }
+        .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        button { padding: 15px; cursor: pointer; border: none; border-radius: 5px; background: #444; color: white; font-weight: bold; }
+        button:active { background: #666; }
+        button.active { background: #ff4444; }
+        #console { background: black; color: #00ff00; height: 200px; overflow-y: scroll; padding: 10px; font-family: monospace; font-size: 12px; border: 1px solid #444; }
     </style>
 </head>
 <body>
-    <nav>
-        <button onclick="tab('bots')" id="b-bots" class="active">BAĞLANTI</button>
-        <button onclick="tab('term')" id="b-term">KONSOL</button>
-        <button onclick="tab('settings')" id="b-settings">AYARLAR</button>
-    </nav>
-
-    <div id="t-bots" class="tab active-tab">
-        <div class="card">
-            <input id="h" placeholder="IP:Port">
-            <input id="u" placeholder="Bot İsmi">
-            <input id="v" placeholder="Sürüm (1.16.5)">
-            <button class="btn on" onclick="add()">BOTU BAŞLAT</button>
-        </div>
-        <div id="list"></div>
-    </div>
-
-    <div id="t-term" class="tab">
-        <div id="logbox"></div>
-        <input id="m" placeholder="Mesaj yaz..." onkeypress="if(event.key==='Enter')send()">
-    </div>
-
-    <div id="t-settings" class="tab">
-        <div id="coords" class="card" style="text-align:center; color:#539bf5;">X: 0 Y: 0 Z: 0</div>
-        <div class="card">
-            <b>OTO-MESAJ</b>
-            <input id="ti" placeholder="Mesaj">
-            <input id="ts" type="number" placeholder="Saniye">
-            <button class="btn blue" onclick="addTask()">EKLE</button>
-            <div id="taskList"></div>
-        </div>
-        <button id="s-afk" class="btn" onclick="tog('afk')">AFK: ...</button>
-        <button id="s-mining" class="btn" onclick="tog('mining')">KAZMA: ...</button>
-    </div>
-
-<script>
-    let mySID = localStorage.getItem('sid') || 's_'+Math.random().toString(36).substr(2,5);
-    localStorage.setItem('sid', mySID);
-    let sel = "";
-
-    function tab(t) {
-        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
-        document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
-        document.getElementById('t-'+t).classList.add('active-tab');
-        document.getElementById('b-'+t).classList.add('active');
-    }
-
-    async function add() {
-        const h=document.getElementById('h').value, u=document.getElementById('u').value, v=document.getElementById('v').value;
-        await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
-        sel = u; tab('term');
-    }
-
-    function send() { 
-        const i=document.getElementById('m'); 
-        fetch(`/send?sid=${mySID}&user=${sel}&msg=${encodeURIComponent(i.value)}`); 
-        i.value=""; 
-    }
-
-    function tog(t) { if(sel) fetch(`/update?sid=${mySID}&user=${sel}&type=${t}`); }
+    <h2>BOT KONTROL MERKEZİ</h2>
     
-    function addTask() {
-        const txt = document.getElementById('ti').value, sec = document.getElementById('ts').value;
-        if(sel && txt && sec > 0) fetch(`/update?sid=${mySID}&user=${sel}&type=add_task&val=${encodeURIComponent(txt)}&sec=${sec}`);
-    }
+    <div class="panel">
+        <div class="stats">
+            <div>Koordinat: <span id="pos">0, 0, 0</span></div>
+            <div>Oto-Mesaj: <span id="autoMsgStatus">KAPALI</span></div>
+        </div>
 
-    setInterval(async () => {
-        try {
-            const r = await fetch(`/data?sid=${mySID}&user=${sel}`);
-            const d = await r.json();
-            if(!sel && d.active.length > 0) sel = d.active[0];
+        <div class="controls">
+            <div></div><button onclick="sendMove('forward')">W (İleri)</button><div></div>
+            <button onclick="sendMove('left')">A (Sol)</button>
+            <button onclick="sendMove('back')">S (Geri)</button>
+            <button onclick="sendMove('right')">D (Sağ)</button>
+            <button onclick="toggleAutoMsg()" style="grid-column: span 3; background: #2196F3;">Oto-Mesaj Aç/Kapat</button>
+            <button onclick="getInventory()" style="grid-column: span 3; background: #4CAF50;">Envanteri Gör</button>
+        </div>
 
-            document.getElementById('list').innerHTML = d.active.map(n => `
-                <div class="card" style="display:flex; justify-content:space-between; ${sel==n?'border-color:#57ab5a':''}">
-                    <b onclick="sel='${n}'">${n}</b>
-                    <button onclick="fetch('/stop?sid=${mySID}&user=${n}')" style="background:none; border:none; color:red; cursor:pointer;">DURDUR</button>
-                </div>`).join('');
+        <div id="console">Bot başlatılıyor...<br></div>
+    </div>
 
-            if(sel && d.logs[sel]) {
-                const lb = document.getElementById('logbox');
-                lb.innerHTML = d.logs[sel].join('<br>');
-                lb.scrollTop = lb.scrollHeight;
-                
-                const c = d.configs[sel];
-                [['afk','s-afk','AFK'],['mining','s-mining','KAZMA']].forEach(x => {
-                    const el = document.getElementById(x[1]);
-                    el.className = "btn " + (c[x[0]] ? "on" : "off");
-                    el.innerText = x[2] + ": " + (c[x[0]] ? "AÇIK" : "KAPALI");
-                });
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const consoleDiv = document.getElementById('console');
 
-                if(d.botData[sel]) {
-                    const p = d.botData[sel].pos;
-                    document.getElementById('coords').innerText = `X: ${Math.floor(p.x)} Y: ${Math.floor(p.y)} Z: ${Math.floor(p.z)}`;
-                }
-            }
-        } catch(e) {}
-    }, 600); // 0.6 saniyede bir güncelleme
-</script>
+        function sendMove(dir) { socket.emit('move', dir); }
+        function toggleAutoMsg() { socket.emit('toggleAuto'); }
+        function getInventory() { socket.emit('getInv'); }
+
+        socket.on('log', (msg) => {
+            consoleDiv.innerHTML += `> ${msg}<br>`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        });
+
+        socket.on('stats', (data) => {
+            document.getElementById('pos').innerText = `${data.x}, ${data.y}, ${data.z}`;
+            document.getElementById('autoMsgStatus').innerText = data.autoMsg ? "AÇIK" : "KAPALI";
+        });
+    </script>
 </body>
 </html>
