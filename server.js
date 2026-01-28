@@ -1,74 +1,97 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
 const mineflayer = require('mineflayer');
+const http = require('http');
+const url = require('url');
+const fs = require('fs');
+const path = require('path');
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+let userSessions = {}; 
 
-let sessionBots = {}; 
-let manualStop = {};
+function getSession(sid) {
+    if (!userSessions[sid]) userSessions[sid] = { bots: {}, logs: {}, configs: {} };
+    return userSessions[sid];
+}
 
-app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
+function startBot(sid, host, user, ver) {
+    const s = getSession(sid);
+    if (s.bots[user]) return;
 
-io.on('connection', (socket) => {
-    const sid = socket.id;
-    sessionBots[sid] = {};
+    const [ip, port] = host.split(':');
+    s.logs[user] = ["<b style='color:gray'>[SİSTEM] " + user + " hazırlanıyor...</b>"];
 
-    socket.on('login', (data) => {
-        const botName = data.user;
-        const botKey = `${sid}_${botName}`;
-        manualStop[botKey] = false;
+    const bot = mineflayer.createBot({
+        host: ip, port: parseInt(port) || 25565, 
+        username: user, version: ver, auth: 'offline'
+    });
 
-        const bot = mineflayer.createBot({
-            host: data.host,
-            port: parseInt(data.port) || 25565,
-            username: botName,
-            version: data.version === 'auto' ? false : data.version,
-            checkTimeoutInterval: 120000 
-        });
+    s.bots[user] = bot;
+    s.configs[user] = { msgT: null, antiAfkT: null };
 
-        sessionBots[sid][botName] = bot;
-
-        bot.on('message', (jsonMsg) => {
-            socket.emit('botLog', { id: botName, msg: jsonMsg.toAnsi() });
-        });
-
-        bot.on('spawn', () => {
-            socket.emit('botUpdate', Object.keys(sessionBots[sid]));
-            socket.emit('log', { id: botName, msg: `[BAĞLANTI] ${botName} oyuna girdi.` });
-            
-            const afk = () => {
-                if(!sessionBots[sid][botName]) return;
-                bot.setControlState('jump', true);
-                setTimeout(() => { if(bot.setControlState) bot.setControlState('jump', false) }, 200);
-                setTimeout(afk, Math.random() * 20000 + 40000); 
-            };
-            afk();
-        });
-
-        bot.on('error', (err) => socket.emit('log', { id: botName, msg: `Hata: ${err.message}` }));
+    bot.on('login', () => {
+        s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " bağlandı!</b>");
         
-        bot.on('end', (reason) => {
-            if (!manualStop[botKey]) {
-                socket.emit('log', { id: botName, msg: `Bağlantı koptu, 10sn sonra tekrar denenecek...` });
-                setTimeout(() => { if (!manualStop[botKey] && sessionBots[sid]) socket.emit('login', data); }, 10000);
-            } else {
-                delete sessionBots[sid][botName];
-                socket.emit('botUpdate', Object.keys(sessionBots[sid]));
-            }
-        });
+        // GELİŞMİŞ ATILMAMA SİSTEMİ (Anti-AFK)
+        s.configs[user].antiAfkT = setInterval(() => {
+            if (!s.bots[user]) return;
+            // Rastgele hareketler: Zıpla, Sağa bak, Sola bak
+            const botInstance = s.bots[user];
+            botInstance.setControlState('jump', true);
+            setTimeout(() => botInstance.setControlState('jump', false), 500);
+            
+            // Rastgele ufak kafa hareketleri (Sunucu bot olduğunu anlamasın diye)
+            const yaw = (Math.random() - 0.5) * 2;
+            const pitch = (Math.random() - 0.5) * 2;
+            botInstance.look(botInstance.entity.yaw + yaw, botInstance.entity.pitch + pitch);
+        }, 30000); // Her 30 saniyede bir tetiklenir
+    });
+    
+    bot.on('message', (m) => {
+        s.logs[user].push(m.toHTML());
+        if(s.logs[user].length > 100) s.logs[user].shift();
     });
 
-    socket.on('stopBot', (name) => {
-        manualStop[`${sid}_${name}`] = true;
-        if (sessionBots[sid][name]) sessionBots[sid][name].quit();
+    bot.on('end', () => {
+        if(s.logs[user]) s.logs[user].push("<b style='color:#ff4757'>[BAĞLANTI] Bot düştü.</b>");
+        clearInterval(s.configs[user].antiAfkT);
+        delete s.bots[user];
     });
 
-    socket.on('chat', (d) => {
-        if (sessionBots[sid] && sessionBots[sid][d.id]) sessionBots[sid][d.id].chat(d.msg);
+    bot.on('error', (e) => { 
+        s.logs[user].push("<b style='color:#ff4757'>[HATA] " + e.message + "</b>"); 
+        clearInterval(s.configs[user].antiAfkT);
+        delete s.bots[user]; 
     });
-});
+}
 
-server.listen(process.env.PORT || 3000);
+http.createServer((req, res) => {
+    const q = url.parse(req.url, true).query;
+    const p = url.parse(req.url, true).pathname;
+    const sid = q.sid;
+    if (!sid && p !== '/') return res.end("No SID");
+
+    const s = getSession(sid);
+    const bot = s.bots[q.user];
+
+    if (p === '/start') { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
+    if (p === '/stop' && bot) { bot.quit(); return res.end("ok"); }
+    if (p === '/send' && bot) { bot.chat(decodeURIComponent(q.msg)); return res.end("ok"); }
+    
+    if (p === '/data' && sid) {
+        const active = Object.keys(s.bots);
+        const botData = {};
+        if (q.user && s.bots[q.user]) {
+            const b = s.bots[q.user];
+            botData[q.user] = {
+                hp: b.health || 0,
+                food: b.food || 0,
+                inv: b.inventory ? b.inventory.slots.map((i, idx) => i ? {
+                    name: i.name, count: i.count, slot: idx
+                } : null).filter(x => x !== null) : []
+            };
+        }
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({ active, logs: s.logs, botData }));
+    }
+
+    let f = path.join(__dirname, p === '/' ? 'index.html' : p);
+    fs.readFile(f, (err, data) => res.end(data || "404"));
+}).listen(process.env.PORT || 10000);
