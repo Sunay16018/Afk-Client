@@ -16,7 +16,7 @@ function startBot(sid, host, user, ver) {
     if (s.bots[user]) return;
 
     const [ip, port] = host.split(':');
-    s.logs[user] = ["<b style='color:gray'>[SİSTEM] " + user + " bağlanıyor...</b>"];
+    s.logs[user] = ["<b style='color:gray'>[SİSTEM] " + user + " hazırlanıyor...</b>"];
 
     const bot = mineflayer.createBot({
         host: ip, port: parseInt(port) || 25565, 
@@ -28,46 +28,47 @@ function startBot(sid, host, user, ver) {
     s.configs[user] = { antiAfkT: null };
 
     bot.on('login', () => {
-        s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " başarıyla bağlandı!</b>");
+        s.logs[user].push("<b style='color:#2ecc71'>[GİRİŞ] " + user + " bağlandı!</b>");
         
-        // GELİŞMİŞ İNSANSI ANTI-AFK (Anti-Cheat Dostu)
+        // ANTI-AFK SİSTEMİ
         s.configs[user].antiAfkT = setInterval(() => {
             if (!s.bots[user] || !bot.entity) return;
-            
             const chance = Math.random();
-            if (chance < 0.25) {
-                // Zıpla
+            if (chance < 0.3) {
                 bot.setControlState('jump', true);
                 setTimeout(() => { if(bot.setControlState) bot.setControlState('jump', false) }, 300);
-            } else if (chance < 0.50) {
-                // Rastgele ve yumuşak kafa hareketi
-                const yaw = bot.entity.yaw + (Math.random() - 0.5) * 1.0;
-                const pitch = (Math.random() - 0.5) * 0.4;
-                bot.look(yaw, pitch, false); 
-            } else if (chance < 0.70) {
-                // Olduğu yerde ufak bir adım at
-                bot.setControlState('forward', true);
-                setTimeout(() => { if(bot.setControlState) bot.setControlState('forward', false) }, 150);
+            } else if (chance < 0.6) {
+                bot.look(bot.entity.yaw + (Math.random()-0.5), (Math.random()-0.5)*0.3, false);
             }
-            // Kalan %30 ihtimalle bot tamamen hareketsiz durur (Doğal görünüm)
-
-        }, Math.floor(Math.random() * 15000) + 15000); // 15-30 saniye arası rastgele tekrar
+        }, Math.floor(Math.random() * 15000) + 20000);
     });
     
-    bot.on('message', (m) => {
-        s.logs[user].push(m.toHTML());
-        if(s.logs[user].length > 100) s.logs[user].shift();
+    // HER TÜRLÜ MESAJI VE İSMİ YAKALAMA MANTIĞI
+    bot.on('message', (jsonMsg, position) => {
+        // Towny ve özel chat formatları için tüm satırı HTML olarak al
+        let formattedMsg = jsonMsg.toHTML();
+        
+        // Eğer mesaj boş değilse loglara ekle
+        if (jsonMsg.toString().trim().length > 0) {
+            s.logs[user].push(formattedMsg);
+        }
+
+        if(s.logs[user].length > 120) s.logs[user].shift();
     });
 
-    bot.on('end', (reason) => {
-        s.logs[user].push("<b style='color:#ff4757'>[BAĞLANTI] Kesildi: " + reason + "</b>");
+    // Chat event'i ile ismi ayrıca kontrol et (Yedek mekanizma)
+    bot.on('chat', (username, message) => {
+        console.log(`[CHAT] ${username}: ${message}`);
+    });
+
+    bot.on('end', (r) => {
+        s.logs[user].push("<b style='color:#ff4757'>[KESİLDİ] " + r + "</b>");
         clearInterval(s.configs[user].antiAfkT);
         delete s.bots[user];
     });
 
     bot.on('error', (e) => { 
         s.logs[user].push("<b style='color:#ff4757'>[HATA] " + e.message + "</b>"); 
-        clearInterval(s.configs[user].antiAfkT);
         delete s.bots[user]; 
     });
 }
@@ -77,7 +78,6 @@ http.createServer((req, res) => {
     const p = url.parse(req.url, true).pathname;
     const sid = q.sid;
     if (!sid && p !== '/') return res.end("No SID");
-
     const s = getSession(sid);
 
     if (p === '/start') { startBot(sid, q.host, q.user, q.ver); return res.end("ok"); }
@@ -90,11 +90,8 @@ http.createServer((req, res) => {
         if (q.user && s.bots[q.user]) {
             const b = s.bots[q.user];
             botData[q.user] = {
-                hp: b.health || 0,
-                food: b.food || 0,
-                inv: b.inventory ? b.inventory.slots.map((i, idx) => i ? {
-                    name: i.name, count: i.count, slot: idx
-                } : null).filter(x => x !== null) : []
+                hp: b.health || 0, food: b.food || 0,
+                inv: b.inventory ? b.inventory.slots.map((i, idx) => i ? {name: i.name, count: i.count, slot: idx} : null).filter(x => x !== null) : []
             };
         }
         res.setHeader('Content-Type', 'application/json');
@@ -104,4 +101,3 @@ http.createServer((req, res) => {
     let f = path.join(__dirname, p === '/' ? 'index.html' : p);
     fs.readFile(f, (err, data) => res.end(data || "404"));
 }).listen(process.env.PORT || 10000);
-        
