@@ -1,54 +1,96 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bot Paneli</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bot Kontrol Merkezi</title>
     <style>
-        body { background: #111; color: #fff; font-family: sans-serif; margin: 0; padding: 10px; }
-        .menu { background: #222; border: 1px solid #444; margin-bottom: 10px; padding: 15px; border-radius: 8px; }
-        h2 { margin: 0 0 10px 0; font-size: 16px; color: #00d4ff; border-bottom: 1px solid #333; }
-        .btn { background: #333; color: white; border: 1px solid #555; padding: 12px; cursor: pointer; border-radius: 4px; width: 100%; margin: 5px 0; }
-        .btn-active { background: #ff4757 !important; }
-        #log-box { background: #000; height: 150px; overflow-y: scroll; padding: 10px; font-family: monospace; font-size: 12px; color: #2ed573; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+        body { background: #1a1a1a; color: white; font-family: sans-serif; margin: 0; }
+        .tabs { display: flex; background: #333; cursor: pointer; }
+        .tab { flex: 1; padding: 15px; text-align: center; border-bottom: 3px solid transparent; }
+        .tab.active { background: #444; border-bottom: 3px solid #00d4ff; }
+        .content { padding: 20px; display: none; }
+        .content.active { display: block; }
+        input, button { width: 100%; padding: 12px; margin: 5px 0; border-radius: 5px; border: none; box-sizing: border-box; }
+        button { background: #00d4ff; color: black; font-weight: bold; cursor: pointer; }
+        .btn-move { background: #444; color: white; }
+        .active-move { background: #ff4757 !important; }
+        #console { background: #000; height: 150px; overflow-y: scroll; padding: 10px; color: #00ff00; font-family: monospace; }
     </style>
 </head>
 <body>
 
-    <div class="menu">
-        <h2>1. HAREKET KONTROL</h2>
-        <p>Koordinat: <span id="coords">0, 0, 0</span></p>
-        <div class="grid">
-            <button></button><button class="btn" onclick="t(this,'forward')">W</button><button></button>
-            <button class="btn" onclick="t(this,'left')">A</button><button class="btn" onclick="t(this,'back')">S</button><button class="btn" onclick="t(this,'right')">D</button>
-            <button></button><button class="btn" onclick="t(this,'jump')" style="background:#555">Zıpla</button><button></button>
+    <div class="tabs">
+        <div class="tab active" onclick="openTab('login-tab')">GİRİŞ</div>
+        <div class="tab" onclick="openTab('move-tab')">HAREKET</div>
+        <div class="tab" onclick="openTab('inv-tab')">ENVANTER</div>
+        <div class="tab" onclick="openTab('settings-tab')">AYARLAR</div>
+    </div>
+
+    <div id="login-tab" class="content active">
+        <h2>Sunucuya Bot Sok</h2>
+        <input type="text" id="host" placeholder="Sunucu IP (Örn: oyna.server.com)">
+        <input type="text" id="port" placeholder="Port (Default: 25565)" value="25565">
+        <input type="text" id="user" placeholder="Bot İsmi">
+        <button onclick="login()">BOTU SOK</button>
+    </div>
+
+    <div id="move-tab" class="content">
+        <h2>Hareket (Aç/Kapat)</h2>
+        <p>Konum: <span id="coords">0, 0, 0</span></p>
+        <button class="btn-move" id="forward" onclick="m('forward')">İLERİ (W)</button>
+        <div style="display:flex; gap:5px;">
+            <button class="btn-move" id="left" onclick="m('left')">SOL (A)</button>
+            <button class="btn-move" id="back" onclick="m('back')">GERİ (S)</button>
+            <button class="btn-move" id="right" onclick="m('right')">SAĞ (D)</button>
         </div>
+        <button class="btn-move" id="jump" onclick="m('jump')">ZIPLAMA</button>
     </div>
 
-    <div class="menu">
-        <h2>2. ENVANTER</h2>
-        <button class="btn" onclick="socket.emit('getInv')" style="background:#1e90ff">Eşyaları Listele</button>
-        <div id="inv-res" style="font-size:13px; color:#aaa; margin-top:5px;"></div>
+    <div id="inv-tab" class="content">
+        <h2>Envanter Listesi</h2>
+        <button onclick="socket.emit('getInv')">LİSTEYİ YENİLE</button>
+        <ul id="inv-list"></ul>
     </div>
 
-    <div class="menu">
-        <h2>3. AYARLAR & KONSOL</h2>
-        <input type="text" id="autoM" placeholder="Oto mesaj ne olsun?" style="width:100%; padding:8px; margin-bottom:5px; box-sizing:border-box;">
-        <button class="btn" onclick="socket.emit('toggleAuto', document.getElementById('autoM').value)" style="background:#2ed573">Oto-Mesaj Aç/Kapat</button>
-        <div id="log-box"></div>
+    <div id="settings-tab" class="content">
+        <h2>Ayarlar ve Konsol</h2>
+        <input type="text" id="autoMsg" placeholder="Oto mesaj yazın...">
+        <button onclick="socket.emit('toggleAuto', document.getElementById('autoMsg').value)">OTO-MESAJ AÇ/KAPAT</button>
+        <div id="console"></div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        function t(btn, dir) { btn.classList.toggle('btn-active'); socket.emit('move', dir); }
-        
+        function openTab(id) {
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function login() {
+            socket.emit('login', {
+                host: document.getElementById('host').value,
+                port: document.getElementById('port').value,
+                user: document.getElementById('user').value
+            });
+            openTab('settings-tab');
+        }
+
+        function m(dir) {
+            document.getElementById(dir).classList.toggle('active-move');
+            socket.emit('move', dir);
+        }
+
         socket.on('stats', d => document.getElementById('coords').innerText = `${d.x}, ${d.y}, ${d.z}`);
-        socket.on('invData', d => document.getElementById('inv-res').innerText = d.join(', '));
         socket.on('log', m => {
-            const lb = document.getElementById('log-box');
-            lb.innerHTML += `> ${m}<br>`;
-            lb.scrollTop = lb.scrollHeight;
+            const c = document.getElementById('console');
+            c.innerHTML += `> ${m}<br>`;
+            c.scrollTop = c.scrollHeight;
+        });
+        socket.on('invData', d => {
+            const l = document.getElementById('inv-list');
+            l.innerHTML = d.map(i => `<li>${i}</li>`).join('');
         });
     </script>
 </body>
