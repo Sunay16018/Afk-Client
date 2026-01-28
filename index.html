@@ -1,69 +1,79 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bot Kontrol Merkezi</title>
+    <title>Süper Bot Paneli</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { background: #1a1a1a; color: white; font-family: sans-serif; margin: 0; }
-        .tabs { display: flex; background: #333; cursor: pointer; }
-        .tab { flex: 1; padding: 15px; text-align: center; border-bottom: 3px solid transparent; }
-        .tab.active { background: #444; border-bottom: 3px solid #00d4ff; }
+        body { background: #0a0a0a; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        .nav { display: flex; background: #151515; border-bottom: 2px solid #00ff88; position: sticky; top: 0; }
+        .nav-item { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #888; transition: 0.3s; }
+        .nav-item.active { color: #00ff88; background: #1a1a1a; }
         .content { padding: 20px; display: none; }
         .content.active { display: block; }
-        input, button { width: 100%; padding: 12px; margin: 5px 0; border-radius: 5px; border: none; box-sizing: border-box; }
-        button { background: #00d4ff; color: black; font-weight: bold; cursor: pointer; }
-        .btn-move { background: #444; color: white; }
-        .active-move { background: #ff4757 !important; }
-        #console { background: #000; height: 150px; overflow-y: scroll; padding: 10px; color: #00ff00; font-family: monospace; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; box-sizing: border-box; outline: none; }
+        input { background: #1a1a1a; color: #fff; }
+        button { background: #00ff88; color: #000; font-weight: bold; border: none; cursor: pointer; }
+        button:hover { background: #00cc6e; }
+        .move-btn { background: #222; color: #fff; }
+        .active-move { background: #ff3e3e !important; }
+        #console { background: #000; height: 350px; overflow-y: scroll; padding: 15px; border-radius: 10px; border: 1px solid #222; font-family: 'Consolas', monospace; font-size: 13px; line-height: 1.5; color: #00ff88; }
+        .chat-input-area { display: flex; gap: 5px; margin-top: 10px; }
+        .coords { font-size: 18px; text-align: center; color: #00ff88; margin-bottom: 20px; font-family: monospace; }
     </style>
 </head>
 <body>
 
-    <div class="tabs">
-        <div class="tab active" onclick="openTab('login-tab')">GİRİŞ</div>
-        <div class="tab" onclick="openTab('move-tab')">HAREKET</div>
-        <div class="tab" onclick="openTab('inv-tab')">ENVANTER</div>
-        <div class="tab" onclick="openTab('settings-tab')">AYARLAR</div>
+    <div class="nav">
+        <div class="nav-item active" onclick="tab('login')">GİRİŞ</div>
+        <div class="nav-item" onclick="tab('move')">HAREKET</div>
+        <div class="nav-item" onclick="tab('settings')">KONSOL/AYARLAR</div>
     </div>
 
-    <div id="login-tab" class="content active">
-        <h2>Sunucuya Bot Sok</h2>
-        <input type="text" id="host" placeholder="Sunucu IP (Örn: oyna.server.com)">
-        <input type="text" id="port" placeholder="Port (Default: 25565)" value="25565">
+    <div id="login" class="content active">
+        <h2>Sunucu Bağlantısı</h2>
+        <input type="text" id="host" placeholder="Sunucu IP (Örn: mcsunucu.com)">
+        <input type="text" id="port" value="25565">
         <input type="text" id="user" placeholder="Bot İsmi">
-        <button onclick="login()">BOTU SOK</button>
+        <button onclick="login()">BOTU BAĞLA</button>
     </div>
 
-    <div id="move-tab" class="content">
-        <h2>Hareket (Aç/Kapat)</h2>
-        <p>Konum: <span id="coords">0, 0, 0</span></p>
-        <button class="btn-move" id="forward" onclick="m('forward')">İLERİ (W)</button>
-        <div style="display:flex; gap:5px;">
-            <button class="btn-move" id="left" onclick="m('left')">SOL (A)</button>
-            <button class="btn-move" id="back" onclick="m('back')">GERİ (S)</button>
-            <button class="btn-move" id="right" onclick="m('right')">SAĞ (D)</button>
+    <div id="move" class="content">
+        <div class="coords">KONUM: <span id="xyz">0, 0, 0</span></div>
+        <button class="move-btn" id="forward" onclick="m('forward')">İLERİ (W)</button>
+        <div style="display:flex; gap:10px;">
+            <button class="move-btn" id="left" onclick="m('left')">SOL (A)</button>
+            <button class="move-btn" id="back" onclick="m('back')">GERİ (S)</button>
+            <button class="move-btn" id="right" onclick="m('right')">SAĞ (D)</button>
         </div>
-        <button class="btn-move" id="jump" onclick="m('jump')">ZIPLAMA</button>
+        <button class="move-btn" id="jump" onclick="m('jump')">ZIPLA</button>
+        <hr border="1">
+        <button onclick="socket.emit('getInv')" style="background: #ffa500;">ENVANTERİ LİSTELE</button>
+        <div id="inv-list" style="margin-top:10px;"></div>
     </div>
 
-    <div id="inv-tab" class="content">
-        <h2>Envanter Listesi</h2>
-        <button onclick="socket.emit('getInv')">LİSTEYİ YENİLE</button>
-        <ul id="inv-list"></ul>
-    </div>
+    <div id="settings" class="content">
+        <h3>Sunucu Konsolu</h3>
+        <div id="console">Bot bekleniyor...</div>
+        
+        <div class="chat-input-area">
+            <input type="text" id="msg" placeholder="Mesaj veya komut yaz...">
+            <button onclick="send()" style="width: 80px;">GÖNDER</button>
+        </div>
 
-    <div id="settings-tab" class="content">
-        <h2>Ayarlar ve Konsol</h2>
-        <input type="text" id="autoMsg" placeholder="Oto mesaj yazın...">
-        <button onclick="socket.emit('toggleAuto', document.getElementById('autoMsg').value)">OTO-MESAJ AÇ/KAPAT</button>
-        <div id="console"></div>
+        <hr style="margin: 20px 0; border: 0.5px solid #222;">
+        
+        <h3>Oto Mesaj</h3>
+        <input type="text" id="autoT" placeholder="Mesaj içeriği...">
+        <input type="number" id="autoS" placeholder="Kaç saniyede bir? (Örn: 30)" value="30">
+        <button onclick="auto()" style="background: #0088ff; color: #fff;">OTO-MESAJ AÇ/KAPAT</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        function openTab(id) {
+        function tab(id) {
             document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             event.currentTarget.classList.add('active');
         }
@@ -74,7 +84,19 @@
                 port: document.getElementById('port').value,
                 user: document.getElementById('user').value
             });
-            openTab('settings-tab');
+            tab('settings');
+        }
+
+        function send() {
+            const val = document.getElementById('msg').value;
+            if(val) { socket.emit('sendMessage', val); document.getElementById('msg').value = ''; }
+        }
+
+        function auto() {
+            socket.emit('toggleAuto', {
+                text: document.getElementById('autoT').value,
+                time: document.getElementById('autoS').value
+            });
         }
 
         function m(dir) {
@@ -82,15 +104,14 @@
             socket.emit('move', dir);
         }
 
-        socket.on('stats', d => document.getElementById('coords').innerText = `${d.x}, ${d.y}, ${d.z}`);
+        socket.on('stats', d => document.getElementById('xyz').innerText = `${d.x}, ${d.y}, ${d.z}`);
         socket.on('log', m => {
             const c = document.getElementById('console');
-            c.innerHTML += `> ${m}<br>`;
+            c.innerHTML += `<div>${m}</div>`;
             c.scrollTop = c.scrollHeight;
         });
         socket.on('invData', d => {
-            const l = document.getElementById('inv-list');
-            l.innerHTML = d.map(i => `<li>${i}</li>`).join('');
+            document.getElementById('inv-list').innerHTML = d.map(i => `• ${i}`).join('<br>');
         });
     </script>
 </body>
