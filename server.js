@@ -26,7 +26,7 @@ io.on('connection', (socket) => {
             port: parseInt(data.port) || 25565,
             username: botName,
             version: data.version === 'auto' ? false : data.version,
-            checkTimeoutInterval: 90000 // Akıllı Proxy: 90sn tolerans
+            checkTimeoutInterval: 90000 
         });
 
         sessionBots[sid][botName] = bot;
@@ -36,24 +36,20 @@ io.on('connection', (socket) => {
         });
 
         bot.on('spawn', () => {
-            socket.emit('log', { id: botName, msg: `[SİSTEM] ${botName} bağlandı.` });
-            
-            // Akıllı AFK Sistemi: 30-60 saniye arası rastgele mikro zıplama
+            socket.emit('log', { id: botName, msg: `[BAŞARILI] ${botName} oyunda.` });
             const afk = () => {
-                if(!sessionBots[sid][botName]) return;
+                if(!sessionBots[sid] || !sessionBots[sid][botName]) return;
                 bot.setControlState('jump', true);
-                setTimeout(() => bot.setControlState('jump', false), 100);
-                setTimeout(afk, Math.random() * 30000 + 30000);
+                setTimeout(() => bot.setControlState('jump', false), 150);
+                setTimeout(afk, Math.random() * 30000 + 40000); 
             };
             afk();
         });
 
         bot.on('end', (reason) => {
             if (!manualStop[botKey]) {
-                socket.emit('log', { id: botName, msg: `[BAĞLANTI] Düştü (${reason}). Yeniden deneniyor...` });
-                setTimeout(() => { 
-                    if (!manualStop[botKey] && sessionBots[sid]) startBot(data); 
-                }, 10000);
+                socket.emit('log', { id: botName, msg: `[SİSTEM] Bağlantı koptu, 15sn sonra tekrar...` });
+                setTimeout(() => { if (!manualStop[botKey] && sessionBots[sid]) startBot(data); }, 15000);
             } else {
                 delete sessionBots[sid][botName];
                 socket.emit('botUpdate', Object.keys(sessionBots[sid]));
@@ -64,14 +60,11 @@ io.on('connection', (socket) => {
     }
 
     socket.on('login', (data) => { if (!sessionBots[sid][data.user]) startBot(data); });
-    socket.on('stopBot', (name) => { manualStop[`${sid}_${name}`] = true; if (sessionBots[sid][name]) sessionBots[sid][name].quit(); });
-    socket.on('chat', (d) => { if (sessionBots[sid][d.id]) sessionBots[sid][d.id].chat(d.msg); });
-    socket.on('disconnect', () => {
-        if (sessionBots[sid]) {
-            Object.keys(sessionBots[sid]).forEach(n => { manualStop[`${sid}_${n}`] = true; sessionBots[sid][n].quit(); });
-            delete sessionBots[sid];
-        }
+    socket.on('stopBot', (name) => { 
+        manualStop[`${sid}_${name}`] = true; 
+        if (sessionBots[sid][name]) sessionBots[sid][name].quit(); 
     });
+    socket.on('chat', (d) => { if (sessionBots[sid][d.id]) sessionBots[sid][d.id].chat(d.msg); });
 });
 
 server.listen(process.env.PORT || 3000);
