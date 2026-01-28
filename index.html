@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AFK PRO v12</title>
+    <title>MYSUNAY AFK PANEL</title>
     <style>
         * { box-sizing: border-box; font-family: sans-serif; font-size: 13px; }
         body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -12,15 +12,15 @@
         nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; }
         .tab { display: none; flex: 1; padding: 10px; overflow-y: auto; flex-direction: column; }
         .active-tab { display: flex; }
-        #logbox { height: 250px; background: #000; padding: 10px; overflow-y: auto; border: 1px solid #333; margin-bottom: 5px; border-radius: 8px; }
+        #logbox { height: 260px; background: #000; padding: 10px; overflow-y: auto; border: 1px solid #333; margin-bottom: 5px; border-radius: 10px; }
         .card { background: #161b22; padding: 12px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 10px; }
         input { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 8px; width: 100%; margin: 5px 0; }
         .btn { padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
         .on { background: #238636; } .off { background: #da3633; } .blue { background: #1f6feb; }
         .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; }
-        .slot { width: 35px; height: 35px; background: #333; border: 1px solid #444; position: relative; }
+        .slot { width: 35px; height: 35px; background: #333; border: 1px solid #444; border-radius: 4px; overflow: hidden; }
         .slot img { width: 100%; image-rendering: pixelated; }
-        .task-item { background: #010409; padding: 8px; border-radius: 6px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #1f6feb; }
+        .task-item { background: #010409; padding: 10px; border-radius: 8px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #1f6feb; }
     </style>
 </head>
 <body>
@@ -29,99 +29,75 @@
         <button onclick="tab('term')" id="b-term">KONSOL</button>
         <button onclick="tab('settings')" id="b-settings">AYARLAR</button>
     </nav>
-
     <div id="t-bots" class="tab active-tab">
         <div class="card">
             <input id="h" placeholder="Sunucu IP:Port">
-            <input id="u" placeholder="Kullanıcı Adı">
+            <input id="u" placeholder="Bot İsmi">
             <input id="v" placeholder="Sürüm (1.16.5 vb.)">
-            <button class="btn blue" style="width:100%" onclick="add()">BAĞLAN</button>
+            <button class="btn blue" style="width:100%" onclick="add()">SİSTEME BAĞLA</button>
         </div>
         <div id="list"></div>
     </div>
-
     <div id="t-term" class="tab">
         <div id="logbox"></div>
-        <input id="m" placeholder="Hızlı mesaj..." onkeypress="if(event.key==='Enter')send()">
+        <input id="m" placeholder="Sohbete yaz..." onkeypress="if(event.key==='Enter')send()">
     </div>
-
     <div id="t-settings" class="tab">
         <div id="coords" class="card" style="text-align:center; color:#58a6ff; font-weight:bold;">X: 0 Y: 0 Z: 0</div>
-        
         <div class="card">
-            <b>MESAJ & SÜRE (SPAM)</b>
-            <div style="display:flex; gap:5px; margin-top:5px;">
-                <input id="ti" placeholder="Mesaj/Komut" style="flex:2">
+            <b>SPAMMER (KOMUT/MESAJ)</b>
+            <div style="display:flex; gap:5px;">
+                <input id="ti" placeholder="Mesaj" style="flex:2">
                 <input id="ts" type="number" placeholder="Sn" style="width:60px;">
                 <button class="btn blue" onclick="addTask()">EKLE</button>
             </div>
             <div id="taskList"></div>
         </div>
-
-        <div class="card">
-            <b>ENVANTER (Atmak için dokun)</b>
-            <div class="inv-grid" id="inv"></div>
-        </div>
-
+        <div class="card"><b>ENVANTER</b><div class="inv-grid" id="inv"></div></div>
         <div class="card" style="display:flex; flex-direction:column; gap:8px;">
             <button id="s-afk" class="btn" onclick="tog('afk')">AFK: ...</button>
             <button id="s-mining" class="btn" onclick="tog('mining')">KAZMA: ...</button>
             <button id="s-reconnect" class="btn" onclick="tog('reconnect')">OTO-BAĞLAN: ...</button>
         </div>
     </div>
-
 <script>
     let mySID = localStorage.getItem('sid') || 'sid_'+Math.random().toString(36).substr(2,9);
     localStorage.setItem('sid', mySID);
     let sel = "";
-
     function tab(t) {
         document.querySelectorAll('.tab').forEach(x => x.classList.remove('active-tab'));
         document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
         document.getElementById('t-'+t).classList.add('active-tab');
         document.getElementById('b-'+t).classList.add('active');
     }
-
     async function add() {
         const h=document.getElementById('h').value, u=document.getElementById('u').value, v=document.getElementById('v').value;
         await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
         sel = u; tab('term');
     }
-
     function send() { 
         const i=document.getElementById('m'); 
         fetch(`/send?sid=${mySID}&user=${sel}&msg=${encodeURIComponent(i.value)}`); 
         i.value=""; 
     }
-
     function tog(t) { if(sel) fetch(`/update?sid=${mySID}&user=${sel}&type=${t}`); }
-    
     function addTask() {
-        const txt = document.getElementById('ti').value;
-        const sec = document.getElementById('ts').value;
-        if(sel && txt) fetch(`/update?sid=${mySID}&user=${sel}&type=add_task&val=${encodeURIComponent(txt)}&sec=${sec}`);
-        document.getElementById('ti').value = "";
-        document.getElementById('ts').value = "";
+        const txt = document.getElementById('ti').value, sec = document.getElementById('ts').value;
+        if(sel && txt && sec > 0) fetch(`/update?sid=${mySID}&user=${sel}&type=add_task&val=${encodeURIComponent(txt)}&sec=${sec}`);
+        document.getElementById('ti').value = ""; document.getElementById('ts').value = "";
     }
-
     setInterval(async () => {
         try {
             const r = await fetch(`/data?sid=${mySID}&user=${sel}`);
             const d = await r.json();
             if(!sel && d.active.length > 0) sel = d.active[0];
-
             document.getElementById('list').innerHTML = d.active.map(n => `
                 <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-color:${sel==n?'#2ecc71':'#333'}">
                     <b onclick="sel='${n}'">${n}</b>
-                    <button class="btn off" style="padding:5px 10px" onclick="fetch('/stop?sid=${mySID}&user=${n}')">DURDUR</button>
-                </div>
-            `).join('');
-
+                    <button class="btn off" onclick="fetch('/stop?sid=${mySID}&user=${n}')">KAPAT</button>
+                </div>`).join('');
             if(sel && d.logs[sel]) {
-                const lb = document.getElementById('logbox');
-                lb.innerHTML = d.logs[sel].join('<br>');
-                lb.scrollTop = lb.scrollHeight;
-
+                document.getElementById('logbox').innerHTML = d.logs[sel].join('<br>');
                 const c = d.configs[sel];
                 if(c) {
                     [['afk','s-afk','AFK'],['mining','s-mining','KAZMA'],['reconnect','s-reconnect','OTO-BAĞLAN']].forEach(x => {
@@ -129,23 +105,17 @@
                         el.className = "btn " + (c[x[0]] ? "on" : "off");
                         el.innerText = x[2] + ": " + (c[x[0]] ? "AÇIK" : "KAPALI");
                     });
-
                     document.getElementById('taskList').innerHTML = c.tasks.map((t, i) => `
-                        <div class="task-item">
-                            <span><b>${t.text}</b> (${t.time}s)</span>
-                            <button class="btn off" style="padding:2px 8px" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=del_task&val=${i}')">SİL</button>
-                        </div>
-                    `).join('');
+                        <div class="task-item"><span><b>${t.text}</b> (${t.time}s)</span>
+                        <button class="btn off" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=del_task&val=${i}')">SİL</button></div>`).join('');
                 }
-
                 if(d.botData[sel]) {
                     const bd = d.botData[sel];
                     document.getElementById('coords').innerText = `X: ${Math.floor(bd.pos.x)} Y: ${Math.floor(bd.pos.y)} Z: ${Math.floor(bd.pos.z)}`;
                     document.getElementById('inv').innerHTML = bd.inv.map(i => `
                         <div class="slot" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=inv&val=${i.slot}')">
                             <img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${i.name}.png">
-                        </div>
-                    `).join('');
+                        </div>`).join('');
                 }
             }
         } catch(e) {}
