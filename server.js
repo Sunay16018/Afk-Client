@@ -7,66 +7,66 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const bot = mineflayer.createBot({
-    host: 'localhost', // Burayı değiştir
-    port: 25565,       // Burayı değiştir
-    username: 'Yonetici_Bot'
-});
+// --- AYARLAR (Burayı sunucuna göre doldur) ---
+const botOptions = {
+    host: 'SUNUCU_IP_YAZ', 
+    port: 25565,
+    username: 'Web_Control_Bot'
+};
 
-let autoMsgActive = false;
+let bot;
+function createBot() {
+    bot = mineflayer.createBot(botOptions);
+    
+    bot.on('chat', (u, m) => io.emit('log', `[Sohbet] ${u}: ${m}`));
+    bot.on('spawn', () => io.emit('log', 'Bot sunucuya girdi!'));
+    bot.on('kicked', (r) => io.emit('log', 'Atıldı: ' + r));
+    bot.on('error', (e) => io.emit('log', 'Hata: ' + e.message));
+}
+
+createBot();
+
 let autoMsgTimer = null;
-const activeMoves = { forward: false, back: false, left: false, right: false, jump: false };
+const moves = { forward: false, back: false, left: false, right: false, jump: false };
 
 app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 
 io.on('connection', (socket) => {
-    // Canlı Veri Akışı
-    const ticker = setInterval(() => {
+    // Canlı veri (Koordinat)
+    const update = setInterval(() => {
         if (bot.entity) {
             socket.emit('stats', {
-                x: Math.floor(bot.entity.position.x),
-                y: Math.floor(bot.entity.position.y),
-                z: Math.floor(bot.entity.position.z),
-                autoMsg: autoMsgActive
+                x: Math.round(bot.entity.position.x),
+                y: Math.round(bot.entity.position.y),
+                z: Math.round(bot.entity.position.z)
             });
         }
-    }, 500);
+    }, 1000);
 
-    // Hareket Kontrolü
     socket.on('move', (dir) => {
-        activeMoves[dir] = !activeMoves[dir];
-        bot.setControlState(dir, activeMoves[dir]);
+        moves[dir] = !moves[dir];
+        bot.setControlState(dir, moves[dir]);
     });
 
-    // Sohbet Mesajı Gönderme
-    socket.on('sendChat', (msg) => { if(msg) bot.chat(msg); });
+    socket.on('getInv', () => {
+        const items = bot.inventory.items().map(i => `${i.name} (${i.count})`);
+        socket.emit('invData', items.length > 0 ? items : ["Boş"]);
+    });
 
-    // Oto Mesaj Sistemi
-    socket.on('toggleAuto', () => {
-        autoMsgActive = !autoMsgActive;
-        if (autoMsgActive) {
-            autoMsgTimer = setInterval(() => bot.chat("Bot hala aktif!"), 60000);
-        } else {
+    socket.on('toggleAuto', (msg) => {
+        if (autoMsgTimer) {
             clearInterval(autoMsgTimer);
+            autoMsgTimer = null;
+            socket.emit('log', 'Oto-Mesaj: Durduruldu');
+        } else {
+            autoMsgTimer = setInterval(() => bot.chat(msg || "Bot aktif!"), 30000);
+            socket.emit('log', 'Oto-Mesaj: 30sn aralıkla başladı');
         }
     });
 
-    // Envanter Sorgusu
-    socket.on('getInv', () => {
-        const items = bot.inventory.items().map(i => ({ name: i.name, count: i.count }));
-        socket.emit('invData', items);
-    });
-
-    // Yeniden Doğma
-    socket.on('respawn', () => { bot.respawn(); io.emit('log', 'Yeniden doğma komutu gönderildi.'); });
-
-    socket.on('disconnect', () => clearInterval(ticker));
+    socket.on('disconnect', () => clearInterval(update));
 });
 
-// Bot Olaylarını Konsola Bas
-bot.on('chat', (u, m) => io.emit('log', `<b>${u}:</b> ${m}`));
-bot.on('spawn', () => io.emit('log', '<span style="color:cyan">Bot sunucuya giriş yaptı!</span>'));
-bot.on('death', () => io.emit('log', '<span style="color:red">Bot öldü!</span>'));
-bot.on('kicked', (r) => io.emit('log', 'Atıldı: ' + r));
-
-server.listen(3000, () => console.log('Panel: http://localhost:3000'));
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Sunucu ${PORT} portunda hazır.`));
+      
