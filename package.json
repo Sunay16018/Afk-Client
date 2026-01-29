@@ -1,6 +1,6 @@
 {
-  "name": "mc-afk-pro-client",
-  "version": "2.0.0",
+  "name": "botmaster-ultra-proxy",
+  "version": "2.5.0",
   "main": "server.js",
   "dependencies": {
     "mineflayer": "^4.22.0",
