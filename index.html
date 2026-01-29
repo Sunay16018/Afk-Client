@@ -1,46 +1,47 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MC AFK PRO v2.5</title>
+    <title>Multi-AFK Professional v5</title>
     <style>
-        * { box-sizing: border-box; font-family: 'Consolas', monospace; font-size: 13px; }
-        body { background: #0b0e14; color: #d1d5db; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        nav { display: flex; background: #161b22; border-bottom: 1px solid #30363d; height: 45px; flex-shrink: 0; }
-        nav button { flex: 1; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
-        nav button.active { color: #2ecc71; border-bottom: 2px solid #2ecc71; background: #1f242c; }
-        .tab { display: none; flex: 1; padding: 10px; overflow-y: auto; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; font-size: 13px; }
+        body { background: #0d1117; color: #c9d1d9; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        nav { display: flex; background: #161b22; border-bottom: 1px solid #30363d; }
+        nav button { flex: 1; padding: 15px; border: none; background: none; color: #8b949e; cursor: pointer; font-weight: bold; }
+        nav button.active { color: #2ecc71; border-bottom: 3px solid #2ecc71; background: #1f242c; }
+        .tab { display: none; flex: 1; padding: 15px; overflow-y: auto; }
         .active-tab { display: flex; flex-direction: column; }
-        #logbox { flex: 1; background: #000; padding: 10px; overflow-y: auto; border: 1px solid #30363d; border-radius: 5px; margin-bottom: 10px; line-height: 1.5; color: #fff; }
-        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; background: #8b8b8b; padding: 10px; border: 3px solid #373737; width: fit-content; margin: 0 auto; }
-        .slot { width: 34px; height: 34px; background: #8b8b8b; border: 2px solid #373737; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
-        .slot img { width: 26px; height: 26px; image-rendering: pixelated; }
-        .count { position: absolute; bottom: 0; right: 2px; color: white; font-size: 10px; text-shadow: 1px 1px black; }
-        .btn { padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; background: #238636; }
-        input, select { background: #010409; border: 1px solid #30363d; color: #fff; padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 5px; }
+        #logbox { flex: 1; background: #000; padding: 12px; overflow-y: auto; border: 1px solid #30363d; border-radius: 8px; font-family: 'Consolas', monospace; line-height: 1.6; }
+        .bot-card { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #161b22; border: 1px solid #30363d; margin-top: 8px; border-radius: 6px; }
+        .btn-stop { background: #da3633; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .inv-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px; margin: 0 auto; background: #8b8b8b; padding: 10px; border: 3px solid #373737; }
+        .slot { width: 35px; height: 35px; background: #8b8b8b; border: 2px solid #373737; display: flex; align-items: center; justify-content: center; }
+        input, select { background: #010409; border: 1px solid #30363d; color: #fff; padding: 12px; border-radius: 6px; margin-bottom: 8px; width: 100%; }
+        .btn-add { background: #238636; color: white; width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
     <nav>
-        <button onclick="tab('bots')" id="btn-bots" class="active">BOTLAR</button>
-        <button onclick="tab('term')" id="btn-term">KONSOL</button>
+        <button onclick="tab('bots')" id="btn-bots" class="active">KONTROL PANELİ</button>
+        <button onclick="tab('term')" id="btn-term">SOHBET LOG</button>
         <button onclick="tab('inv')" id="btn-inv">ENVANTER</button>
     </nav>
 
     <div id="tab-bots" class="tab active-tab">
-        <input id="h" placeholder="Sunucu IP:Port">
-        <input id="u" placeholder="Kullanıcı Adı">
-        <input id="v" placeholder="Sürüm (örn: 1.20.1)">
-        <button class="btn" onclick="add()">SİSTEMİ BAŞLAT</button>
-        <div id="list" style="margin-top:10px;"></div>
+        <div style="background:#161b22; padding:15px; border-radius:8px; border:1px solid #30363d;">
+            <input id="h" placeholder="Sunucu IP (oyna.sunucu.com)">
+            <input id="u" placeholder="Bot İsmi">
+            <input id="v" placeholder="Sürüm (1.20.1)">
+            <button class="btn-add" onclick="add()">BOTU SOK</button>
+        </div>
+        <div id="list"></div>
     </div>
 
     <div id="tab-term" class="tab">
         <div id="logbox"></div>
-        <div style="display:flex; gap:5px;">
-            <input id="m" style="margin:0" placeholder="Chat mesajı..." onkeydown="if(event.key==='Enter') send()">
-            <button onclick="send()" class="btn" style="background:#1f6feb;">GÖNDER</button>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <input id="m" style="margin:0" placeholder="Mesaj gönder..." onkeydown="if(event.key==='Enter') send()">
+            <button onclick="send()" class="btn-add" style="width:100px; background:#1f6feb;">GÖNDER</button>
         </div>
     </div>
 
@@ -62,8 +63,15 @@
 
         async function add() {
             const h = document.getElementById('h').value, u = document.getElementById('u').value, v = document.getElementById('v').value;
+            if(!h || !u) return alert("Eksik bilgi!");
+            sel = u;
             await fetch(`/start?sid=${mySID}&host=${h}&user=${u}&ver=${v}`);
-            sel = u; tab('term');
+            tab('term');
+        }
+
+        async function stop(name) {
+            await fetch(`/stop?sid=${mySID}&user=${name}`);
+            if(sel === name) sel = "";
         }
 
         async function send() {
@@ -73,14 +81,19 @@
             i.value = "";
         }
 
-        // ULTRA HIZLI VERİ AKIŞI (100ms)
         setInterval(async () => {
             try {
                 const r = await fetch(`/data?sid=${mySID}&user=${sel}`);
                 const d = await r.json();
                 
-                document.getElementById('list').innerHTML = d.active.map(n => `<div style="display:flex; justify-content:space-between; background:#161b22; padding:10px; border:1px solid ${sel==n?'#2ecc71':'#30363d'}; margin-bottom:5px; border-radius:5px;" onclick="sel='${n}'"><span>${n}</span><button onclick="fetch('/stop?sid=${mySID}&user=${n}')" style="background:red; color:white; border:none; padding:3px 8px; border-radius:3px;">X</button></div>`).join('');
-                
+                // Bot Listesi Güncelleme
+                document.getElementById('list').innerHTML = d.active.map(n => `
+                    <div class="bot-card" style="border-color:${sel==n?'#2ecc71':'#30363d'}" onclick="sel='${n}'">
+                        <span><b>${n}</b> ${sel==n?'<small style="color:#2ecc71">(SEÇİLDİ)</small>':''}</span>
+                        <button class="btn-stop" onclick="event.stopPropagation(); stop('${n}')">X</button>
+                    </div>
+                `).join('');
+
                 if(sel && d.logs[sel]) {
                     const lb = document.getElementById('logbox');
                     lb.innerHTML = d.logs[sel].join('<br>');
@@ -92,13 +105,13 @@
                         let invH = "";
                         for(let i=0; i<45; i++) {
                             const it = bd.inv.find(x => x.slot === i);
-                            invH += `<div class="slot" onclick="fetch('/update?sid=${mySID}&user=${sel}&type=inv&status=drop&val=${i}')">${it ? `<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png" onerror="this.src='https://minecraft.wiki/images/Barrier_JE2_BE2.png'"><span class="count">${it.count>1?it.count:''}</span>` : ''}</div>`;
+                            invH += `<div class="slot">${it ? `<img src="https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.16.1/items/${it.name}.png" style="width:26px;">` : ''}</div>`;
                         }
                         document.getElementById('inv-box').innerHTML = invH;
                     }
                 }
             } catch(e) {}
-        }, 100); 
+        }, 200); // 200ms kalite ve performans dengesi
     </script>
 </body>
 </html>
